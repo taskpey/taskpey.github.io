@@ -55,21 +55,46 @@ nav button{flex:1;background:none;color:var(--mu);border-radius:16px;padding:7px
 nav button.on{color:var(--pr2);background:var(--soft)}
 nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 a{color:var(--pr2)}
+
+.pcard{display:flex;align-items:center;gap:14px}
+.av{position:relative;width:92px;height:92px;border-radius:50%;flex:none;border:4px solid #22c55e;background:var(--soft);display:grid;place-items:center;color:var(--pr);box-shadow:0 6px 16px rgba(34,197,94,.3)}
+.av img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.av .ic{width:46px;height:46px;stroke-width:1.8;fill:currentColor}
+.cam{position:absolute;right:-4px;bottom:-2px;width:32px;height:32px;border-radius:50%;background:var(--pr2);color:#fff;display:grid;place-items:center;border:2px solid var(--card);padding:0;box-shadow:none}
+.cam .ic{width:16px;height:16px}
+.pinfo{flex:1;min-width:0;border-left:1px solid var(--bd);padding-left:14px}
+.pinfo h2{margin:0;font-size:19px;display:flex;align-items:center;gap:6px;word-break:break-all}
+.pinfo h2 .ic{color:var(--pr);fill:var(--pr);stroke:#fff;width:20px;height:20px}
+.sec{display:flex;align-items:center;gap:12px}
+.pi{width:46px;height:46px;border-radius:50%;background:var(--soft);color:var(--pr);display:grid;place-items:center;flex:none}
+.pi .ic{width:24px;height:24px}
+.prow{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:11px 14px;margin:9px 0;box-shadow:var(--sh);cursor:pointer}
+.prow.ro{cursor:default}
+.pt{flex:1;min-width:0}.pt b{display:block;font-size:16px}.pt span{display:block;font-size:14px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow>.ic{color:var(--tx);width:20px;height:20px}
+.pstat{display:flex;align-items:center;gap:12px;background:var(--soft);border:1px solid var(--bd);border-radius:18px;padding:12px 14px;margin:12px 0}
+.pstat .pi{background:transparent}.pstat .pi .ic{width:38px;height:38px;fill:var(--pr);stroke:#fff}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.sheet h3{margin-top:0}
 </style>
 </head>
 <body>
 <div class="w">
-<div class="hdr"><div class="logo"><svg viewBox="0 0 34 34"><path d="M10 27V8h8.5a5.5 5.5 0 010 11H13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ht"><h1 id="brand"></h1></div></div>
+<div class="hdr"><div class="logo"><svg viewBox="0 0 34 34"><path d="M10 27V8h8.5a5.5 5.5 0 010 11H13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ht"><h1 id="brand"></h1><div class="mu">Earn • Invite • Withdraw</div></div><button id="lo" class="g hide" onclick="auth.signOut()"></button></div>
 
 <div id="auth" class="card">
   <h3>Login / Create Account</h3>
   <input id="em" type="email" placeholder="Email">
   <input id="pw" type="password" placeholder="Password">
   <div class="mu">Password: 8+ characters, with uppercase, lowercase, a number and a special character (@ # $ ! etc.)</div>
+  <div class="mu" style="margin-top:8px">New here? Fill in your name and country, then tap Create Account.</div>
+  <input id="fn" placeholder="Full name" maxlength="40" autocomplete="name">
+  <select id="co"></select>
   <input id="rf" placeholder="Referral code (optional)" maxlength="6">
   <div class="row"><button onclick="login()">Login</button><button class="g" onclick="signup()">Create Account</button></div>
   <div id="aerr" class="mu"></div>
-  <div class="mu" style="text-align:center;margin-top:12px">Created by <b>TEAM RAJPOOT</b></div>
+  <div class="mu" style="text-align:center;margin-top:12px">Created by <b>NOVA REEF STUDIO</b></div>
 </div>
 
 <div id="verify" class="card hide">
@@ -102,6 +127,8 @@ a{color:var(--pr2)}
   <div id="v-tasks" class="hide"></div>
   <div id="v-refer" class="hide"></div>
   <div id="v-profile" class="hide"></div>
+  <input id="pf" type="file" accept="image/*" class="hide">
+  <div id="modal" class="hide" onclick="if(event.target===this)closeM()"></div>
   <nav id="nav"></nav>
 </div>
 </div>
@@ -131,7 +158,28 @@ const auth = firebase.auth(), db = firebase.firestore();
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let me = null, ud = null;
-$("brand").textContent = NAME; document.title = NAME;
+const X = {
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.5 7l8.5 6 8.5-6"/>',
+  lock:'<rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/>',
+  shield:'<path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  badge:'<path d="M12 2l2.4 2 3.1-.2 1 3 2.6 1.7-1 3 1 3-2.6 1.7-1 3-3.1-.2L12 22l-2.4-2-3.1.2-1-3L2.9 15.5l1-3-1-3L5.5 7.8l1-3 3.1.2z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  chev:'<path d="M9 5l7 7-7 7"/>',
+  out:'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>',
+  check:'<path d="M5 12l5 5 9-10"/>',
+  wallet:'<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>'};
+const xi = k => `<svg class="ic" viewBox="0 0 24 24">${X[k]}</svg>`;
+$("lo").innerHTML = xi("out") + "Logout";
+const COUNTRIES = [["Pakistan","PK"],["India","IN"],["Bangladesh","BD"],["Afghanistan","AF"],["Saudi Arabia","SA"],["United Arab Emirates","AE"],["Qatar","QA"],["Kuwait","KW"],["Oman","OM"],["Bahrain","BH"],["United Kingdom","GB"],["United States","US"],["Canada","CA"],["Australia","AU"],["Germany","DE"],["France","FR"],["Italy","IT"],["Spain","ES"],["Netherlands","NL"],["Ireland","IE"],["Sweden","SE"],["Norway","NO"],["Turkey","TR"],["Malaysia","MY"],["Indonesia","ID"],["Singapore","SG"],["China","CN"],["Japan","JP"],["South Korea","KR"],["Sri Lanka","LK"],["Nepal","NP"],["Iran","IR"],["Iraq","IQ"],["Jordan","JO"],["Lebanon","LB"],["Egypt","EG"],["Nigeria","NG"],["South Africa","ZA"],["Brazil","BR"],["Mexico","MX"],["Russia","RU"],["Other",""]];
+const flagOf = n => { const c = (COUNTRIES.find(x => x[0] === n) || [])[1]; return c ? String.fromCodePoint(...[...c].map(ch => 127397 + ch.charCodeAt(0))) : "\u{1F30D}"; };
+const countryOpts = sel => COUNTRIES.map(c => `<option value="${esc(c[0])}" ${c[0]===sel?"selected":""}>${flagOf(c[0])} ${esc(c[0])}</option>`).join("");
+$("co").innerHTML = '<option value="">Select your country</option>' + countryOpts("");
+
+$("brand").innerHTML = "Task<span>Pey</span>"; document.title = NAME;
 const qref = (new URLSearchParams(location.search).get("ref") || "").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
 if(qref) $("rf").value = qref;
 
@@ -141,7 +189,9 @@ const strong = p => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.te
 async function signup(){
   const pw = $("pw").value;
   if(!strong(pw)) return err({message:"Weak password. Use 8+ characters with uppercase, lowercase, a number and a special character (@ # $ !)."});
+  if(!$("co").value) return err({message:"Please select your country."});
   sessionStorage.setItem("tp_ref", $("rf").value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6));
+  sessionStorage.setItem("tp_co", $("co").value); sessionStorage.setItem("tp_fn", $("fn").value.trim().slice(0,40));
   try{ await auth.createUserWithEmailAndPassword($("em").value, pw); }catch(e){ err(e); }
 }
 
@@ -172,14 +222,15 @@ async function verifyOtp(){
 /* ---------- Session ---------- */
 const genCode = () => Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
 auth.onAuthStateChanged(async u => {
-  me = u; $("auth").classList.toggle("hide", !!u);
+  me = u; $("auth").classList.toggle("hide", !!u); $("lo").classList.toggle("hide", !u);
   $("verify").classList.add("hide"); $("app").classList.add("hide"); $("banned").classList.add("hide"); $("activate").classList.add("hide");
   if(!u) return;
   try{ const c = await db.collection("settings").doc("config").get(); CFG = {...DEF, ...(c.exists ? c.data() : {})}; }catch(e){}
   const ur = db.collection("users").doc(u.uid);
   let d = await ur.get();
   if(!d.exists){
-    await ur.set({email:u.email, balance:0, verified:false, refCode:genCode(), referredBy:sessionStorage.getItem("tp_ref")||"", refEarned:0, refCount:0, createdAt:Date.now()});
+    await ur.set({email:u.email, balance:0, verified:false, refCode:genCode(), referredBy:sessionStorage.getItem("tp_ref")||"", refEarned:0, refCount:0, createdAt:Date.now(),
+      country:(COUNTRIES.some(c => c[0] === sessionStorage.getItem("tp_co")) ? sessionStorage.getItem("tp_co") : ""), fullName:sessionStorage.getItem("tp_fn")||""});
     d = await ur.get();
   }
   if(d.data().banned){ $("banned").classList.remove("hide"); return; }
@@ -295,13 +346,56 @@ function cp(t){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promis
 
 /* ---------- Profile ---------- */
 function loadProfile(){
-  $("v-profile").innerHTML = `<div class="card"><h3>My profile</h3>
-    <div>${esc(me.email)}</div>
-    <div class="mu">Member since ${new Date(ud.createdAt||Date.now()).toLocaleDateString()}</div>
-    <div class="row"><span class="tag">Email verified</span><span class="tag">Balance: Rs ${esc(ud.balance)}</span></div></div>
-    <div class="card mu" style="text-align:center">${NAME} · Created by <b>TEAM RAJPOOT</b></div>
-    <button class="g" style="width:100%" onclick="auth.signOut()">Logout</button>`;
+  const un = (me.email || "").split("@")[0];
+  const photo = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(ud.photo || "") ? ud.photo : "";
+  const row = (ic, t, sub, act) => `<div class="prow ${act ? "" : "ro"}" ${act ? `onclick="${act}"` : ""}><span class="pi">${xi(ic)}</span><div class="pt"><b>${t}</b><span>${sub}</span></div>${act ? xi("chev") : ""}</div>`;
+  $("v-profile").innerHTML = `<div class="card"><div class="pcard">
+      <div class="av">${photo ? `<img src="${photo}" alt="">` : xi("user")}<button class="cam" onclick="$('pf').click()" aria-label="Change photo">${xi("cam")}</button></div>
+      <div class="pinfo"><h2>${esc(un)} ${xi("badge")}</h2>
+        <div class="mu">Member since ${new Date(ud.createdAt || Date.now()).toLocaleDateString()}</div>
+        <div class="row"><span class="tag">${xi("mail")}Email verified</span><span class="tag">${xi("wallet")}Balance: Rs ${esc(ud.balance)}</span></div></div></div></div>
+    <div class="sec" style="margin:16px 4px 4px"><span class="pi">${xi("gear")}</span><div class="pt"><b style="font-size:18px">Account Information</b><span>Manage your account settings</span></div></div>
+    ${row("user", "Full Name", ud.fullName ? esc(ud.fullName) : "Tap to add your name", "editField('name')")}
+    ${row("globe", "Country", ud.country ? esc(ud.country) + " " + flagOf(ud.country) : "Tap to select your country", "editField('country')")}
+    ${row("mail", "Email Address", esc(me.email), "")}
+    ${row("lock", "Change Password", "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022", "changePw()")}
+    ${row("image", "Update Profile Picture", "Change your profile photo", "$('pf').click()")}
+    <div class="pstat"><span class="pi">${xi("shield")}</span><div class="pt"><b style="font-size:17px">Account Status</b><span style="white-space:normal">Your account is verified &amp; active</span></div><span class="tag">${xi("check")}Verified</span></div>
+    <div class="mu" style="text-align:center;margin:14px 0">${NAME} \u00b7 Created by <b>NOVA REEF STUDIO</b></div>`;
 }
+function closeM(){ $("modal").classList.add("hide"); }
+function editField(k){
+  $("modal").innerHTML = k === "name"
+    ? `<div class="sheet"><h3>Full Name</h3><input id="mv" maxlength="40" value="${esc(ud.fullName || "")}" placeholder="Your full name"><div class="row"><button onclick="saveField('name')">Save</button><button class="g" onclick="closeM()">Cancel</button></div></div>`
+    : `<div class="sheet"><h3>Country</h3><select id="mv"><option value="">Select your country</option>${countryOpts(ud.country || "")}</select><div class="row"><button onclick="saveField('country')">Save</button><button class="g" onclick="closeM()">Cancel</button></div></div>`;
+  $("modal").classList.remove("hide");
+}
+async function saveField(k){
+  const v = $("mv").value.trim();
+  if(k === "name" && v.length < 2) return alert("Please enter your full name.");
+  if(k === "country" && !v) return alert("Please select your country.");
+  try{ await db.collection("users").doc(me.uid).update(k === "name" ? {fullName: v.slice(0,40)} : {country: v}); closeM(); show("profile"); }
+  catch(e){ alert(e.message); }
+}
+async function changePw(){
+  if(!confirm("We will email a password reset link to " + me.email + ". Continue?")) return;
+  try{ await auth.sendPasswordResetEmail(me.email); alert("Reset link sent. Check your email (and Spam)."); }
+  catch(e){ alert(e.message); }
+}
+$("pf").onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const img = new Image(), url = URL.createObjectURL(f);
+  img.onload = async () => {
+    const c = document.createElement("canvas"); c.width = c.height = 240;
+    const m = Math.min(img.width, img.height);
+    c.getContext("2d").drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, 240, 240);
+    URL.revokeObjectURL(url);
+    try{ await db.collection("users").doc(me.uid).update({photo: c.toDataURL("image/jpeg", .75)}); show("profile"); }
+    catch(err){ alert(err.message); }
+  };
+  img.onerror = () => alert("Please choose an image file.");
+  img.src = url; e.target.value = "";
+};
 </script>
 </body>
 </html>

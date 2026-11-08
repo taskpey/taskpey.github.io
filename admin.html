@@ -231,6 +231,7 @@ function renderUsers(){
   $("ulist").innerHTML = USERS.filter(u => (u.email||"").toLowerCase().includes(k)).map(u => `<div class="card l">
     <b>${esc(u.email)}</b> ${u.banned ? '<span class="tag bad">banned</span>' : ''}
     <span class="tag ${u.verified ? "" : "no"}">${u.verified ? ic("check") + "verified" : "unverified"}</span> <span class="tag ${u.activated ? "" : "no"}">${u.activated ? "plan active" : "no plan"}</span>
+    ${u.fullName || u.country ? `<div class="mu">${esc(u.fullName||"")}${u.fullName && u.country ? " \u00b7 " : ""}${esc(u.country||"")}</div>` : ""}
     <div class="mu">Balance Rs ${esc(u.balance||0)} · Friends ${esc(u.refCount||0)} · Joined ${new Date(u.createdAt||0).toLocaleDateString()}</div>
     <div class="row"><button class="g" onclick="setActive('${u.id}',${!u.activated})">${ic("bolt")}${u.activated ? "Deactivate" : "Activate"}</button>
       ${u.email === ADMIN_EMAIL ? "" : `<button class="${u.banned ? "g" : "r"}" onclick="ban('${u.id}',${!u.banned})">${u.banned ? "Unban" : "Ban user"}</button>`}</div>
