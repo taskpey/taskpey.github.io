@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TaskPey</title>
+<link rel="preconnect" href="https://firestore.googleapis.com">
+<link rel="preconnect" href="https://www.gstatic.com">
 <style>
 :root{--bg:#f3faf6;--card:#fff;--tx:#0e2a1c;--mu:#66786e;--pr:#16a34a;--pr2:#0b7a3b;--soft:#e2f6e9;--bd:#e0ece5;--sh:0 8px 22px rgba(22,163,74,.13);--g1:#7ddf9f;--g2:#d6f4e1}
 @media(prefers-color-scheme:dark){:root{--bg:#0c1511;--card:#14201a;--tx:#e6f3ea;--mu:#93aa9c;--soft:#1b3326;--bd:#25382d;--sh:0 8px 22px rgba(0,0,0,.35);--g1:#1f6b40;--g2:#12301f}}
@@ -55,6 +57,7 @@ nav button{flex:1;background:none;color:var(--mu);border-radius:16px;padding:7px
 nav button.on{color:var(--pr2);background:var(--soft)}
 nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 a{color:var(--pr2)}
+textarea{font-family:inherit}
 
 .pcard{display:flex;align-items:center;gap:14px}
 .av{position:relative;width:92px;height:92px;border-radius:50%;flex:none;border:4px solid #22c55e;background:var(--soft);display:grid;place-items:center;color:var(--pr);box-shadow:0 6px 16px rgba(34,197,94,.3)}
@@ -77,6 +80,12 @@ a{color:var(--pr2)}
 #modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--card);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
 .sheet h3{margin-top:0}
+.sp{width:36px;height:36px;border:4px solid var(--soft);border-top-color:var(--pr);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}
+
+.pb{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:11px;flex:none;font-size:19px;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+.pb svg{width:62%;height:62%}
+.th{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}.th h3{margin:0;flex:1;min-width:0}
+.note{background:var(--soft);color:var(--pr2);border-radius:12px;padding:8px 10px;font-size:14px;margin:8px 0}
 </style>
 </head>
 <body>
@@ -113,6 +122,8 @@ a{color:var(--pr2)}
 
 <div id="activate" class="card hide"></div>
 
+<div id="ld" class="card hide" style="text-align:center;padding:30px 14px"><div class="sp" id="ldsp"></div><div class="mu" id="ldm">Loading your account…</div></div>
+
 <div id="app" class="hide">
   <div id="v-home">
     <div class="card hero"><div class="mu">Available balance</div><div class="bal" id="bal">Rs 0</div></div>
@@ -133,7 +144,6 @@ a{color:var(--pr2)}
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -152,9 +162,19 @@ const firebaseConfig = {
 const EMAILJS = { publicKey: "Ck35uPqqaOvVcN_uj", serviceId: "service_i50h7da", templateId: "template_sljklem" };
 /* ====================== */
 
-emailjs.init({ publicKey: EMAILJS.publicKey });
+let emailReady = null;
+function loadEmailJS(){
+  return emailReady || (emailReady = new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js";
+    sc.onload = () => { emailjs.init({ publicKey: EMAILJS.publicKey }); res(); };
+    sc.onerror = () => { emailReady = null; rej(new Error("Could not load the email service. Check your internet and tap Resend code.")); };
+    document.head.appendChild(sc);
+  }));
+}
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth(), db = firebase.firestore();
+db.settings({experimentalAutoDetectLongPolling:true, merge:true});
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let me = null, ud = null;
@@ -172,6 +192,22 @@ const X = {
   out:'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>',
   check:'<path d="M5 12l5 5 9-10"/>',
   wallet:'<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>'};
+
+const PLAT = {
+  instagram:{n:"Instagram", bg:"linear-gradient(135deg,#f9a03f,#e1306c 55%,#7b3fe4)", g:'<rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17" cy="7" r="1" fill="#fff" stroke="none"/>'},
+  tiktok:{n:"TikTok", bg:"#111", g:'<path d="M14 4v10.2a3.4 3.4 0 11-3.4-3.4M14 4c.4 2.5 2 4.1 4.6 4.3"/>'},
+  youtube:{n:"YouTube", bg:"#ff0000", g:'<rect x="3" y="6.5" width="18" height="11" rx="3.5"/><path d="M10 9.6v4.8l4.3-2.4z" fill="#fff" stroke="none"/>'},
+  facebook:{n:"Facebook", bg:"#1877f2", g:'<path d="M13.5 20v-7h2.4l.4-3h-2.8V8.3c0-.9.3-1.4 1.5-1.4h1.4V4.2C15.7 4.1 14.9 4 14 4c-2.1 0-3.5 1.3-3.5 3.6V10H8v3h2.5v7z" fill="#fff" stroke="none"/>'},
+  x:{n:"X (Twitter)", bg:"#111", g:'<path d="M5 5l14 14M19 5L5 19"/>'},
+  telegram:{n:"Telegram", bg:"#229ed9", g:'<path d="M20 5L3.5 11.5l5.5 2 2 5.5 3-3.5 4 3z"/>'},
+  whatsapp:{n:"WhatsApp", bg:"#25d366", g:'<path d="M4 20l1.4-4.2A8 8 0 1112 20a8 8 0 01-3.9-1z"/><path d="M9.5 9c.3 2.5 2.5 4.7 5 5"/>'},
+  snapchat:{n:"Snapchat", bg:"#fffc00", e:"\u{1F47B}"},
+  app:{n:"Mobile App", bg:"linear-gradient(135deg,#34a853,#4285f4)", g:'<path d="M7 4l12 8-12 8z" fill="#fff" stroke="none"/>'},
+  maps:{n:"Google Maps", bg:"#ea4335", g:'<path d="M12 21s6-5.6 6-10.5A6 6 0 006 10.5C6 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/>'},
+  web:{n:"Website", bg:"#16a34a", g:'<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3 3.2 3 13.8 0 17M12 3.5c-3 3.2-3 13.8 0 17"/>'}
+};
+const pbadge = (k, sz) => { const p = PLAT[k] || {bg:"#16a34a", e:"\u{1F3AF}"};
+  return `<span class="pb" style="background:${p.bg};${sz ? `width:${sz}px;height:${sz}px` : ""}">${p.g ? `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p.g}</svg>` : p.e}</span>`; };
 const xi = k => `<svg class="ic" viewBox="0 0 24 24">${X[k]}</svg>`;
 $("lo").innerHTML = xi("out") + "Logout";
 const COUNTRIES = [["Pakistan","PK"],["India","IN"],["Bangladesh","BD"],["Afghanistan","AF"],["Saudi Arabia","SA"],["United Arab Emirates","AE"],["Qatar","QA"],["Kuwait","KW"],["Oman","OM"],["Bahrain","BH"],["United Kingdom","GB"],["United States","US"],["Canada","CA"],["Australia","AU"],["Germany","DE"],["France","FR"],["Italy","IT"],["Spain","ES"],["Netherlands","NL"],["Ireland","IE"],["Sweden","SE"],["Norway","NO"],["Turkey","TR"],["Malaysia","MY"],["Indonesia","ID"],["Singapore","SG"],["China","CN"],["Japan","JP"],["South Korea","KR"],["Sri Lanka","LK"],["Nepal","NP"],["Iran","IR"],["Iraq","IQ"],["Jordan","JO"],["Lebanon","LB"],["Egypt","EG"],["Nigeria","NG"],["South Africa","ZA"],["Brazil","BR"],["Mexico","MX"],["Russia","RU"],["Other",""]];
@@ -202,6 +238,7 @@ async function sendOtp(){
   const last = getOtp();
   if(last && Date.now() - last.sent < 60000) throw new Error("Please wait a minute before requesting a new code.");
   const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000);
+  await loadEmailJS();
   await emailjs.send(EMAILJS.serviceId, EMAILJS.templateId, {to_email: me.email, otp: code, app_name: NAME});
   sessionStorage.setItem(OTP_KEY, JSON.stringify({code, exp: Date.now()+600000, sent: Date.now(), tries: 0}));
 }
@@ -222,17 +259,25 @@ async function verifyOtp(){
 /* ---------- Session ---------- */
 const genCode = () => Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
 auth.onAuthStateChanged(async u => {
+  try{ await onUser(u); }
+  catch(e){ if(u){ $("ld").classList.remove("hide"); $("ldsp").classList.add("hide"); $("ldm").textContent = "Could not load your account. " + (e.message || "") + " Pull to refresh or try again."; } }
+});
+async function onUser(u){
   me = u; $("auth").classList.toggle("hide", !!u); $("lo").classList.toggle("hide", !u);
   $("verify").classList.add("hide"); $("app").classList.add("hide"); $("banned").classList.add("hide"); $("activate").classList.add("hide");
+  $("ld").classList.add("hide");
   if(!u) return;
-  try{ const c = await db.collection("settings").doc("config").get(); CFG = {...DEF, ...(c.exists ? c.data() : {})}; }catch(e){}
+  $("ldsp").classList.remove("hide"); $("ldm").textContent = "Loading your account\u2026"; $("ld").classList.remove("hide");
   const ur = db.collection("users").doc(u.uid);
-  let d = await ur.get();
+  const [cs, d0] = await Promise.all([db.collection("settings").doc("config").get().catch(() => null), ur.get()]);
+  if(cs && cs.exists) CFG = {...DEF, ...cs.data()};
+  let d = d0;
   if(!d.exists){
     await ur.set({email:u.email, balance:0, verified:false, refCode:genCode(), referredBy:sessionStorage.getItem("tp_ref")||"", refEarned:0, refCount:0, createdAt:Date.now(),
       country:(COUNTRIES.some(c => c[0] === sessionStorage.getItem("tp_co")) ? sessionStorage.getItem("tp_co") : ""), fullName:sessionStorage.getItem("tp_fn")||""});
     d = await ur.get();
   }
+  $("ld").classList.add("hide");
   if(d.data().banned){ $("banned").classList.remove("hide"); return; }
   if(!d.data().verified){
     $("vem").textContent = u.email; $("verify").classList.remove("hide");
@@ -252,13 +297,14 @@ auth.onAuthStateChanged(async u => {
     profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>'};
   $("nav").innerHTML = [["home","Home"],["tasks","Tasks"],["refer","Refer"],["profile","Profile"]]
     .map(t => `<button id="n-${t[0]}" onclick="show('${t[0]}')"><svg viewBox="0 0 24 24">${I[t[0]]}</svg>${t[1]}</button>`).join("");
-  show("home");
-});
+  ud = d.data();
+  show("home", true);
+}
 
-async function show(t){
+async function show(t, cached){
   ["home","tasks","refer","profile"].forEach(x => {
     $("v-"+x).classList.toggle("hide", x!==t); $("n-"+x).classList.toggle("on", x===t); });
-  ud = (await db.collection("users").doc(me.uid).get()).data();
+  if(!cached) ud = (await db.collection("users").doc(me.uid).get()).data();
   ({home:loadHome, tasks:loadTasks, refer:loadRefer, profile:loadProfile})[t]();
 }
 
@@ -316,9 +362,10 @@ async function loadTasks(){
   const done = {}; ss.forEach(s => done[s.data().taskId] = s.data().status);
   let h = "";
   ts.forEach(d => { const t = d.data(), st = done[d.id];
-    h += `<div class="card"><h3>${esc(t.title)} <span class="tag">Rs ${esc(t.reward)}</span></h3>
+    h += `<div class="card"><div class="th">${pbadge(t.platform)}<h3>${esc(t.title)}</h3><span class="tag">Rs ${esc(t.reward)}</span></div>
       <div class="mu">${esc(t.desc)}</div>
-      ${t.link ? `<div class="row"><a href="${esc(t.link)}" target="_blank" rel="noopener"><button class="g">Open link</button></a></div>` : ""}
+      ${t.note ? `<div class="note">\u{1F4DD} ${esc(t.note)}</div>` : ""}
+      ${/^https?:\/\//i.test(t.link || "") ? `<div class="row"><a href="${esc(t.link)}" target="_blank" rel="noopener"><button class="g">${esc(t.openLabel || "Open link")}</button></a></div>` : ""}
       ${st ? `<div class="row"><span class="tag">Status: ${esc(st)}</span></div>` :
       `<input id="p-${d.id}" placeholder="Proof (screenshot link or note)">
        <button onclick="submitProof('${d.id}')">Submit proof</button>`}</div>`; });

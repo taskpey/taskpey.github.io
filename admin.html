@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>TaskPey Admin</title>
+<link rel="preconnect" href="https://firestore.googleapis.com">
 <style>
 :root{--bg:#f3faf6;--card:#fff;--tx:#0e2a1c;--mu:#66786e;--pr:#16a34a;--pr2:#0b7a3b;--soft:#e2f6e9;--bd:#e0ece5;--sh:0 8px 22px rgba(22,163,74,.13);--g1:#7ddf9f;--g2:#d6f4e1}
 @media(prefers-color-scheme:dark){:root{--bg:#0c1511;--card:#14201a;--tx:#e6f3ea;--mu:#93aa9c;--soft:#1b3326;--bd:#25382d;--sh:0 8px 22px rgba(0,0,0,.35);--g1:#1f6b40;--g2:#12301f}}
@@ -57,6 +58,13 @@ nav button{flex:1;background:none;color:var(--mu);border-radius:16px;padding:7px
 nav button.on{color:var(--pr2);background:var(--soft)}
 nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 a{color:var(--pr2)}
+textarea{font-family:inherit}
+.sp{width:34px;height:34px;border:4px solid var(--soft);border-top-color:var(--pr);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 8px}@keyframes spin{to{transform:rotate(360deg)}}
+
+.pb{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:11px;flex:none;font-size:19px;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+.pb svg{width:62%;height:62%}
+.th{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}.th h3{margin:0;flex:1;min-width:0}
+.note{background:var(--soft);color:var(--pr2);border-radius:12px;padding:8px 10px;font-size:14px;margin:8px 0}
 </style>
 </head>
 <body>
@@ -105,10 +113,15 @@ a{color:var(--pr2)}
 
   <div id="t-tasks" class="hide">
     <div class="card"><h3 style="margin-top:0">New task</h3>
-      <input id="tt" placeholder="Task title">
-      <textarea id="td" placeholder="What to do (steps)"></textarea>
-      <input id="tl" placeholder="Link (app/video/page)">
-      <input id="tr" type="number" placeholder="User reward (Rs)">
+      <div class="mu">1. What should the user do?</div>
+      <select id="tp" onchange="tpChange()"></select>
+      <div id="tprev"></div>
+      <div class="mu">2. Link <span id="tlh"></span></div>
+      <input id="tl" placeholder="https://..." inputmode="url">
+      <div class="mu">3. Reward for the user (Rs)</div>
+      <input id="tr" type="number" placeholder="e.g. 5">
+      <div class="mu">Extra instruction (optional), e.g. what to comment</div>
+      <textarea id="td" placeholder="e.g. Comment: Nice video! 🔥"></textarea>
       <button onclick="addTask()">Create task</button></div>
     <h3>All tasks</h3><div id="atasks"></div>
   </div>
@@ -130,6 +143,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth(), db = firebase.firestore();
+db.settings({experimentalAutoDetectLongPolling:true, merge:true});
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const IC = {
@@ -143,10 +157,82 @@ const IC = {
   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
   out:'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>',
   bolt:'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
-  check:'<path d="M5 12l5 5 9-10"/>'};
+  check:'<path d="M5 12l5 5 9-10"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>'};
 const ic = k => `<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
 let USERS = [], tab = "users";
 $("lo").innerHTML = ic("out") + "Logout";
+const PLAT = {
+  instagram:{n:"Instagram", bg:"linear-gradient(135deg,#f9a03f,#e1306c 55%,#7b3fe4)", g:'<rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17" cy="7" r="1" fill="#fff" stroke="none"/>'},
+  tiktok:{n:"TikTok", bg:"#111", g:'<path d="M14 4v10.2a3.4 3.4 0 11-3.4-3.4M14 4c.4 2.5 2 4.1 4.6 4.3"/>'},
+  youtube:{n:"YouTube", bg:"#ff0000", g:'<rect x="3" y="6.5" width="18" height="11" rx="3.5"/><path d="M10 9.6v4.8l4.3-2.4z" fill="#fff" stroke="none"/>'},
+  facebook:{n:"Facebook", bg:"#1877f2", g:'<path d="M13.5 20v-7h2.4l.4-3h-2.8V8.3c0-.9.3-1.4 1.5-1.4h1.4V4.2C15.7 4.1 14.9 4 14 4c-2.1 0-3.5 1.3-3.5 3.6V10H8v3h2.5v7z" fill="#fff" stroke="none"/>'},
+  x:{n:"X (Twitter)", bg:"#111", g:'<path d="M5 5l14 14M19 5L5 19"/>'},
+  telegram:{n:"Telegram", bg:"#229ed9", g:'<path d="M20 5L3.5 11.5l5.5 2 2 5.5 3-3.5 4 3z"/>'},
+  whatsapp:{n:"WhatsApp", bg:"#25d366", g:'<path d="M4 20l1.4-4.2A8 8 0 1112 20a8 8 0 01-3.9-1z"/><path d="M9.5 9c.3 2.5 2.5 4.7 5 5"/>'},
+  snapchat:{n:"Snapchat", bg:"#fffc00", e:"\u{1F47B}"},
+  app:{n:"Mobile App", bg:"linear-gradient(135deg,#34a853,#4285f4)", g:'<path d="M7 4l12 8-12 8z" fill="#fff" stroke="none"/>'},
+  maps:{n:"Google Maps", bg:"#ea4335", g:'<path d="M12 21s6-5.6 6-10.5A6 6 0 006 10.5C6 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/>'},
+  web:{n:"Website", bg:"#16a34a", g:'<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3 3.2 3 13.8 0 17M12 3.5c-3 3.2-3 13.8 0 17"/>'}
+};
+const pbadge = (k, sz) => { const p = PLAT[k] || {bg:"#16a34a", e:"\u{1F3AF}"};
+  return `<span class="pb" style="background:${p.bg};${sz ? `width:${sz}px;height:${sz}px` : ""}">${p.g ? `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p.g}</svg>` : p.e}</span>`; };
+
+const PRESETS = [
+ ["instagram","\u{1F4F8} Instagram",[
+  ["ig_like_reel","\u2764\uFE0F","Instagram reel like","Like Instagram Reel","Open Reel","reel","Open the reel and tap the \u2764\uFE0F Like button."],
+  ["ig_like_post","\u2764\uFE0F","Instagram post like","Like Instagram Post","Open Post","post","Open the post and tap the \u2764\uFE0F Like button."],
+  ["ig_follow","\u2795","Instagram account follow","Follow on Instagram","Open Account","account","Open the account and tap Follow."],
+  ["ig_comment_reel","\u{1F4AC}","Instagram reel comment","Comment on Instagram Reel","Open Reel","reel","Open the reel and write a nice comment."],
+  ["ig_comment_post","\u{1F4AC}","Instagram post comment","Comment on Instagram Post","Open Post","post","Open the post and write a nice comment."]]],
+ ["tiktok","\u{1F3B5} TikTok",[
+  ["tt_like_video","\u2764\uFE0F","TikTok video like","Like TikTok Video","Open Video","video","Open the video and tap the \u2764\uFE0F Like button."],
+  ["tt_follow","\u2795","TikTok account follow","Follow on TikTok","Open Account","account","Open the account and tap Follow."],
+  ["tt_comment_video","\u{1F4AC}","TikTok video comment","Comment on TikTok Video","Open Video","video","Open the video and write a nice comment."],
+  ["tt_share_video","\u{1F501}","TikTok video share","Share TikTok Video","Open Video","video","Open the video, tap Share and share it."],
+  ["tt_watch_video","\u{1F440}","TikTok video watch","Watch TikTok Video","Open Video","video","Open the video and watch it till the end."]]],
+ ["youtube","\u25B6\uFE0F YouTube",[
+  ["yt_like_video","\u{1F44D}","YouTube video like","Like YouTube Video","Open Video","video","Open the video and tap the \u{1F44D} Like button."],
+  ["yt_subscribe","\u{1F514}","YouTube channel subscribe","Subscribe on YouTube","Open Channel","channel","Open the channel and tap Subscribe."],
+  ["yt_comment_video","\u{1F4AC}","YouTube video comment","Comment on YouTube Video","Open Video","video","Open the video and write a nice comment."],
+  ["yt_watch_video","\u{1F440}","YouTube video watch","Watch YouTube Video","Open Video","video","Open the video and watch it for at least 1 minute."]]],
+ ["facebook","\u{1F44D} Facebook",[
+  ["fb_like_page","\u{1F44D}","Facebook page like","Like Facebook Page","Open Page","page","Open the page and tap Like."],
+  ["fb_follow","\u2795","Facebook page follow","Follow on Facebook","Open Page","page","Open the page and tap Follow."],
+  ["fb_like_post","\u{1F44D}","Facebook post like","Like Facebook Post","Open Post","post","Open the post and tap Like."],
+  ["fb_comment_post","\u{1F4AC}","Facebook post comment","Comment on Facebook Post","Open Post","post","Open the post and write a nice comment."],
+  ["fb_share_post","\u{1F501}","Facebook post share","Share Facebook Post","Open Post","post","Open the post and share it."]]],
+ ["x","\u{1F426} X (Twitter)",[
+  ["x_like","\u2764\uFE0F","X post like","Like X Post","Open Post","post","Open the post and tap the \u2764\uFE0F Like button."],
+  ["x_follow","\u2795","X account follow","Follow on X","Open Account","account","Open the account and tap Follow."],
+  ["x_repost","\u{1F501}","X post repost","Repost on X","Open Post","post","Open the post and repost it."],
+  ["x_reply","\u{1F4AC}","X post reply","Reply on X","Open Post","post","Open the post and write a reply."]]],
+ ["telegram","\u2708\uFE0F Telegram",[
+  ["tg_channel","\u{1F4E2}","Telegram channel join","Join Telegram Channel","Open Channel","channel","Open the channel and tap Join."],
+  ["tg_group","\u{1F465}","Telegram group join","Join Telegram Group","Open Group","group","Open the group and tap Join."]]],
+ ["whatsapp","\u{1F4AC} WhatsApp",[
+  ["wa_channel","\u{1F4E2}","WhatsApp channel join","Join WhatsApp Channel","Open Channel","channel","Open the channel and tap Follow."],
+  ["wa_group","\u{1F465}","WhatsApp group join","Join WhatsApp Group","Open Group","group","Open the group link and tap Join."]]],
+ ["snapchat","\u{1F47B} Snapchat",[
+  ["sc_follow","\u2795","Snapchat account follow","Follow on Snapchat","Open Account","account","Open the profile and tap Add Friend or Subscribe."]]],
+ ["app","\u{1F4F1} Mobile App",[
+  ["app_review","\u2B50","App review (5 stars + comment)","Review the App","Open App Page","app","Open the app page, give 5 stars and write a short review."],
+  ["app_install","\u2B07\uFE0F","App install","Install the App","Open App Page","app","Install the app and open it once."]]],
+ ["maps","\u{1F4CD} Google Maps",[
+  ["maps_review","\u2B50","Google Maps review","Review on Google Maps","Open Place","place","Open the place, give 5 stars and write a short review."]]],
+ ["web","\u{1F310} Website",[
+  ["web_visit","\u{1F310}","Website visit","Visit the Website","Open Website","website","Open the website and stay on it for about 30 seconds."]]]
+];
+const PMAP = {};
+PRESETS.forEach(g => g[2].forEach(p => PMAP[p[0]] = {id:p[0], pl:g[0], emoji:p[1], label:p[2], title:p[3], open:p[4], target:p[5], how:p[6]}));
+$("tp").innerHTML = '<option value="">Choose a task\u2026</option>' + PRESETS.map(g =>
+  `<optgroup label="${esc(g[1])}">${g[2].map(p => `<option value="${p[0]}">${p[1]} ${esc(p[2])}</option>`).join("")}</optgroup>`).join("");
+function tpChange(){
+  const p = PMAP[$("tp").value];
+  $("tprev").innerHTML = p ? `<div class="card" style="margin:6px 0"><div class="th">${pbadge(p.pl)}<h3>${esc(p.title)}</h3></div><div class="mu">${esc(p.how)}</div><div class="mu" style="margin-top:6px">Button: <b>${esc(p.open)}</b></div></div>` : "";
+  $("tlh").textContent = p ? "(paste the " + p.target + " link)" : "";
+}
+
 
 function login(){ auth.signInWithEmailAndPassword($("em").value, $("pw").value).catch(e => $("aerr").textContent = e.message); }
 auth.onAuthStateChanged(u => {
@@ -169,12 +255,22 @@ async function saveSettings(){
 }
 
 async function addTask(){
-  const r = Number($("tr").value); if(!$("tt").value || !r) return alert("Enter title and reward");
-  await db.collection("tasks").add({title:$("tt").value, desc:$("td").value, link:$("tl").value, reward:r, active:true, at:Date.now()});
-  ["tt","td","tl","tr"].forEach(i => $(i).value = ""); load();
+  const p = PMAP[$("tp").value], link = $("tl").value.trim(), r = Number($("tr").value);
+  if(!p) return alert("Please choose what the user should do.");
+  if(!/^https?:\/\//i.test(link)) return alert("Please paste the " + p.target + " link (it must start with https://).");
+  if(!(r > 0)) return alert("Please enter the reward in Rs.");
+  try{
+    await db.collection("tasks").add({platform:p.pl, preset:p.id, title:p.title, desc:p.how, openLabel:p.open, note:$("td").value.trim(), link, reward:r, active:true, at:Date.now()});
+  }catch(e){ return alert(e.message); }
+  ["tl","tr","td"].forEach(i => $(i).value = ""); $("tp").value = ""; tpChange(); load();
 }
 
 async function load(){
+  if(!USERS.length) $("stats").innerHTML = '<div style="padding:10px"><div class="sp"></div>Loading\u2026</div>';
+  try{ await load0(); }
+  catch(e){ $("stats").innerHTML = '<div style="padding:10px;color:#dc2626">Could not load: ' + esc(e.message) + '</div>'; }
+}
+async function load0(){
   const [s, w, t, u, p, cs] = await Promise.all([
     db.collection("submissions").where("status","==","pending").get(),
     db.collection("withdrawals").get(),
@@ -220,7 +316,7 @@ async function load(){
       <div class="mu">${esc(x.email)} · ${new Date(x.at||0).toLocaleDateString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
 
   h = ""; t.forEach(d => { const x = d.data();
-    h += `<div class="card l">${esc(x.title)} · Rs ${esc(x.reward)} <span class="tag">${x.active ? "live" : "closed"}</span>
+    h += `<div class="card l"><div class="th">${pbadge(x.platform,30)}<b style="flex:1">${esc(x.title)}</b> <span class="tag">Rs ${esc(x.reward)}</span> <span class="tag ${x.active ? "" : "no"}">${x.active ? "live" : "closed"}</span></div>
       <div class="row"><button class="g" onclick="toggleTask('${d.id}',${!x.active})">${x.active ? "Close" : "Make live"}</button></div></div>`; });
   $("atasks").innerHTML = h;
   show(tab);
@@ -233,9 +329,26 @@ function renderUsers(){
     <span class="tag ${u.verified ? "" : "no"}">${u.verified ? ic("check") + "verified" : "unverified"}</span> <span class="tag ${u.activated ? "" : "no"}">${u.activated ? "plan active" : "no plan"}</span>
     ${u.fullName || u.country ? `<div class="mu">${esc(u.fullName||"")}${u.fullName && u.country ? " \u00b7 " : ""}${esc(u.country||"")}</div>` : ""}
     <div class="mu">Balance Rs ${esc(u.balance||0)} · Friends ${esc(u.refCount||0)} · Joined ${new Date(u.createdAt||0).toLocaleDateString()}</div>
-    <div class="row"><button class="g" onclick="setActive('${u.id}',${!u.activated})">${ic("bolt")}${u.activated ? "Deactivate" : "Activate"}</button>
+    <div class="row"><button class="g" onclick="adjBal('${u.id}',1)">${ic("plus")}Add Rs</button><button class="r" onclick="adjBal('${u.id}',-1)">${ic("minus")}Deduct</button>
+      <button class="g" onclick="setActive('${u.id}',${!u.activated})">${ic("bolt")}${u.activated ? "Deactivate" : "Activate"}</button>
       ${u.email === ADMIN_EMAIL ? "" : `<button class="${u.banned ? "g" : "r"}" onclick="ban('${u.id}',${!u.banned})">${u.banned ? "Unban" : "Ban user"}</button>`}</div>
   </div>`).join("") || '<div class="mu">No users found</div>';
+}
+async function adjBal(id, sign){
+  const u = USERS.find(x => x.id === id); if(!u) return;
+  const a = Number(prompt((sign > 0 ? "Add balance to " : "Deduct balance from ") + u.email + "\nCurrent balance: Rs " + (u.balance || 0) + "\nEnter amount (Rs):"));
+  if(!(a > 0)) return;
+  if(!confirm((sign > 0 ? "Add Rs " + a + " to " : "Deduct Rs " + a + " from ") + u.email + "?")) return;
+  const ref = db.collection("users").doc(id); let before = 0, after = 0;
+  try{
+    await db.runTransaction(async tx => {
+      const s = await tx.get(ref); before = s.data().balance || 0; after = before + sign * a;
+      if(after < 0) throw new Error("Balance cannot go below Rs 0 (current: Rs " + before + ")");
+      tx.update(ref, {balance: after});
+    });
+  }catch(e){ return alert(e.message); }
+  try{ await db.collection("balanceLogs").add({uid:id, email:u.email, amount:sign * a, before, after, by:ADMIN_EMAIL, at:Date.now()}); }catch(e){}
+  load();
 }
 async function ban(id, v){
   if(!confirm(v ? "Ban this user?" : "Unban this user?")) return;
