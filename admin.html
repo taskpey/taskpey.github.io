@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>TaskPey Admin</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#1b2333;--mu:#6b7487;--pr:#16a34a;--bd:#e3e7ef}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1420;--card:#1a2132;--tx:#e8ecf5;--mu:#93a0b8;--bd:#2a3349}}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+.w{max-width:640px;margin:0 auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0}
+h1{font-size:22px;margin:6px 0}h3{margin:14px 0 6px;font-size:16px}
+input,textarea{width:100%;padding:11px;margin:5px 0;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font-size:15px}
+button{background:var(--pr);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-size:15px;cursor:pointer}
+button.g{background:var(--bd);color:var(--tx)}button.r{background:#dc2626}
+.mu{color:var(--mu);font-size:13px}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--bd)}.hide{display:none}
+.tabs{display:flex;gap:6px;margin:10px 0;overflow-x:auto}.tabs button{flex:1;background:var(--card);color:var(--tx);border:1px solid var(--bd);white-space:nowrap}
+.tabs button.on{background:var(--pr);color:#fff}
+.stat{display:flex;gap:8px}.stat div{flex:1;text-align:center;font-size:12px;color:var(--mu)}.stat b{display:block;font-size:20px;color:var(--pr)}
+</style>
+</head>
+<body>
+<div class="w">
+<h1>TaskPey Admin</h1>
+
+<div id="auth" class="card">
+  <input id="em" type="email" placeholder="Admin email">
+  <input id="pw" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <div id="aerr" class="mu"></div>
+</div>
+
+<div id="panel" class="hide">
+  <div class="row"><span class="mu" id="who"></span><button class="g" onclick="auth.signOut()">Logout</button></div>
+  <div class="card stat" id="stats"></div>
+  <div class="tabs" id="tabs"></div>
+
+  <div id="t-users" class="hide">
+    <input id="us" placeholder="Search user by email" oninput="renderUsers()">
+    <div id="ulist"></div>
+  </div>
+
+  <div id="t-set" class="hide">
+    <div class="card"><h3 style="margin-top:0">Plan &amp; payment</h3>
+      <div class="mu">Plan fee (Rs)</div><input id="s-fee" type="number">
+      <div class="mu">Payment method (e.g. Easypaisa)</div><input id="s-method">
+      <div class="mu">Payment number</div><input id="s-num">
+      <div class="mu">Account title</div><input id="s-name">
+      <h3>Referral &amp; withdrawal</h3>
+      <div class="mu">Referral bonus per friend (Rs), paid when the friend's first task is approved</div><input id="s-ref" type="number">
+      <div class="mu">Minimum withdrawal (Rs)</div><input id="s-min" type="number">
+      <button onclick="saveSettings()">Save settings</button><div id="sok" class="mu"></div></div>
+  </div>
+
+  <div id="t-pay" class="hide">
+    <h3>Pending plan payments</h3><div id="apay"></div>
+    <h3>History</h3><div id="phist"></div>
+  </div>
+
+  <div id="t-proofs" class="hide"><div id="asub"></div></div>
+
+  <div id="t-wd" class="hide">
+    <h3>Pending requests</h3><div id="awd"></div>
+    <h3>History (paid / rejected)</h3><div id="whist"></div>
+  </div>
+
+  <div id="t-tasks" class="hide">
+    <div class="card"><h3 style="margin-top:0">New task</h3>
+      <input id="tt" placeholder="Task title">
+      <textarea id="td" placeholder="What to do (steps)"></textarea>
+      <input id="tl" placeholder="Link (app/video/page)">
+      <input id="tr" type="number" placeholder="User reward (Rs)">
+      <button onclick="addTask()">Create task</button></div>
+    <h3>All tasks</h3><div id="atasks"></div>
+  </div>
+</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const ADMIN_EMAIL = "umardrazofficial01@gmail.com";
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500};
+let CFG = {...DEF};
+const firebaseConfig = {
+  apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
+  authDomain: "taskpey-2158a.firebaseapp.com",
+  projectId: "taskpey-2158a",
+  appId: "1:377131772878:web:88a03dc550adaad77d599f"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(), db = firebase.firestore();
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let USERS = [], tab = "users";
+
+function login(){ auth.signInWithEmailAndPassword($("em").value, $("pw").value).catch(e => $("aerr").textContent = e.message); }
+auth.onAuthStateChanged(u => {
+  if(u && u.email !== ADMIN_EMAIL){ $("aerr").textContent = "Access denied. This page is for the owner only."; auth.signOut(); return; }
+  $("auth").classList.toggle("hide", !!u); $("panel").classList.toggle("hide", !u);
+  if(u){ $("who").textContent = u.email; load(); }
+});
+
+function show(t){
+  tab = t;
+  ["users","pay","proofs","wd","tasks","set"].forEach(x => { $("t-"+x).classList.toggle("hide", x!==t); $("b-"+x).classList.toggle("on", x===t); });
+}
+
+async function saveSettings(){
+  const n = {planFee:Number($("s-fee").value), payMethod:$("s-method").value.trim(), payNumber:$("s-num").value.trim(),
+    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value)};
+  if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0)) return alert("Please fill every field correctly.");
+  try{ await db.collection("settings").doc("config").set(n); CFG = n; $("sok").textContent = "Saved. Users will see the new values."; }
+  catch(e){ alert(e.message); }
+}
+
+async function addTask(){
+  const r = Number($("tr").value); if(!$("tt").value || !r) return alert("Enter title and reward");
+  await db.collection("tasks").add({title:$("tt").value, desc:$("td").value, link:$("tl").value, reward:r, active:true, at:Date.now()});
+  ["tt","td","tl","tr"].forEach(i => $(i).value = ""); load();
+}
+
+async function load(){
+  const [s, w, t, u, p, cs] = await Promise.all([
+    db.collection("submissions").where("status","==","pending").get(),
+    db.collection("withdrawals").get(),
+    db.collection("tasks").get(),
+    db.collection("users").get(),
+    db.collection("payments").get(),
+    db.collection("settings").doc("config").get()]);
+  CFG = {...DEF, ...(cs.exists ? cs.data() : {})};
+  $("s-fee").value = CFG.planFee; $("s-method").value = CFG.payMethod; $("s-num").value = CFG.payNumber;
+  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw;
+
+  USERS = u.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+  const wds = w.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.at||0) - (a.at||0));
+  const pend = wds.filter(x => x.status === "pending");
+
+  $("stats").innerHTML = `<div><b>${USERS.length}</b>Users</div><div><b>${USERS.filter(x=>x.banned).length}</b>Banned</div>
+    <div><b>${USERS.filter(x=>x.activated).length}</b>Active</div><div><b>${s.size}</b>Proofs</div><div><b>${pend.length}</b>Withdrawals</div>`;
+  $("tabs").innerHTML = [["users","Users"],["pay","Payments"],["proofs","Proofs"],["wd","Withdrawals"],["tasks","Tasks"],["set","Settings"]]
+    .map(x => `<button id="b-${x[0]}" onclick="show('${x[0]}')">${x[1]}</button>`).join("");
+
+  renderUsers();
+  const pays = p.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.at||0) - (a.at||0));
+  $("apay").innerHTML = pays.filter(x => x.status === "pending").map(x => `<div class="card"><b>Rs ${esc(x.amount)}</b> · ${esc(x.method)}
+    <div class="mu">${esc(x.email)}</div><div>Sender: ${esc(x.sender)}</div><div>TID: ${esc(x.tid)}</div>
+    <div class="mu">Check this payment in your JazzCash/Easypaisa first, then approve.</div>
+    <div class="row"><button onclick="appPay('${x.id}',true)">Approve</button><button class="r" onclick="appPay('${x.id}',false)">Reject</button></div></div>`).join("")
+    || '<div class="mu">No pending payments</div>';
+  $("phist").innerHTML = pays.filter(x => x.status !== "pending").map(x => `<div class="card">Rs ${esc(x.amount)} · ${esc(x.email)} <span class="tag">${esc(x.status)}</span>
+    <div class="mu">TID ${esc(x.tid)} · ${new Date(x.at||0).toLocaleDateString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
+
+  let h = ""; s.forEach(d => { const x = d.data();
+    h += `<div class="card"><b>${esc(x.taskTitle)}</b> · Rs ${esc(x.reward)}<div class="mu">${esc(x.email)}</div>
+      <div>${/^https?:\/\//.test(x.proof) ? `<a href="${esc(x.proof)}" target="_blank" rel="noopener">${esc(x.proof)}</a>` : esc(x.proof)}</div>
+      <div class="row"><button onclick="appSub('${d.id}',true)">Approve</button><button class="r" onclick="appSub('${d.id}',false)">Reject</button></div></div>`; });
+  $("asub").innerHTML = h || '<div class="mu">No pending proofs</div>';
+
+  $("awd").innerHTML = pend.map(x => `<div class="card"><b>Rs ${esc(x.amount)}</b> · ${esc(x.method)} · ${esc(x.number)}<div class="mu">${esc(x.email)}</div>
+      <div class="mu">Send the money via JazzCash/Easypaisa first, then tap "Paid".</div>
+      <div class="row"><button onclick="appWd('${x.id}',true)">Paid</button><button class="r" onclick="appWd('${x.id}',false)">Reject</button></div></div>`).join("")
+    || '<div class="mu">No pending requests</div>';
+  $("whist").innerHTML = wds.filter(x => x.status !== "pending").map(x =>
+    `<div class="card">Rs ${esc(x.amount)} · ${esc(x.method)} · ${esc(x.number)} <span class="tag">${esc(x.status)}</span>
+      <div class="mu">${esc(x.email)} · ${new Date(x.at||0).toLocaleDateString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
+
+  h = ""; t.forEach(d => { const x = d.data();
+    h += `<div class="card">${esc(x.title)} · Rs ${esc(x.reward)} <span class="tag">${x.active ? "live" : "closed"}</span>
+      <div class="row"><button class="g" onclick="toggleTask('${d.id}',${!x.active})">${x.active ? "Close" : "Make live"}</button></div></div>`; });
+  $("atasks").innerHTML = h;
+  show(tab);
+}
+
+function renderUsers(){
+  const k = $("us").value.toLowerCase();
+  $("ulist").innerHTML = USERS.filter(u => (u.email||"").toLowerCase().includes(k)).map(u => `<div class="card">
+    <b>${esc(u.email)}</b> ${u.banned ? '<span class="tag" style="background:#dc2626;color:#fff">banned</span>' : ''}
+    <span class="tag">${u.verified ? "verified" : "unverified"}</span> <span class="tag">${u.activated ? "plan active" : "no plan"}</span>
+    <div class="mu">Balance Rs ${esc(u.balance||0)} · Friends ${esc(u.refCount||0)} · Joined ${new Date(u.createdAt||0).toLocaleDateString()}</div>
+    <div class="row"><button class="g" onclick="setActive('${u.id}',${!u.activated})">${u.activated ? "Deactivate" : "Activate"}</button>
+      ${u.email === ADMIN_EMAIL ? "" : `<button class="${u.banned ? "g" : "r"}" onclick="ban('${u.id}',${!u.banned})">${u.banned ? "Unban" : "Ban user"}</button>`}</div>
+  </div>`).join("") || '<div class="mu">No users found</div>';
+}
+async function ban(id, v){
+  if(!confirm(v ? "Ban this user?" : "Unban this user?")) return;
+  await db.collection("users").doc(id).update({banned:v}); load();
+}
+
+async function appPay(uid, ok){
+  const b = db.batch();
+  b.update(db.collection("payments").doc(uid), {status: ok ? "approved" : "rejected"});
+  if(ok) b.update(db.collection("users").doc(uid), {activated:true, activatedAt:Date.now()});
+  try{ await b.commit(); }catch(e){ alert(e.message); }
+  load();
+}
+async function setActive(id, v){
+  if(!confirm(v ? "Activate this user's plan?" : "Deactivate this user's plan?")) return;
+  await db.collection("users").doc(id).update({activated:v}); load();
+}
+
+async function appSub(id, ok){
+  const ref = db.collection("submissions").doc(id);
+  let rq = null;
+  if(ok){
+    const s0 = (await ref.get()).data();
+    const u0 = (await db.collection("users").doc(s0.uid).get()).data();
+    if(u0.referredBy && !u0.refPaid){
+      const q = await db.collection("users").where("refCode","==",u0.referredBy).limit(1).get();
+      if(!q.empty && q.docs[0].id !== s0.uid) rq = q.docs[0].ref;
+    }
+  }
+  try{
+    await db.runTransaction(async tx => {
+      const s = await tx.get(ref); const x = s.data(); if(x.status !== "pending") return;
+      const uref = db.collection("users").doc(x.uid);
+      const u = await tx.get(uref); const r = (ok && rq) ? await tx.get(rq) : null;
+      if(ok){
+        const upd = {balance: (u.data().balance||0) + x.reward};
+        if(r){ upd.refPaid = true;
+          tx.update(rq, {balance:(r.data().balance||0)+CFG.refBonus, refEarned:(r.data().refEarned||0)+CFG.refBonus, refCount:(r.data().refCount||0)+1}); }
+        tx.update(uref, upd);
+      }
+      tx.update(ref, {status: ok ? "approved" : "rejected"});
+    });
+  }catch(e){ alert(e.message); }
+  load();
+}
+async function appWd(id, ok){
+  const ref = db.collection("withdrawals").doc(id);
+  try{
+    await db.runTransaction(async tx => {
+      const s = await tx.get(ref); const x = s.data(); if(x.status !== "pending") return;
+      if(ok){ const uref = db.collection("users").doc(x.uid); const u = await tx.get(uref);
+        if((u.data().balance||0) < x.amount) throw new Error("User balance is too low");
+        tx.update(uref, {balance: u.data().balance - x.amount}); }
+      tx.update(ref, {status: ok ? "paid" : "rejected"});
+    });
+  }catch(e){ alert(e.message); }
+  load();
+}
+async function toggleTask(id, v){ await db.collection("tasks").doc(id).update({active:v}); load(); }
+</script>
+</body>
+</html>
