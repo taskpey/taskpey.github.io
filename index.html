@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TaskPey</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#1b2333;--mu:#6b7487;--pr:#16a34a;--bd:#e3e7ef}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1420;--card:#1a2132;--tx:#e8ecf5;--mu:#93a0b8;--bd:#2a3349}}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+.w{max-width:560px;margin:0 auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0}
+h1{font-size:22px;margin:6px 0}h3{margin:0 0 6px;font-size:16px}
+input,textarea,select{width:100%;padding:11px;margin:5px 0;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font-size:15px}
+button{background:var(--pr);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-size:15px;cursor:pointer}
+button.g{background:var(--bd);color:var(--tx)}button.r{background:#dc2626}
+.tabs{display:flex;gap:6px;margin:10px 0}.tabs button{flex:1;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.tabs button.on{background:var(--pr);color:#fff}
+.mu{color:var(--mu);font-size:13px}.bal{font-size:30px;font-weight:700;color:var(--pr)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.tag{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--bd)}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="w">
+<h1 id="brand"></h1>
+
+<div id="auth" class="card">
+  <h3>Login / Create Account</h3>
+  <input id="em" type="email" placeholder="Email">
+  <input id="pw" type="password" placeholder="Password">
+  <div class="mu">Password: 8+ characters, with uppercase, lowercase, a number and a special character (@ # $ ! etc.)</div>
+  <div class="row"><button onclick="login()">Login</button><button class="g" onclick="signup()">Create Account</button></div>
+  <div id="aerr" class="mu"></div>
+  <div class="mu" style="text-align:center;margin-top:12px">Created by <b>TEAM RAJPOOT</b></div>
+</div>
+
+<div id="verify" class="card hide">
+  <h3>Verify your email</h3>
+  <div class="mu">We sent a 6-digit code to <b id="vem"></b>. Enter it below (check Spam too). The code is valid for 10 minutes.</div>
+  <input id="otp" inputmode="numeric" maxlength="6" placeholder="6-digit code">
+  <div class="row"><button onclick="verifyOtp()">Verify</button><button class="g" onclick="resendOtp()">Resend code</button><button class="g" onclick="auth.signOut()">Logout</button></div>
+  <div id="verr" class="mu"></div>
+</div>
+
+<div id="app" class="hide">
+  <div class="card"><span class="mu" id="who"></span><div class="bal" id="bal">Rs 0</div>
+    <button class="g" onclick="auth.signOut()">Logout</button></div>
+  <div class="tabs" id="tabs"></div>
+
+  <div id="t-tasks"></div>
+
+  <div id="t-wallet" class="hide">
+    <div class="card"><h3>Withdraw money</h3>
+      <select id="wm"><option>JazzCash</option><option>Easypaisa</option></select>
+      <input id="wn" placeholder="Account number">
+      <input id="wa" type="number" placeholder="Amount (Rs)">
+      <button onclick="withdraw()">Request withdrawal</button>
+      <div class="mu" id="wmin"></div></div>
+    <div id="wlist"></div>
+  </div>
+
+  <div id="t-admin" class="hide">
+    <div class="card"><h3>New task</h3>
+      <input id="tt" placeholder="Task title">
+      <textarea id="td" placeholder="What to do (steps)"></textarea>
+      <input id="tl" placeholder="Link (app/video/page)">
+      <input id="tr" type="number" placeholder="User reward (Rs)">
+      <button onclick="addTask()">Create task</button></div>
+    <h3>Pending proofs</h3><div id="asub"></div>
+    <h3>Pending withdrawals</h3><div id="awd"></div>
+    <h3>All tasks</h3><div id="atasks"></div>
+  </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+/* ====== SETTINGS: change these ====== */
+const NAME = "TaskPey";
+const ADMIN_EMAIL = "umardrazofficial01@gmail.com";   // your email (only this email gets the Admin tab)
+const MIN_WITHDRAW = 500;
+const firebaseConfig = {
+  apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
+  authDomain: "taskpey-2158a.firebaseapp.com",
+  projectId: "taskpey-2158a",
+  appId: "1:377131772878:web:88a03dc550adaad77d599f"
+};
+const EMAILJS = { publicKey: "Ck35uPqqaOvVcN_uj", serviceId: "service_i50h7da", templateId: "template_sljklem" };
+/* ================================================ */
+
+emailjs.init({ publicKey: EMAILJS.publicKey });
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(), db = firebase.firestore();
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let me = null, isAdmin = false, tab = "tasks";
+$("brand").textContent = NAME; document.title = NAME;
+$("wmin").textContent = "Minimum Rs " + MIN_WITHDRAW;
+
+const err = e => $("aerr").textContent = e.message;
+function login(){ auth.signInWithEmailAndPassword($("em").value, $("pw").value).catch(err); }
+const strong = p => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(p);
+async function signup(){
+  const pw = $("pw").value;
+  if(!strong(pw)) return err({message:"Weak password. Use 8+ characters with uppercase, lowercase, a number and a special character (@ # $ !)."});
+  try{ await auth.createUserWithEmailAndPassword($("em").value, pw); }catch(e){ err(e); }
+}
+
+/* ---------- Email OTP (via EmailJS) ---------- */
+const OTP_KEY = "tp_otp";
+const getOtp = () => JSON.parse(sessionStorage.getItem(OTP_KEY) || "null");
+async function sendOtp(){
+  const last = getOtp();
+  if(last && Date.now() - last.sent < 60000) throw new Error("Please wait a minute before requesting a new code.");
+  const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000);
+  await emailjs.send(EMAILJS.serviceId, EMAILJS.templateId, {to_email: me.email, otp: code, app_name: NAME});
+  sessionStorage.setItem(OTP_KEY, JSON.stringify({code, exp: Date.now()+600000, sent: Date.now(), tries: 0}));
+}
+async function resendOtp(){
+  try{ await sendOtp(); $("verr").textContent = "New code sent to your email."; }
+  catch(e){ $("verr").textContent = e.message || "Could not send the email. Try again later."; }
+}
+async function verifyOtp(){
+  const o = getOtp(), v = $("otp").value.trim(), m = $("verr");
+  if(!o) return m.textContent = "No code yet. Tap Resend code.";
+  if(Date.now() > o.exp) return m.textContent = "Code expired. Tap Resend code.";
+  if(o.tries >= 5) return m.textContent = "Too many wrong attempts. Tap Resend code.";
+  if(v !== o.code){ o.tries++; sessionStorage.setItem(OTP_KEY, JSON.stringify(o)); return m.textContent = "Wrong code. Try again."; }
+  await db.collection("users").doc(me.uid).update({verified: true});
+  sessionStorage.removeItem(OTP_KEY); location.reload();
+}
+
+auth.onAuthStateChanged(async u => {
+  me = u; $("auth").classList.toggle("hide", !!u);
+  $("verify").classList.add("hide"); $("app").classList.add("hide");
+  if(!u) return;
+  const ur = db.collection("users").doc(u.uid);
+  let d = await ur.get();
+  if(!d.exists){ await ur.set({email:u.email, balance:0, verified:false, createdAt:Date.now()}); d = await ur.get(); }
+  if(!d.data().verified){
+    $("vem").textContent = u.email; $("verify").classList.remove("hide");
+    const o = getOtp();
+    if(!o || Date.now() > o.exp){
+      try{ await sendOtp(); $("verr").textContent = "Code sent to your email."; }
+      catch(e){ $("verr").textContent = e.message || "Could not send the email. Tap Resend code."; }
+    }
+    return;
+  }
+  $("app").classList.remove("hide");
+  isAdmin = u.email === ADMIN_EMAIL;
+  $("who").textContent = u.email;
+  const ts = [["tasks","Tasks"],["wallet","Wallet"]]; if(isAdmin) ts.push(["admin","Admin"]);
+  $("tabs").innerHTML = ts.map(t => `<button id="b-${t[0]}" onclick="show('${t[0]}')">${t[1]}</button>`).join("");
+  show("tasks");
+});
+
+function show(t){
+  tab = t;
+  ["tasks","wallet","admin"].forEach(x => {
+    $("t-"+x).classList.toggle("hide", x!==t);
+    const b = $("b-"+x); if(b) b.classList.toggle("on", x===t);
+  });
+  ({tasks:loadTasks, wallet:loadWallet, admin:loadAdmin})[t]();
+}
+
+async function loadBal(){
+  const d = await db.collection("users").doc(me.uid).get();
+  $("bal").textContent = "Rs " + (d.exists ? d.data().balance : 0);
+}
+
+async function loadTasks(){
+  loadBal();
+  const [ts, ss] = await Promise.all([
+    db.collection("tasks").where("active","==",true).get(),
+    db.collection("submissions").where("uid","==",me.uid).get()
+  ]);
+  const done = {}; ss.forEach(s => done[s.data().taskId] = s.data().status);
+  let h = "";
+  ts.forEach(d => { const t = d.data(), st = done[d.id];
+    h += `<div class="card"><h3>${esc(t.title)} <span class="tag">Rs ${esc(t.reward)}</span></h3>
+      <div class="mu">${esc(t.desc)}</div>
+      ${t.link ? `<div class="row"><a href="${esc(t.link)}" target="_blank" rel="noopener"><button class="g">Open link</button></a></div>` : ""}
+      ${st ? `<div class="row"><span class="tag">Status: ${esc(st)}</span></div>` :
+      `<input id="p-${d.id}" placeholder="Proof (screenshot link or note)">
+       <button onclick="submitProof('${d.id}')">Submit proof</button>`}</div>`; });
+  $("t-tasks").innerHTML = h || '<div class="card mu">No tasks available right now.</div>';
+}
+
+async function submitProof(id){
+  const proof = $("p-"+id).value.trim(); if(!proof) return alert("Please add your proof");
+  const t = (await db.collection("tasks").doc(id).get()).data();
+  try{
+    await db.collection("submissions").doc(me.uid+"_"+id).set({
+      uid:me.uid, email:me.email, taskId:id, taskTitle:t.title, reward:Number(t.reward),
+      proof, status:"pending", at:Date.now()});
+    loadTasks();
+  }catch(e){ alert("Already submitted, or error: "+e.message); }
+}
+
+async function loadWallet(){
+  loadBal();
+  const q = await db.collection("withdrawals").where("uid","==",me.uid).get();
+  let h = "<h3>My requests</h3>";
+  q.forEach(d => { const w = d.data();
+    h += `<div class="card">Rs ${esc(w.amount)} · ${esc(w.method)} <span class="tag">${esc(w.status)}</span></div>`; });
+  $("wlist").innerHTML = h;
+}
+
+async function withdraw(){
+  const amount = Number($("wa").value), number = $("wn").value.trim();
+  if(!number || !(amount >= MIN_WITHDRAW)) return alert("Enter account number and amount (minimum Rs "+MIN_WITHDRAW+")");
+  const bal = (await db.collection("users").doc(me.uid).get()).data().balance;
+  if(amount > bal) return alert("Insufficient balance");
+  await db.collection("withdrawals").add({uid:me.uid, email:me.email, amount, method:$("wm").value, number, status:"pending", at:Date.now()});
+  $("wa").value = ""; loadWallet();
+}
+
+/* ---------- ADMIN ---------- */
+async function addTask(){
+  const r = Number($("tr").value); if(!$("tt").value || !r) return alert("Enter title and reward");
+  await db.collection("tasks").add({title:$("tt").value, desc:$("td").value, link:$("tl").value, reward:r, active:true, at:Date.now()});
+  ["tt","td","tl","tr"].forEach(i => $(i).value = ""); loadAdmin();
+}
+
+async function loadAdmin(){
+  const [s, w, t] = await Promise.all([
+    db.collection("submissions").where("status","==","pending").get(),
+    db.collection("withdrawals").where("status","==","pending").get(),
+    db.collection("tasks").get()
+  ]);
+  let h = ""; s.forEach(d => { const x = d.data();
+    h += `<div class="card"><b>${esc(x.taskTitle)}</b> · Rs ${esc(x.reward)}<div class="mu">${esc(x.email)}</div>
+      <div>${/^https?:\/\//.test(x.proof) ? `<a href="${esc(x.proof)}" target="_blank" rel="noopener">${esc(x.proof)}</a>` : esc(x.proof)}</div>
+      <div class="row"><button onclick="appSub('${d.id}',true)">Approve</button><button class="r" onclick="appSub('${d.id}',false)">Reject</button></div></div>`; });
+  $("asub").innerHTML = h || '<div class="mu">None</div>';
+  h = ""; w.forEach(d => { const x = d.data();
+    h += `<div class="card"><b>Rs ${esc(x.amount)}</b> · ${esc(x.method)} · ${esc(x.number)}<div class="mu">${esc(x.email)}</div>
+      <div class="mu">Send the money via JazzCash/Easypaisa first, then tap "Paid".</div>
+      <div class="row"><button onclick="appWd('${d.id}',true)">Paid</button><button class="r" onclick="appWd('${d.id}',false)">Reject</button></div></div>`; });
+  $("awd").innerHTML = h || '<div class="mu">None</div>';
+  h = ""; t.forEach(d => { const x = d.data();
+    h += `<div class="card">${esc(x.title)} · Rs ${esc(x.reward)} <span class="tag">${x.active ? "live" : "closed"}</span>
+      <div class="row"><button class="g" onclick="toggleTask('${d.id}',${!x.active})">${x.active ? "Close" : "Make live"}</button></div></div>`; });
+  $("atasks").innerHTML = h;
+}
+
+async function appSub(id, ok){
+  const ref = db.collection("submissions").doc(id);
+  await db.runTransaction(async tx => {
+    const s = await tx.get(ref); const x = s.data(); if(x.status !== "pending") return;
+    if(ok){ const uref = db.collection("users").doc(x.uid); const u = await tx.get(uref);
+      tx.update(uref, {balance: (u.data().balance||0) + x.reward}); }
+    tx.update(ref, {status: ok ? "approved" : "rejected"});
+  });
+  loadAdmin();
+}
+async function appWd(id, ok){
+  const ref = db.collection("withdrawals").doc(id);
+  try{
+    await db.runTransaction(async tx => {
+      const s = await tx.get(ref); const x = s.data(); if(x.status !== "pending") return;
+      if(ok){ const uref = db.collection("users").doc(x.uid); const u = await tx.get(uref);
+        if((u.data().balance||0) < x.amount) throw new Error("User balance is too low");
+        tx.update(uref, {balance: u.data().balance - x.amount}); }
+      tx.update(ref, {status: ok ? "paid" : "rejected"});
+    });
+  }catch(e){ alert(e.message); }
+  loadAdmin();
+}
+async function toggleTask(id, v){ await db.collection("tasks").doc(id).update({active:v}); loadAdmin(); }
+</script>
+</body>
+</html>
