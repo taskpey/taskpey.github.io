@@ -174,6 +174,29 @@ nav button.on svg{animation:pop 1.8s ease-in-out infinite}
 #hfab::after{display:none!important}
 .chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-top:1px solid #dbe5ff;max-height:132px;overflow-y:auto}
 .chips button{padding:7px 12px;font-size:13px}
+/* ===== Withdrawal list + slip ===== */
+.wd{padding:12px 14px}
+.wtop{display:flex;align-items:center;gap:12px}
+.wi{width:46px;height:46px;border-radius:15px;flex:none;display:grid;place-items:center;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.18)}
+.wi .ic{width:24px;height:24px}
+.wi.ep{background:linear-gradient(135deg,#34d399,#059669)}.wi.jc{background:linear-gradient(135deg,#fb923c,#dc2626)}.wi.ot{background:linear-gradient(135deg,#38bdf8,#1d4ed8)}
+.wm{flex:1;min-width:0}.wm b{display:block;font-size:19px;color:var(--tx)}.wm span{display:block;font-size:12.5px;color:var(--mu);margin-top:1px}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;white-space:nowrap;animation:none}
+.st::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.st.paid{background:#dcfce7;color:#15803d}.st.pending{background:#fef3c7;color:#b45309}.st.rejected{background:#fee2e2;color:#b91c1c}
+.wbot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--bd)}
+.wbot .mu b{color:var(--pr2);font-size:15px}
+button.sm{padding:7px 14px;font-size:13px}
+.slip{max-height:88vh;overflow-y:auto}
+.slh{display:flex;align-items:center;gap:10px}
+.slh .logo{width:40px;height:40px;border-radius:12px;animation:none}.slh .logo svg{width:24px;height:24px}
+.slh b{font-size:17px;display:block;line-height:1.1}.slh span{font-size:12px;color:var(--mu)}
+.slamt{text-align:center;margin:14px 0 4px}.slamt .bal{font-size:32px;display:block}.slamt .st{margin-top:6px}
+.dash{border-top:2px dashed var(--bd);margin:12px 0;position:relative}
+.sr{display:flex;justify-content:space-between;gap:14px;padding:6px 0;font-size:14px}
+.sr span{color:var(--mu);flex:none}.sr b{text-align:right;word-break:break-word;color:var(--tx)}
+.slnote{background:var(--soft);color:var(--pr2);border-radius:12px;padding:9px 11px;font-size:13px;text-align:center;margin-top:10px}
+.slnote.paid{background:#dcfce7;color:#15803d}.slnote.rejected{background:#fee2e2;color:#b91c1c}.slnote.pending{background:#fef3c7;color:#b45309}
 </style>
 </head>
 <body>
@@ -207,6 +230,12 @@ nav button.on svg{animation:pop 1.8s ease-in-out infinite}
     <div class="mu" style="text-align:center;margin-top:16px">Already have an account? <a href="#" onclick="showAuth('login');return false"><b>Login</b></a></div>
     <div class="mu" style="text-align:center;margin-top:14px">Created by <b>NOVA REEF STUDIO</b></div>
   </div>
+</div>
+
+<div id="switch" class="card hide">
+  <h3 style="margin-top:0">You are already logged in</h3>
+  <div class="mu">You opened an invite link, but this browser is logged in as <b id="swem"></b>. To create a new account, log out first.</div>
+  <div class="row"><button onclick="newSession()">Create new account (keep this one logged in)</button><button class="g" onclick="switchAcc()">Logout &amp; create new account</button><button class="g" onclick="stayAcc()">Stay logged in</button></div>
 </div>
 
 <div id="needref" class="card hide">
@@ -243,6 +272,7 @@ nav button.on svg{animation:pop 1.8s ease-in-out infinite}
     <div class="card" id="wacard"></div>
     <div class="card"><h3>Withdraw money</h3>
       <select id="wm"><option>JazzCash</option><option>Easypaisa</option></select>
+      <input id="wh" maxlength="40" placeholder="Account holder name" autocomplete="name">
       <input id="wn" placeholder="Account number">
       <input id="wa" type="number" step="any" inputmode="decimal" placeholder="Amount ($)" oninput="taxPreview()">
       <div class="note" id="wtax" style="display:none"></div>
@@ -301,8 +331,13 @@ function fatal(m){
 }
 window.addEventListener("error", e => fatal("Error: " + (e.message || "unknown") + " - please refresh the page."));
 if(!window.firebase || !firebase.firestore || !firebase.auth) fatal("Could not load Firebase. Check your internet connection and refresh the page.");
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth(), db = firebase.firestore();
+// Two accounts in one browser: a tab opened with ?alt=1 (or via "Add another account") uses its own separate login
+const qa = new URLSearchParams(location.search).get("alt");
+try{ if(qa === "1") sessionStorage.setItem("tp_alt", "1"); if(qa === "0") sessionStorage.removeItem("tp_alt"); }catch(e){}
+let ALT = false; try{ ALT = sessionStorage.getItem("tp_alt") === "1"; }catch(e){}
+const P = ALT ? "alt_" : "";
+const fbApp = firebase.initializeApp(firebaseConfig, ALT ? "alt" : undefined);
+const auth = fbApp.auth(), db = fbApp.firestore();
 try{ db.settings({experimentalForceLongPolling:true}); }catch(e){ console.warn(e); }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const rate = () => Number(CFG.usdRate) > 0 ? Number(CFG.usdRate) : DEF.usdRate;
@@ -348,13 +383,14 @@ const flagOf = n => { const c = (COUNTRIES.find(x => x[0] === n) || [])[1]; retu
 const countryOpts = sel => COUNTRIES.map(c => `<option value="${esc(c[0])}" ${c[0]===sel?"selected":""}>${flagOf(c[0])} ${esc(c[0])}</option>`).join("");
 $("co").innerHTML = '<option value="">Select your country</option>' + countryOpts("");
 
-$("brand").innerHTML = "Task<span>Pey</span>"; document.title = NAME;
+$("brand").innerHTML = "Task<span>Pey</span>"; document.title = NAME + (ALT ? " (2nd account)" : "");
+if(ALT){ const m0 = document.querySelector(".ht .mu"); if(m0) m0.textContent += " \u2022 2nd account"; }
 const qref = (new URLSearchParams(location.search).get("ref") || "").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
 if(qref) $("rf").value = qref;
 
-const lsGet = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
-const lsSet = (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} };
-const lsDel = k => { try{ localStorage.removeItem(k); }catch(e){} };
+const lsGet = k => { try{ return localStorage.getItem(P + k); }catch(e){ return null; } };
+const lsSet = (k, v) => { try{ localStorage.setItem(P + k, v); }catch(e){} };
+const lsDel = k => { try{ localStorage.removeItem(P + k); }catch(e){} };
 const cleanCode = v => String(v || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
 function msg(id, t, ok){ const el = $(id); el.textContent = t || ""; el.classList.toggle("err", !!t && !ok); }
 const friendly = e => ({
@@ -438,7 +474,7 @@ async function verifyOtp(){
 
 /* ---------- Session ---------- */
 const genCode = () => Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
-const CK = "tp_cache";
+const CK = P + "tp_cache";
 function readCache(){ try{ return JSON.parse(localStorage.getItem(CK) || "null"); }catch(e){ return null; } }
 function writeCache(uid, d){ try{ localStorage.setItem(CK, JSON.stringify({uid, ud:d, cfg:CFG})); }catch(e){} }
 function mountApp(){
@@ -465,7 +501,14 @@ async function refreshBg(u){
     loadTasks().catch(() => {});
   }catch(e){}
 }
+let refChecked = false;   // invite link opened while another account is logged in: ask once per page load
+function showSwitch(u){ refChecked = true; $("swem").textContent = u.email || ""; $("ld").classList.add("hide"); $("auth").classList.add("hide"); $("switch").classList.remove("hide"); }
+function dropRef(){ try{ history.replaceState(null, "", location.pathname); }catch(e){} }
+async function switchAcc(){ $("switch").classList.add("hide"); dropRef(); lsDel(CK); await auth.signOut(); showAuth("signup"); }
+function newSession(){ try{ sessionStorage.setItem("tp_alt", "1"); }catch(e){} location.reload(); }
+function stayAcc(){ $("switch").classList.add("hide"); dropRef(); boot(auth.currentUser); }
 async function boot(u){
+  if(u && qref && !refChecked) return showSwitch(u);
   try{
     const c = u ? readCache() : null;
     if(c && c.uid === u.uid && c.ud && c.ud.verified && c.ud.activated && !c.ud.banned){
@@ -579,10 +622,37 @@ async function loadHome(){
   let paid = 0; q.forEach(d => { const w = d.data(); if(w.status === "paid") paid += Number(w.amount) || 0; });
   let te = null; if(sq){ te = 0; sq.forEach(d => { const x = d.data(); if(x.status === "approved") te += Number(x.reward) || 0; }); }
   paint(paid, te);
-  let h = "<h3>My withdrawals</h3>";
-  q.forEach(d => { const w = d.data();
-    h += `<div class="card">${usd(w.amount)}${w.net != null ? " \u2192 you get " + usd(w.net) : ""} · ${esc(w.method)} <span class="tag">${esc(w.status)}</span></div>`; });
-  $("wlist").innerHTML = q.empty ? "" : h;
+  const arr = q.docs.map(d => ({id: d.id, ...d.data()})).sort((x, y) => (y.at || 0) - (x.at || 0));
+  arr.forEach(w => WD[w.id] = w);
+  const stName = {paid:"Paid", pending:"Pending", rejected:"Rejected"};
+  $("wlist").innerHTML = arr.length ? "<h3>My withdrawals</h3>" + arr.map(w => `<div class="card wd">
+    <div class="wtop"><span class="wi ${wcls(w.method)}">${xi("wallet")}</span>
+      <div class="wm"><b>${usd(w.amount)}</b><span>${esc(w.method)} \u00b7 ${fdate(w.at)}, ${ftime(w.at)}</span></div>
+      <span class="st ${esc(w.status)}">${esc(stName[w.status] || w.status)}</span></div>
+    <div class="wbot"><span class="mu">${w.net != null ? "You get <b>" + usd(w.net) + "</b>" : "&nbsp;"}</span><button class="g sm" onclick="viewSlip('${esc(w.id)}')">View slip</button></div></div>`).join("") : "";
+}
+const WD = {};
+const wcls = m => /easy/i.test(m) ? "ep" : /jazz/i.test(m) ? "jc" : "ot";
+const fdate = t => t ? new Date(t).toLocaleDateString("en-GB", {day:"2-digit", month:"short", year:"numeric"}) : "-";
+const ftime = t => t ? new Date(t).toLocaleTimeString("en-US", {hour:"2-digit", minute:"2-digit", hour12:true}) : "-";
+function viewSlip(id){
+  const w = WD[id]; if(!w) return;
+  const stName = {paid:"Paid", pending:"Pending", rejected:"Rejected"};
+  const notes = {paid:"Payment has been sent to your account.", pending:"Your request is waiting for review by our team.", rejected:"This request was rejected. Your balance was not deducted."};
+  const row = (l, v) => `<div class="sr"><span>${l}</span><b>${v}</b></div>`;
+  $("modal").innerHTML = `<div class="sheet slip">
+    <div class="slh"><div class="logo"><svg viewBox="0 0 34 34"><path d="M10 27V8h8.5a5.5 5.5 0 010 11H13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><b>${NAME}</b><span>Withdrawal slip</span></div></div>
+    <div class="slamt"><span class="bal">${usd(w.amount)}</span><span class="st ${esc(w.status)}">${esc(stName[w.status] || w.status)}</span></div>
+    <div class="dash"></div>
+    ${row("Date", fdate(w.at))}${row("Time", ftime(w.at))}
+    ${row("Method", esc(w.method))}${row("Account number", esc(w.number))}${row("Account holder", w.holder ? esc(w.holder) : "-")}
+    <div class="dash"></div>
+    ${row("Amount", usd(w.amount))}${w.fee != null ? row("Tax", usd(w.fee)) : ""}${w.net != null ? row("You receive", usd(w.net)) : ""}
+    <div class="dash"></div>
+    ${row("Status", esc(stName[w.status] || w.status))}${w.doneAt ? row("Processed on", fdate(w.doneAt) + ", " + ftime(w.doneAt)) : ""}${row("Slip ID", esc(id.slice(0, 8).toUpperCase()))}
+    <div class="slnote ${esc(w.status)}">${esc(notes[w.status] || "")}</div>
+    <div class="row"><button class="g" style="width:100%" onclick="closeM()">Close</button></div></div>`;
+  $("modal").classList.remove("hide");
 }
 const waOk = l => /^https:\/\/(chat\.)?whatsapp\.com\//i.test(l || "");
 function waCard(){
@@ -601,14 +671,15 @@ function taxPreview(){
   el.style.display = "block"; el.innerHTML = `Tax (${CFG.withdrawTax}%): <b>${usd(c.fee)}</b> \u00b7 You will receive: <b>${usd(c.net)}</b> <span class="mu">(Rs ${c.net})</span>`;
 }
 async function withdraw(){
-  const amount = wdPkr(), number = $("wn").value.trim();
+  const amount = wdPkr(), number = $("wn").value.trim(), holder = $("wh").value.trim().slice(0, 40);
+  if(holder.length < 3) return alert("Enter the account holder name (as on your account).");
   if(!number || !(amount >= CFG.minWithdraw)) return alert("Enter account number and amount (minimum " + usd(CFG.minWithdraw) + ")");
   if(amount > ud.balance) return alert("Insufficient balance");
   const c = taxCalc(amount);
   if(!confirm("Withdraw " + usd(amount) + "?\nTax (" + (CFG.withdrawTax || 0) + "%): " + usd(c.fee) + "\nYou will receive: " + usd(c.net) + " (Rs " + c.net + ")")) return;
-  try{ await db.collection("withdrawals").add({uid:me.uid, email:me.email, amount, fee:c.fee, net:c.net, method:$("wm").value, number, status:"pending", at:Date.now()}); }
+  try{ await db.collection("withdrawals").add({uid:me.uid, email:me.email, amount, fee:c.fee, net:c.net, method:$("wm").value, number, holder, status:"pending", at:Date.now()}); }
   catch(e){ return alert(e.message); }
-  $("wa").value = ""; taxPreview(); loadHome();
+  $("wa").value = ""; $("wh").value = ""; $("wn").value = ""; taxPreview(); loadHome();
 }
 
 /* ---------- Tasks ---------- */
@@ -746,10 +817,12 @@ function loadProfile(){
     ${row("mail", "Email Address", esc(me.email), "")}
     ${row("lock", "Change Password", "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022", "changePw()")}
     ${row("image", "Update Profile Picture", "Change your profile photo", "$('pf').click()")}
+    ${row("user", ALT ? "Open main account" : "Add another account", ALT ? "Opens your main account in a new tab" : "Use a second account in this browser (new tab)", "otherAcc()")}
     ${waOk(CFG.waLink) ? `<a class="prow" href="${esc(CFG.waLink)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="pi" style="background:none">${pbadge("whatsapp", 46)}</span><div class="pt"><b>WhatsApp Community</b><span>Join our official community</span></div>${xi("chev")}</a>` : ""}
     <div class="pstat"><span class="pi">${xi("shield")}</span><div class="pt"><b style="font-size:17px">Account Status</b><span style="white-space:normal">Your account is verified &amp; active</span></div><span class="tag">${xi("check")}Verified</span></div>
     <div class="mu" style="text-align:center;margin:14px 0">${NAME} \u00b7 Created by <b>NOVA REEF STUDIO</b></div>`;
 }
+function otherAcc(){ window.open(location.pathname + "?alt=" + (ALT ? "0" : "1"), "_blank"); }
 function closeM(){ $("modal").classList.add("hide"); }
 function editField(k){
   $("modal").innerHTML = k === "name"

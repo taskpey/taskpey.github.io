@@ -442,13 +442,13 @@ async function load0(){
   $("asub").innerHTML = h || '<div class="mu">No pending proofs</div>';
 
   const taxOf = a => { const f = Math.ceil(Number(a) * (CFG.withdrawTax || 0) / 100); return {fee:f, net:Number(a) - f}; };
-  $("awd").innerHTML = pend.map(x => { const tx_ = taxOf(x.amount); return `<div class="card l"><b>Pay Rs ${tx_.net}</b> <span class="mu">(Rs ${esc(x.amount)} - ${CFG.withdrawTax||0}% tax Rs ${tx_.fee})</span> · ${esc(x.method)} · ${esc(x.number)}<div class="mu">${esc(x.email)}</div>
+  $("awd").innerHTML = pend.map(x => { const tx_ = taxOf(x.amount); return `<div class="card l"><b>Pay Rs ${tx_.net}</b> <span class="mu">(Rs ${esc(x.amount)} - ${CFG.withdrawTax||0}% tax Rs ${tx_.fee})</span> · ${esc(x.method)} · ${esc(x.number)}<div class="mu">Account holder: <b>${esc(x.holder || "-")}</b></div><div class="mu">${esc(x.email)}</div>
       <div class="mu">Send the money via JazzCash/Easypaisa first, then tap "Paid".</div>
       <div class="row"><button onclick="appWd('${x.id}',true)">Paid</button><button class="r" onclick="appWd('${x.id}',false)">Reject</button></div></div>`; }).join("")
     || '<div class="mu">No pending requests</div>';
   $("whist").innerHTML = wds.filter(x => x.status !== "pending").map(x =>
     `<div class="card l">Rs ${esc(x.amount)}${x.net != null ? " (paid Rs " + esc(x.net) + " after tax)" : ""} · ${esc(x.method)} · ${esc(x.number)} <span class="tag">${esc(x.status)}</span>
-      <div class="mu">${esc(x.email)} · ${new Date(x.at||0).toLocaleDateString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
+      <div class="mu">${esc(x.holder || "-")} · ${esc(x.email)} · ${new Date(x.at||0).toLocaleString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
 
   h = ""; t.forEach(d => { const x = d.data();
     h += `<div class="card l"><div class="th">${pbadge(x.platform,30)}<b style="flex:1">${esc(x.title)}</b> <span class="tag">${rs(x.reward)}</span> ${x.limit > 0 ? `<span class="tag ${(x.taken||0) >= x.limit ? "bad" : ""}">${x.taken||0}/${x.limit}</span>` : `<span class="tag no">${x.taken||0} done</span>`}
@@ -599,7 +599,7 @@ async function appWd(id, ok){
         if((u.data().balance||0) < x.amount) throw new Error("User balance is too low");
         tx.update(uref, {balance: r6(u.data().balance - x.amount), totalWithdrawn: inc(x.amount)}); }
       const fee = Math.ceil(Number(x.amount) * (CFG.withdrawTax || 0) / 100);
-      tx.update(ref, ok ? {status:"paid", fee, net:Number(x.amount) - fee} : {status:"rejected"});
+      tx.update(ref, ok ? {status:"paid", fee, net:Number(x.amount) - fee, doneAt:Date.now()} : {status:"rejected", doneAt:Date.now()});
     });
   }catch(e){ alert(e.message); }
   load();
