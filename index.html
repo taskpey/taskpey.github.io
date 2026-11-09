@@ -94,7 +94,7 @@ textarea{font-family:inherit}
 <div class="w">
 <div class="hdr"><div class="logo"><svg viewBox="0 0 34 34"><path d="M10 27V8h8.5a5.5 5.5 0 010 11H13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ht"><h1 id="brand"></h1><div class="mu">Earn • Invite • Withdraw</div></div><button id="lo" class="g hide" onclick="auth.signOut()"></button></div>
 
-<div id="auth">
+<div id="auth" class="hide">
   <div id="login" class="card">
     <h3 style="font-size:21px;margin-top:0">Welcome back</h3>
     <div class="mu">Login to your TaskPey account</div>
@@ -147,7 +147,7 @@ textarea{font-family:inherit}
 
 <div id="activate" class="card hide"></div>
 
-<div id="ld" class="card hide" style="text-align:center;padding:30px 14px"><div class="sp" id="ldsp"></div><div class="mu" id="ldm">Loading your account…</div></div>
+<div id="ld" class="card" style="text-align:center;padding:30px 14px"><div class="sp" id="ldsp"></div><div class="mu" id="ldm">Loading your account…</div></div>
 
 <div id="app" class="hide">
   <div id="v-home">
@@ -337,16 +337,55 @@ async function verifyOtp(){
 
 /* ---------- Session ---------- */
 const genCode = () => Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
+const CK = "tp_cache";
+function readCache(){ try{ return JSON.parse(localStorage.getItem(CK) || "null"); }catch(e){ return null; } }
+function writeCache(uid, d){ try{ localStorage.setItem(CK, JSON.stringify({uid, ud:d, cfg:CFG})); }catch(e){} }
+function mountApp(){
+  $("app").classList.remove("hide");
+  const I = {
+    home:'<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',
+    tasks:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6M9 13l2 2 4-4"/>',
+    refer:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 3-6 6-6s6 2.5 6 6M18 8v6M15 11h6"/>',
+    profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>'};
+  $("nav").innerHTML = [["home","Home"],["tasks","Tasks"],["refer","Refer"],["profile","Profile"]]
+    .map(t => `<button id="n-${t[0]}" onclick="show('${t[0]}')"><svg viewBox="0 0 24 24">${I[t[0]]}</svg>${t[1]}</button>`).join("");
+}
+async function refreshBg(u){
+  try{
+    const [cs, d] = await Promise.all([db.collection("settings").doc("config").get().catch(() => null), db.collection("users").doc(u.uid).get()]);
+    if(cs && cs.exists) CFG = {...DEF, ...cs.data()};
+    if(!d.exists) return;
+    const nd = d.data();
+    if(nd.banned || !nd.verified || !nd.activated){ await onUser(u); return; }
+    ensureRef(nd.refCode);
+    const changed = JSON.stringify(nd) !== JSON.stringify(ud);
+    ud = nd; writeCache(u.uid, nd);
+    if(changed) ({home:loadHome, tasks:loadTasks, refer:loadRefer, profile:loadProfile})[curTab]();
+    loadTasks().catch(() => {});
+  }catch(e){}
+}
 async function boot(u){
-  try{ await onUser(u); }
+  try{
+    const c = u ? readCache() : null;
+    if(c && c.uid === u.uid && c.ud && c.ud.verified && c.ud.activated && !c.ud.banned){
+      // fast path: show the app instantly from saved data, refresh quietly in the background
+      me = u; ud = c.ud; if(c.cfg) CFG = {...DEF, ...c.cfg};
+      $("auth").classList.add("hide"); $("ld").classList.add("hide"); $("lo").classList.remove("hide");
+      mountApp(); show("home", true); refreshBg(u);
+      return;
+    }
+    await onUser(u);
+  }
   catch(e){ if(u){ $("ld").classList.remove("hide"); $("ldsp").classList.add("hide"); $("ldm").textContent = "Could not load your account. " + (e.message || "") + " Pull to refresh or try again."; } }
 }
 auth.onAuthStateChanged(boot);
+setTimeout(() => { if(!$("ld").classList.contains("hide") && !$("ldsp").classList.contains("hide")) $("ldm").textContent = "Slow internet \u2014 please wait\u2026"; }, 6000);
+
 async function onUser(u){
   me = u; $("auth").classList.toggle("hide", !!u); $("lo").classList.toggle("hide", !u);
   $("verify").classList.add("hide"); $("needref").classList.add("hide"); $("app").classList.add("hide"); $("banned").classList.add("hide"); $("activate").classList.add("hide");
   $("ld").classList.add("hide");
-  if(!u) return;
+  if(!u){ try{ localStorage.removeItem(CK); }catch(e){} return; }
   $("ldsp").classList.remove("hide"); $("ldm").textContent = "Loading your account\u2026"; $("ld").classList.remove("hide");
   const ur = db.collection("users").doc(u.uid);
   const [cs, d0] = await Promise.all([db.collection("settings").doc("config").get().catch(() => null), ur.get()]);
@@ -375,15 +414,8 @@ async function onUser(u){
     return;
   }
   if(!d.data().activated){ showActivate(); return; }
-  $("app").classList.remove("hide");
-  const I = {
-    home:'<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',
-    tasks:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6M9 13l2 2 4-4"/>',
-    refer:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 3-6 6-6s6 2.5 6 6M18 8v6M15 11h6"/>',
-    profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>'};
-  $("nav").innerHTML = [["home","Home"],["tasks","Tasks"],["refer","Refer"],["profile","Profile"]]
-    .map(t => `<button id="n-${t[0]}" onclick="show('${t[0]}')"><svg viewBox="0 0 24 24">${I[t[0]]}</svg>${t[1]}</button>`).join("");
-  ud = d.data();
+  mountApp();
+  ud = d.data(); writeCache(u.uid, ud);
   show("home", true);
   loadTasks().catch(() => {});
 }
@@ -398,7 +430,7 @@ async function show(t, cached){
   if(cached && ud) return;
   try{
     const nd = (await db.collection("users").doc(me.uid).get()).data();
-    if(!ud || JSON.stringify(nd) !== JSON.stringify(ud)){ ud = nd; if(curTab === t) run(); }
+    if(!ud || JSON.stringify(nd) !== JSON.stringify(ud)){ ud = nd; writeCache(me.uid, ud); if(curTab === t) run(); }
   }catch(e){ if(!ud) throw e; }
 }
 

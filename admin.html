@@ -71,7 +71,8 @@ textarea{font-family:inherit}
 <div class="w">
 <div class="hdr"><div class="logo"><svg viewBox="0 0 34 34"><path d="M10 27V8h8.5a5.5 5.5 0 010 11H13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ht"><h1>TaskPey <span>Admin</span></h1><div class="mu" id="who"></div></div><button id="lo" class="g hide" onclick="auth.signOut()">Logout</button></div>
 
-<div id="auth" class="card">
+<div id="boot" class="card" style="text-align:center;padding:26px"><div class="sp"></div><div class="mu">Loading…</div></div>
+<div id="auth" class="card hide">
   <input id="em" type="email" placeholder="Admin email">
   <input id="pw" type="password" placeholder="Password">
   <button onclick="login()">Login</button>
@@ -244,7 +245,7 @@ function tpChange(){
 function login(){ auth.signInWithEmailAndPassword($("em").value, $("pw").value).catch(e => $("aerr").textContent = e.message); }
 auth.onAuthStateChanged(u => {
   if(u && u.email !== ADMIN_EMAIL){ $("aerr").textContent = "Access denied. This page is for the owner only."; auth.signOut(); return; }
-  $("auth").classList.toggle("hide", !!u); $("panel").classList.toggle("hide", !u); $("lo").classList.toggle("hide", !u);
+  $("boot").classList.add("hide"); $("auth").classList.toggle("hide", !!u); $("panel").classList.toggle("hide", !u); $("lo").classList.toggle("hide", !u);
   if(u){ $("who").textContent = u.email; load(); }
 });
 
