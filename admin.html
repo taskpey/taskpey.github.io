@@ -180,6 +180,7 @@ button.g{color:#cfe8ff}.tag{color:#7dd3fc}.note,a{color:#7dd3fc}
   <div id="t-set" class="hide">
     <div class="card"><h3 style="margin-top:0">Plan &amp; payment</h3>
       <div class="mu">Dollar rate (1 USD = how many Rs). Users see everything in dollars using this rate</div><input id="s-usd" type="number" step="any">
+      <div class="mu">Signup bonus for every new user (Rs). It is added to their wallet automatically. Use 0 to switch it off</div><input id="s-sb" type="number" min="0" max="1000" step="any">
       <div class="mu">Plan fee (Rs)</div><input id="s-fee" type="number">
       <div class="mu">Payment method (e.g. Easypaisa)</div><input id="s-method">
       <div class="mu">Payment number</div><input id="s-num">
@@ -232,7 +233,7 @@ button.g{color:#cfe8ff}.tag{color:#7dd3fc}.note,a{color:#7dd3fc}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 const ADMIN_EMAIL = "umardrazofficial01@gmail.com";
-const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, usdRate:280, chatBot:true, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, usdRate:280, signupBonus:15, chatBot:true, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
 let CFG = {...DEF};
 const firebaseConfig = {
   apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
@@ -359,8 +360,8 @@ function show(t){
 
 async function saveSettings(){
   const n = {planFee:Number($("s-fee").value), payMethod:$("s-method").value.trim(), payNumber:$("s-num").value.trim(),
-    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value), withdrawTax:Number($("s-tax").value), usdRate:Number($("s-usd").value), waLink:$("s-wa").value.trim(), chatBot:$("s-bot").value==="1"};
-  if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0) || !(n.withdrawTax >= 0 && n.withdrawTax <= 50) || !(n.usdRate > 0)) return alert("Please fill every field correctly.");
+    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value), withdrawTax:Number($("s-tax").value), usdRate:Number($("s-usd").value), signupBonus:Number($("s-sb").value), waLink:$("s-wa").value.trim(), chatBot:$("s-bot").value==="1"};
+  if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0) || !(n.withdrawTax >= 0 && n.withdrawTax <= 50) || !(n.usdRate > 0) || !(n.signupBonus >= 0 && n.signupBonus <= 1000)) return alert("Please fill every field correctly.");
   if(n.waLink && !/^https:\/\/(chat\.)?whatsapp\.com\//i.test(n.waLink)) return alert("WhatsApp link must start with https://chat.whatsapp.com/");
   try{ await db.collection("settings").doc("config").set(n); CFG = n; $("sok").textContent = "Saved. Users will see the new values."; }
   catch(e){ alert(e.message); }
@@ -396,7 +397,7 @@ async function load0(){
     db.collection("profiles").get().catch(() => null)]);
   CFG = {...DEF, ...(cs.exists ? cs.data() : {})};
   $("s-fee").value = CFG.planFee; $("s-method").value = CFG.payMethod; $("s-num").value = CFG.payNumber;
-  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax; $("s-usd").value = CFG.usdRate; $("s-wa").value = CFG.waLink || ""; $("s-bot").value = CFG.chatBot === false ? "0" : "1";
+  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax; $("s-usd").value = CFG.usdRate; $("s-sb").value = CFG.signupBonus ?? 15; $("s-wa").value = CFG.waLink || ""; $("s-bot").value = CFG.chatBot === false ? "0" : "1";
 
   USERS = u.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
   if(rc){ const have = new Set(rc.docs.map(d => d.id)), miss = USERS.filter(x => x.refCode && !have.has(x.refCode)).slice(0, 400);
@@ -537,7 +538,7 @@ async function syncProfiles(pf, w){
     }
     USERS.forEach(x => {
       const pd = paid[x.id] || 0, fix = x.earnedV !== 2;
-      const te = fix ? (sums[x.id] || 0) + (Number(x.refEarned) || 0) : x.totalEarned, tw = x.totalWithdrawn != null ? x.totalWithdrawn : pd;
+      const te = fix ? (sums[x.id] || 0) + (Number(x.refEarned) || 0) + (Number(x.signupBonus) || 0) : x.totalEarned, tw = x.totalWithdrawn != null ? x.totalWithdrawn : pd;
       const ruid = x.referredBy ? (byCode[x.referredBy] || "") : "";
       const upd = {};
       if(fix){ upd.totalEarned = te; upd.earnedV = 2; }

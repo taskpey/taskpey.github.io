@@ -312,7 +312,7 @@ button.sm{padding:7px 14px;font-size:13px}
 /* ====== SETTINGS ====== */
 const NAME = "TaskPey";
 // Default values. Admin panel (Settings tab) se badal sakte ho, wo yahan override ho jayengi.
-const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, usdRate:280, chatBot:true, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, usdRate:280, signupBonus:15, chatBot:true, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
 let CFG = {...DEF};
 const firebaseConfig = {
   apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
@@ -538,8 +538,10 @@ function dropRef(){ try{ history.replaceState(null, "", location.pathname); }cat
 async function switchAcc(){ $("switch").classList.add("hide"); dropRef(); lsDel(CK); await auth.signOut(); showAuth("signup"); }
 function newSession(){ try{ sessionStorage.setItem("tp_alt", "1"); }catch(e){} location.reload(); }
 function stayAcc(){ $("switch").classList.add("hide"); dropRef(); boot(auth.currentUser); }
+let authFirst = true;   // the "already logged in" question is only for the FIRST auth event of the page load (not after a new signup)
 async function boot(u){
-  if(u && qref && !refChecked) return showSwitch(u);
+  const first = authFirst; authFirst = false;
+  if(first && u && qref && !refChecked) return showSwitch(u);
   try{
     const c = u ? readCache() : null;
     if(c && c.uid === u.uid && c.ud && c.ud.verified && c.ud.activated && !c.ud.banned){
@@ -565,17 +567,21 @@ async function onUser(u){
   const ur = db.collection("users").doc(u.uid);
   const [cs, d0] = await Promise.all([db.collection("settings").doc("config").get().catch(() => null), ur.get()]);
   if(cs && cs.exists) CFG = {...DEF, ...cs.data()};
-  let d = d0;
+  const cfgOk = !!(cs && cs.exists);
+  let d = d0, newBonus = 0;
   if(!d.exists){
     const rc = cleanCode(lsGet("tp_ref")); let ok = false, rUid = "";
     if(rc.length === 6){ try{ const r0 = await db.collection("refCodes").doc(rc).get(); ok = r0.exists; rUid = ok ? (r0.data().uid || "") : ""; }catch(e){} }
     if(!ok){ $("ld").classList.add("hide"); $("nr").value = rc; $("needref").classList.remove("hide"); helpShow(true); return; }
     const co = lsGet("tp_co");
-    await ur.set({email:u.email, balance:0, verified:false, refCode:genCode(), referredBy:rc, referrerUid:rUid, refEarned:0, refCount:0, createdAt:Date.now(),
+    newBonus = cfgOk ? Math.min(1000, Math.max(0, Number(CFG.signupBonus) || 0)) : 0;   // signup bonus goes straight into the wallet
+    await ur.set({email:u.email, balance:newBonus, signupBonus:newBonus, verified:false, refCode:genCode(), referredBy:rc, referrerUid:rUid, refEarned:0, refCount:0, createdAt:Date.now(),
       country:(COUNTRIES.some(c => c[0] === co) ? co : ""), fullName:lsGet("tp_fn") || ""});
     ["tp_ref","tp_co","tp_fn"].forEach(lsDel);
     d = await ur.get();
+    if(newBonus > 0) toast("Welcome! Signup bonus " + usd(newBonus) + " (Rs " + newBonus + ") was added to your wallet. \u{1F381}");
   }
+  window.__uDoc = d.data();
   ensureRef(d.data().refCode);
   $("ld").classList.add("hide");
   if(d.data().banned){ $("banned").classList.remove("hide"); return; }
@@ -619,6 +625,7 @@ async function showActivate(){
     return;
   }
   a.innerHTML = `<h3>Activate your account</h3>
+    ${(Number((window.__uDoc || {}).signupBonus) || 0) > 0 ? `<div class="note">\u{1F381} Signup bonus <b>${usd(window.__uDoc.signupBonus)}</b> (Rs ${esc(window.__uDoc.signupBonus)}) is already in your wallet.</div>` : ""}
     <div style="text-align:center;margin:10px 0 4px"><div class="mu">Investment plan (one-time)</div><div class="bal">${usd2(CFG.planFee)}</div><div class="mu">Rs ${CFG.planFee}</div></div>
     <div class="mu">It unlocks tasks, withdrawals and your referral code. Earnings are <b>not guaranteed</b>: they depend on available tasks and on approval of your work.</div>
     ${st === "rejected" ? '<div class="mu" style="color:#dc2626;margin-top:8px">Your last payment could not be verified. Please check the details and submit again.</div>' : ""}
@@ -645,7 +652,7 @@ async function loadHome(){
   const sd = (ic, n, l) => `<div><span class="si">${xi(ic)}</span><b>${usd(n)}</b>${l}</div>`;
   const paint = (paid, tasksEarned) => {
     const tw = ud.totalWithdrawn != null ? ud.totalWithdrawn : paid;
-    const te = tasksEarned != null ? tasksEarned + (Number(ud.refEarned) || 0) : (ud.totalEarned != null ? ud.totalEarned : (Number(ud.balance) || 0) + paid);
+    const te = tasksEarned != null ? tasksEarned + (Number(ud.refEarned) || 0) + (Number(ud.signupBonus) || 0) : (ud.totalEarned != null ? ud.totalEarned : (Number(ud.balance) || 0) + paid);
     $("hstats").innerHTML = sd("trend", te, "Total earning") + sd("wallet", tw, "Total withdrawal");
   };
   paint(0);
