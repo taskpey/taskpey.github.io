@@ -876,7 +876,11 @@ async function botSay(arr){
     try{ await db.collection("chats").doc(me.uid).collection("msgs").add({from:"bot", text:String(text).slice(0, 500), at:at++}); }catch(e){ console.warn(e); }
   }
 }
+const HAND_MS = 6 * 3600 * 1000;   // after "we are working on it", bot stays silent so the agent can reply
+const handKey = () => "tp_hand_" + (me ? me.uid : "");
+const inHandoff = () => Date.now() - Number(lsGet(handKey()) || 0) < HAND_MS;
 async function botReply(t){
+  if(inHandoff()) return;
   const ask = k => { botFlow = {k}; const T = TOPICS[k];
     return [`Sorry for the trouble! What is the issue with your ${T.name}?\n` + T.opts.map((o, i) => `${i + 1}) ${o.l}`).join("\n") + `\n${T.opts.length + 1}) Something else\nReply with a number or write your issue.`]; };
   if(botFlow){
@@ -886,6 +890,7 @@ async function botReply(t){
     if(!o && !n){ const k2 = topicOf(t); if(k2 && k2 !== botFlow.k) return botSay(ask(k2)); }
     const k = botFlow.k; botFlow = null;
     const live = T.live && o ? await wdLive() : "";
+    lsSet(handKey(), Date.now());
     return botSay([o ? o.t + live + " " + T.more : "Thanks for explaining. " + T.more, DONE]);
   }
   const gk = guideKey(t);
@@ -894,7 +899,7 @@ async function botReply(t){
   if(hit) return botSay([hit[1]()]);
   const k = topicOf(t);
   if(k) return botSay(ask(k));
-  return botSay(["Thanks! Please tell us your issue (plan, tasks, withdrawals or referrals) and we will help.", DONE]);
+  return botSay(["Thanks! Please tell us your issue (plan, tasks, withdrawals or referrals) and we will help."]);
 }
 
 /* ---------- Help guide (works before login too, no database needed) ---------- */
