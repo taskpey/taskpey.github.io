@@ -156,6 +156,7 @@ textarea{font-family:inherit}
   <div id="v-home">
     <div class="card hero"><div class="mu">Available balance</div><div class="bal" id="bal">Rs 0</div></div>
     <div class="card stat pl" id="hstats"></div>
+    <div class="card" id="wacard"></div>
     <div class="card"><h3>Withdraw money</h3>
       <select id="wm"><option>JazzCash</option><option>Easypaisa</option></select>
       <input id="wn" placeholder="Account number">
@@ -181,7 +182,7 @@ textarea{font-family:inherit}
 /* ====== SETTINGS ====== */
 const NAME = "TaskPey";
 // Default values. Admin panel (Settings tab) se badal sakte ho, wo yahan override ho jayengi.
-const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5};
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
 let CFG = {...DEF};
 const firebaseConfig = {
   apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
@@ -471,20 +472,30 @@ async function submitPay(){
 /* ---------- Home ---------- */
 async function loadHome(){
   $("wmin").textContent = "Minimum Rs " + CFG.minWithdraw;
-  $("bal").textContent = "Rs " + ud.balance;
+  $("bal").textContent = "Rs " + ud.balance; waCard();
   const sd = (ic, n, l) => `<div><span class="si">${xi(ic)}</span><b>Rs ${esc(n)}</b>${l}</div>`;
-  const paint = paid => {
-    const tw = ud.totalWithdrawn != null ? ud.totalWithdrawn : paid, te = ud.totalEarned != null ? ud.totalEarned : (Number(ud.balance) || 0) + paid;
+  const paint = (paid, tasksEarned) => {
+    const tw = ud.totalWithdrawn != null ? ud.totalWithdrawn : paid;
+    const te = tasksEarned != null ? tasksEarned + (Number(ud.refEarned) || 0) : (ud.totalEarned != null ? ud.totalEarned : (Number(ud.balance) || 0) + paid);
     $("hstats").innerHTML = sd("trend", te, "Total earning") + sd("wallet", tw, "Total withdrawal");
   };
   paint(0);
-  const q = await db.collection("withdrawals").where("uid","==",me.uid).get();
+  const [q, sq] = await Promise.all([db.collection("withdrawals").where("uid","==",me.uid).get(), db.collection("submissions").where("uid","==",me.uid).get().catch(() => null)]);
   let paid = 0; q.forEach(d => { const w = d.data(); if(w.status === "paid") paid += Number(w.amount) || 0; });
-  paint(paid);
+  let te = null; if(sq){ te = 0; sq.forEach(d => { const x = d.data(); if(x.status === "approved") te += Number(x.reward) || 0; }); }
+  paint(paid, te);
   let h = "<h3>My withdrawals</h3>";
   q.forEach(d => { const w = d.data();
     h += `<div class="card">Rs ${esc(w.amount)}${w.net != null ? " \u2192 you get Rs " + esc(w.net) : ""} · ${esc(w.method)} <span class="tag">${esc(w.status)}</span></div>`; });
   $("wlist").innerHTML = q.empty ? "" : h;
+}
+const waOk = l => /^https:\/\/(chat\.)?whatsapp\.com\//i.test(l || "");
+function waCard(){
+  const l = CFG.waLink, el = $("wacard"); if(!el) return;
+  if(!waOk(l)){ el.style.display = "none"; return; }
+  el.style.display = "block";
+  el.innerHTML = `<div class="fr">${pbadge("whatsapp", 46)}<div class="pt"><b>Join our WhatsApp Official Community</b><span style="white-space:normal">Updates, support and new tasks</span></div></div>
+    <a href="${esc(l)}" target="_blank" rel="noopener"><button style="width:100%;margin-top:10px">Join now</button></a>`;
 }
 const taxCalc = a => { const fee = Math.ceil(a * (CFG.withdrawTax || 0) / 100); return {fee, net:a - fee}; };
 function taxPreview(){
@@ -639,6 +650,7 @@ function loadProfile(){
     ${row("mail", "Email Address", esc(me.email), "")}
     ${row("lock", "Change Password", "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022", "changePw()")}
     ${row("image", "Update Profile Picture", "Change your profile photo", "$('pf').click()")}
+    ${waOk(CFG.waLink) ? `<a class="prow" href="${esc(CFG.waLink)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="pi" style="background:none">${pbadge("whatsapp", 46)}</span><div class="pt"><b>WhatsApp Community</b><span>Join our official community</span></div>${xi("chev")}</a>` : ""}
     <div class="pstat"><span class="pi">${xi("shield")}</span><div class="pt"><b style="font-size:17px">Account Status</b><span style="white-space:normal">Your account is verified &amp; active</span></div><span class="tag">${xi("check")}Verified</span></div>
     <div class="mu" style="text-align:center;margin:14px 0">${NAME} \u00b7 Created by <b>NOVA REEF STUDIO</b></div>`;
 }

@@ -81,6 +81,7 @@ textarea{font-family:inherit}
 
 <div id="panel" class="hide">
   <div class="card stat" id="stats"></div>
+  <div class="mu" id="syn" style="margin:-4px 4px 8px"></div>
   <div class="tabs" id="tabs"></div>
 
   <div id="t-users" class="hide">
@@ -97,6 +98,7 @@ textarea{font-family:inherit}
       <h3>Referral &amp; withdrawal</h3>
       <div class="mu">Referral bonus per friend (Rs), paid when the friend's account (plan) is approved</div><input id="s-ref" type="number">
       <div class="mu">Minimum withdrawal (Rs)</div><input id="s-min" type="number">
+      <div class="mu">WhatsApp community link (leave empty to hide)</div><input id="s-wa" inputmode="url" placeholder="https://chat.whatsapp.com/...">
       <div class="mu">Withdrawal tax (%) - deducted from every withdrawal</div><input id="s-tax" type="number" min="0" max="50" step="0.5">
       <button onclick="saveSettings()">Save settings</button><div id="sok" class="mu"></div></div>
   </div>
@@ -137,7 +139,7 @@ textarea{font-family:inherit}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 const ADMIN_EMAIL = "umardrazofficial01@gmail.com";
-const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5};
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
 let CFG = {...DEF};
 const firebaseConfig = {
   apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
@@ -259,8 +261,9 @@ function show(t){
 
 async function saveSettings(){
   const n = {planFee:Number($("s-fee").value), payMethod:$("s-method").value.trim(), payNumber:$("s-num").value.trim(),
-    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value), withdrawTax:Number($("s-tax").value)};
+    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value), withdrawTax:Number($("s-tax").value), waLink:$("s-wa").value.trim()};
   if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0) || !(n.withdrawTax >= 0 && n.withdrawTax <= 50)) return alert("Please fill every field correctly.");
+  if(n.waLink && !/^https:\/\/(chat\.)?whatsapp\.com\//i.test(n.waLink)) return alert("WhatsApp link must start with https://chat.whatsapp.com/");
   try{ await db.collection("settings").doc("config").set(n); CFG = n; $("sok").textContent = "Saved. Users will see the new values."; }
   catch(e){ alert(e.message); }
 }
@@ -295,7 +298,7 @@ async function load0(){
     db.collection("profiles").get().catch(() => null)]);
   CFG = {...DEF, ...(cs.exists ? cs.data() : {})};
   $("s-fee").value = CFG.planFee; $("s-method").value = CFG.payMethod; $("s-num").value = CFG.payNumber;
-  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax;
+  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax; $("s-wa").value = CFG.waLink || "";
 
   USERS = u.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
   if(rc){ const have = new Set(rc.docs.map(d => d.id)), miss = USERS.filter(x => x.refCode && !have.has(x.refCode)).slice(0, 400);
@@ -422,11 +425,18 @@ async function syncProfiles(pf, w){
     const byCode = {}; USERS.forEach(x => { if(x.refCode) byCode[x.refCode] = x.id; });
     const paid = {}; w.docs.forEach(d => { const x = d.data(); if(x.status === "paid") paid[x.uid] = (paid[x.uid] || 0) + (Number(x.amount) || 0); });
     const ops = [];
+    // Total earning = approved task rewards + referral commission (admin ke manual balance badlav shamil nahi)
+    const sums = {};
+    if(USERS.some(x => x.earnedV !== 2)){
+      const as = await db.collection("submissions").where("status","==","approved").get();
+      as.docs.forEach(d => { const x = d.data(); sums[x.uid] = (sums[x.uid] || 0) + (Number(x.reward) || 0); });
+    }
     USERS.forEach(x => {
-      const pd = paid[x.id] || 0, te = x.totalEarned != null ? x.totalEarned : (Number(x.balance) || 0) + pd, tw = x.totalWithdrawn != null ? x.totalWithdrawn : pd;
+      const pd = paid[x.id] || 0, fix = x.earnedV !== 2;
+      const te = fix ? (sums[x.id] || 0) + (Number(x.refEarned) || 0) : x.totalEarned, tw = x.totalWithdrawn != null ? x.totalWithdrawn : pd;
       const ruid = x.referredBy ? (byCode[x.referredBy] || "") : "";
       const upd = {};
-      if(x.totalEarned == null) upd.totalEarned = te;
+      if(fix){ upd.totalEarned = te; upd.earnedV = 2; }
       if(x.totalWithdrawn == null) upd.totalWithdrawn = tw;
       if(ruid && x.referrerUid !== ruid) upd.referrerUid = ruid;
       if(Object.keys(upd).length) ops.push(b => b.update(db.collection("users").doc(x.id), upd));
@@ -436,7 +446,8 @@ async function syncProfiles(pf, w){
       else if(p.refUid !== want.refUid || p.team !== want.team || p.earned !== want.earned || p.active !== want.active) ops.push(b => b.update(db.collection("profiles").doc(x.id), want));
     });
     for(let i = 0; i < ops.length; i += 100){ const b = db.batch(); ops.slice(i, i + 100).forEach(f => f(b)); await b.commit(); }
-  }catch(e){ console.warn(e); }
+    $("syn").textContent = ops.length ? "Profiles synced (" + ops.length + " updates)." : "";
+  }catch(e){ console.warn(e); $("syn").textContent = "Profile sync failed: " + e.message + " (publish the latest firestore.rules)"; }
   syncing = false;
 }
 let paying = false;
