@@ -197,6 +197,16 @@ button.sm{padding:7px 14px;font-size:13px}
 .sr span{color:var(--mu);flex:none}.sr b{text-align:right;word-break:break-word;color:var(--tx)}
 .slnote{background:var(--soft);color:var(--pr2);border-radius:12px;padding:9px 11px;font-size:13px;text-align:center;margin-top:10px}
 .slnote.paid{background:#dcfce7;color:#15803d}.slnote.rejected{background:#fee2e2;color:#b91c1c}.slnote.pending{background:#fef3c7;color:#b45309}
+/* ===== Toast + confirm (replace browser popups) ===== */
+#toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-150%);z-index:200;max-width:min(92vw,420px);display:flex;align-items:center;gap:10px;padding:11px 18px 11px 12px;border-radius:20px;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--tx);font-size:14px;font-weight:600;line-height:1.35;box-shadow:0 12px 32px rgba(4,24,110,.45);border:1px solid rgba(255,255,255,.85);opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s}
+#toast.on{transform:translate(-50%,0);opacity:1}
+#toast i{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-style:normal;font-size:15px;font-weight:800;background:linear-gradient(135deg,#22d3ee,#1d4ed8);box-shadow:0 0 14px rgba(56,189,248,.7)}
+#toast.err i{background:#dc2626;box-shadow:0 0 14px rgba(220,38,38,.5)}
+#cfm{position:fixed;inset:0;z-index:150;background:rgba(2,12,70,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:18px}
+.cfb{width:min(92vw,380px);background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.85);border-radius:24px;padding:20px 18px 16px;box-shadow:0 20px 50px rgba(4,24,110,.5);animation:up .3s cubic-bezier(.2,.8,.2,1) both}
+.cfb h3{margin:0 0 6px;font-size:19px;color:var(--tx)}
+.cft{color:var(--mu);font-size:14px;line-height:1.65;margin-bottom:6px}
+.cfb .row button{flex:1}
 </style>
 </head>
 <body>
@@ -324,6 +334,27 @@ function loadEmailJS(){
   }));
 }
 const $ = id => document.getElementById(id);
+let toastT = null;
+function toast(m, type){
+  let t = document.getElementById("toast");
+  if(!t){ t = document.createElement("div"); t.id = "toast"; t.innerHTML = "<i></i><span></span>"; document.body.appendChild(t); }
+  t.className = type === "err" ? "err" : "";
+  t.querySelector("i").textContent = type === "err" ? "!" : "\u2713";
+  t.querySelector("span").textContent = String(m);
+  void t.offsetWidth; t.classList.add("on");
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), Math.min(6500, 2000 + String(m).length * 45));
+}
+window.alert = m => toast(m, /copied|sent|success|saved/i.test(String(m)) ? "ok" : "err");
+function uiConfirm(title, body, okLabel){
+  return new Promise(res => {
+    const o = document.createElement("div"); o.id = "cfm";
+    o.innerHTML = `<div class="cfb"><h3>${esc(title)}</h3><div class="cft">${esc(body).replace(/\n/g, "<br>")}</div><div class="row"><button id="cfy">${esc(okLabel || "Confirm")}</button><button class="g" id="cfn">Cancel</button></div></div>`;
+    document.body.appendChild(o);
+    const done = v => { o.remove(); res(v); };
+    o.querySelector("#cfy").onclick = () => done(true); o.querySelector("#cfn").onclick = () => done(false);
+    o.onclick = e => { if(e.target === o) done(false); };
+  });
+}
 function fatal(m){
   let b = document.getElementById("fatal");
   if(!b){ b = document.createElement("div"); b.id = "fatal"; b.style.cssText = "position:fixed;left:8px;right:8px;top:8px;z-index:99;background:#dc2626;color:#fff;padding:10px 12px;border-radius:12px;font:14px system-ui,sans-serif"; document.body.appendChild(b); }
@@ -676,7 +707,7 @@ async function withdraw(){
   if(!number || !(amount >= CFG.minWithdraw)) return alert("Enter account number and amount (minimum " + usd(CFG.minWithdraw) + ")");
   if(amount > ud.balance) return alert("Insufficient balance");
   const c = taxCalc(amount);
-  if(!confirm("Withdraw " + usd(amount) + "?\nTax (" + (CFG.withdrawTax || 0) + "%): " + usd(c.fee) + "\nYou will receive: " + usd(c.net) + " (Rs " + c.net + ")")) return;
+  if(!(await uiConfirm("Withdraw " + usd(amount) + "?", "Tax (" + (CFG.withdrawTax || 0) + "%): " + usd(c.fee) + "\nYou will receive: " + usd(c.net) + " (Rs " + c.net + ")", "Withdraw"))) return;
   try{ await db.collection("withdrawals").add({uid:me.uid, email:me.email, amount, fee:c.fee, net:c.net, method:$("wm").value, number, holder, status:"pending", at:Date.now()}); }
   catch(e){ return alert(e.message); }
   $("wa").value = ""; $("wh").value = ""; $("wn").value = ""; taxPreview(); loadHome();
@@ -838,7 +869,7 @@ async function saveField(k){
   catch(e){ alert(e.message); }
 }
 async function changePw(){
-  if(!confirm("We will email a password reset link to " + me.email + ". Continue?")) return;
+  if(!(await uiConfirm("Change password", "We will email a password reset link to " + me.email + ".", "Send link"))) return;
   try{ await auth.sendPasswordResetEmail(me.email); alert("Reset link sent. Check your email (and Spam)."); }
   catch(e){ alert(e.message); }
 }
