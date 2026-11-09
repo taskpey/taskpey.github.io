@@ -197,10 +197,17 @@ function loadEmailJS(){
     document.head.appendChild(sc);
   }));
 }
+const $ = id => document.getElementById(id);
+function fatal(m){
+  let b = document.getElementById("fatal");
+  if(!b){ b = document.createElement("div"); b.id = "fatal"; b.style.cssText = "position:fixed;left:8px;right:8px;top:8px;z-index:99;background:#dc2626;color:#fff;padding:10px 12px;border-radius:12px;font:14px system-ui,sans-serif"; document.body.appendChild(b); }
+  b.textContent = m;
+}
+window.addEventListener("error", e => fatal("Error: " + (e.message || "unknown") + " - please refresh the page."));
+if(!window.firebase || !firebase.firestore || !firebase.auth) fatal("Could not load Firebase. Check your internet connection and refresh the page.");
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth(), db = firebase.firestore();
-db.settings({experimentalForceLongPolling:true, merge:true});
-const $ = id => document.getElementById(id);
+try{ db.settings({experimentalForceLongPolling:true}); }catch(e){ console.warn(e); }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let me = null, ud = null;
 const X = {
