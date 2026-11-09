@@ -7,11 +7,11 @@
 <title>TaskPey Admin</title>
 <link rel="preconnect" href="https://firestore.googleapis.com">
 <style>
-:root{--bg:#f3faf6;--card:#fff;--tx:#0e2a1c;--mu:#66786e;--pr:#16a34a;--pr2:#0b7a3b;--soft:#e2f6e9;--bd:#e0ece5;--sh:0 8px 22px rgba(22,163,74,.13);--g1:#7ddf9f;--g2:#d6f4e1}
-@media(prefers-color-scheme:dark){:root{--bg:#0c1511;--card:#14201a;--tx:#e6f3ea;--mu:#93aa9c;--soft:#1b3326;--bd:#25382d;--sh:0 8px 22px rgba(0,0,0,.35);--g1:#1f6b40;--g2:#12301f}}
+:root{--bg:#f3faf6;--card:#fff;--tx:#0e2a1c;--mu:#66786e;--pr:#16a34a;--pr2:#0b7a3b;--soft:#e2f6e9;--bd:#e0ece5;--sh:0 3px 10px rgba(22,163,74,.12);--g1:#7ddf9f;--g2:#d6f4e1}
+@media(prefers-color-scheme:dark){:root{--bg:#0c1511;--card:#14201a;--tx:#e6f3ea;--mu:#93aa9c;--soft:#1b3326;--bd:#25382d;--sh:0 3px 10px rgba(0,0,0,.3);--g1:#1f6b40;--g2:#12301f}}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx)}
-body::before{content:"";position:fixed;left:0;right:0;top:0;height:230px;z-index:-1;background:radial-gradient(110% 130% at 100% 0%,var(--g1) 0,transparent 58%),radial-gradient(90% 120% at 0% 0%,var(--g2) 0,transparent 62%)}
+body::before{content:"";position:absolute;left:0;right:0;top:0;height:230px;z-index:-1;background:radial-gradient(110% 130% at 100% 0%,var(--g1) 0,transparent 58%),radial-gradient(90% 120% at 0% 0%,var(--g2) 0,transparent 62%)}
 body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:110px;z-index:-1;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%2386e3a8'/%3E%3Cstop offset='1' stop-color='%230b7a3b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 55C80 20 160 90 260 50S360 10 400 30V100H0Z' fill='url(%23g)' opacity='.35'/%3E%3Cpath d='M0 78C90 48 180 100 280 70S370 44 400 58V100H0Z' fill='url(%23g)'/%3E%3C/svg%3E") no-repeat bottom/100% 100%}
 .w{max-width:600px;margin:0 auto;padding:14px 14px 120px}
 .hdr{display:flex;align-items:center;gap:12px;padding:4px 0 12px}
@@ -23,9 +23,9 @@ h1{font-size:24px;margin:0;line-height:1.15;font-weight:800;letter-spacing:-.3px
 h3{margin:14px 0 6px;font-size:16px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:14px;margin:10px 0;box-shadow:var(--sh)}
 .card.l{border-left:5px solid var(--pr)}
-input,textarea,select{width:100%;padding:12px 14px;margin:5px 0;border:1px solid var(--bd);border-radius:14px;background:var(--card);color:var(--tx);font-size:15px;box-shadow:0 2px 8px rgba(22,163,74,.06)}
+input,textarea,select{width:100%;padding:12px 14px;margin:5px 0;border:1px solid var(--bd);border-radius:14px;background:var(--card);color:var(--tx);font-size:15px}
 input:focus,textarea:focus,select:focus{outline:2px solid var(--pr);outline-offset:0}
-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:linear-gradient(135deg,#22c55e,#0b7a3b);color:#fff;border:0;border-radius:14px;padding:11px 16px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 6px 14px rgba(11,122,59,.25)}
+button{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:linear-gradient(135deg,#22c55e,#0b7a3b);color:#fff;border:0;border-radius:14px;padding:11px 16px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 3px 8px rgba(11,122,59,.22)}
 button:active{transform:scale(.98)}
 button.g{background:var(--soft);color:var(--pr2);box-shadow:none}
 button.r{background:#dc2626;box-shadow:none}
@@ -143,7 +143,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth(), db = firebase.firestore();
-db.settings({experimentalAutoDetectLongPolling:true, merge:true});
+db.settings({experimentalForceLongPolling:true, merge:true});
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const IC = {
@@ -271,18 +271,21 @@ async function load(){
   catch(e){ $("stats").innerHTML = '<div style="padding:10px;color:#dc2626">Could not load: ' + esc(e.message) + '</div>'; }
 }
 async function load0(){
-  const [s, w, t, u, p, cs] = await Promise.all([
+  const [s, w, t, u, p, cs, rc] = await Promise.all([
     db.collection("submissions").where("status","==","pending").get(),
     db.collection("withdrawals").get(),
     db.collection("tasks").get(),
     db.collection("users").get(),
     db.collection("payments").get(),
-    db.collection("settings").doc("config").get()]);
+    db.collection("settings").doc("config").get(),
+    db.collection("refCodes").get().catch(() => null)]);
   CFG = {...DEF, ...(cs.exists ? cs.data() : {})};
   $("s-fee").value = CFG.planFee; $("s-method").value = CFG.payMethod; $("s-num").value = CFG.payNumber;
   $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw;
 
   USERS = u.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+  if(rc){ const have = new Set(rc.docs.map(d => d.id)), miss = USERS.filter(x => x.refCode && !have.has(x.refCode)).slice(0, 400);
+    if(miss.length){ const bt = db.batch(); miss.forEach(x => bt.set(db.collection("refCodes").doc(x.refCode), {uid:x.id})); bt.commit().catch(() => {}); } }
   const wds = w.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.at||0) - (a.at||0));
   const pend = wds.filter(x => x.status === "pending");
 
@@ -328,6 +331,7 @@ function renderUsers(){
     <b>${esc(u.email)}</b> ${u.banned ? '<span class="tag bad">banned</span>' : ''}
     <span class="tag ${u.verified ? "" : "no"}">${u.verified ? ic("check") + "verified" : "unverified"}</span> <span class="tag ${u.activated ? "" : "no"}">${u.activated ? "plan active" : "no plan"}</span>
     ${u.fullName || u.country ? `<div class="mu">${esc(u.fullName||"")}${u.fullName && u.country ? " \u00b7 " : ""}${esc(u.country||"")}</div>` : ""}
+    <div class="mu">Referral code: <b>${esc(u.refCode||"-")}</b></div>
     <div class="mu">Balance Rs ${esc(u.balance||0)} · Friends ${esc(u.refCount||0)} · Joined ${new Date(u.createdAt||0).toLocaleDateString()}</div>
     <div class="row"><button class="g" onclick="adjBal('${u.id}',1)">${ic("plus")}Add Rs</button><button class="r" onclick="adjBal('${u.id}',-1)">${ic("minus")}Deduct</button>
       <button class="g" onclick="setActive('${u.id}',${!u.activated})">${ic("bolt")}${u.activated ? "Deactivate" : "Activate"}</button>
