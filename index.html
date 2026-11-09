@@ -492,6 +492,31 @@ async function withdraw(){
 }
 
 /* ---------- Tasks ---------- */
+const SHOTS = {};
+function readShot(file){
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, 900 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      let q = .6, d = c.toDataURL("image/jpeg", q);
+      while(d.length > 300000 && q > .3){ q -= .1; d = c.toDataURL("image/jpeg", q); }
+      res(d);
+    };
+    img.onerror = () => rej(new Error("Please choose an image file."));
+    img.src = url;
+  });
+}
+async function pickShot(id, inp){
+  const f = inp.files[0]; if(!f) return;
+  try{
+    SHOTS[id] = await readShot(f);
+    $("pv-"+id).innerHTML = `<img src="${SHOTS[id]}" alt="" style="max-width:100%;max-height:200px;border-radius:12px;margin:8px 0;border:1px solid var(--bd)"><div class="row"><button class="g" onclick="clearShot('${id}')">Remove screenshot</button></div>`;
+  }catch(e){ alert(e.message); }
+  inp.value = "";
+}
+function clearShot(id){ delete SHOTS[id]; $("pv-"+id).innerHTML = ""; }
 let tasksHtml = null;
 async function loadTasks(){
   if(tasksHtml !== null && $("v-tasks").dataset.h !== "1"){ $("v-tasks").innerHTML = tasksHtml; $("v-tasks").dataset.h = "1"; }
@@ -508,13 +533,17 @@ async function loadTasks(){
       ${t.note ? `<div class="note">\u{1F4DD} ${esc(t.note)}</div>` : ""}
       ${/^https?:\/\//i.test(t.link || "") ? `<div class="row"><a href="${esc(t.link)}" target="_blank" rel="noopener"><button class="g">${esc(t.openLabel || "Open link")}</button></a></div>` : ""}
       ${st ? `<div class="row"><span class="tag">Status: ${esc(st)}</span></div>` :
-      `<input id="p-${d.id}" placeholder="Proof (screenshot link or note)">
+      `<input id="p-${d.id}" placeholder="Note or link (optional if you attach a screenshot)">
+       <input id="f-${d.id}" type="file" accept="image/*" class="hide" onchange="pickShot('${d.id}', this)">
+       <div class="row"><button class="g" onclick="$('f-${d.id}').click()">${xi("image")}Attach screenshot</button></div>
+       <div id="pv-${d.id}"></div>
        <button onclick="submitProof('${d.id}')">Submit proof</button>`}</div>`; });
   h = h || '<div class="card mu">No tasks available right now.</div>';
   if(h !== tasksHtml){ tasksHtml = h; $("v-tasks").innerHTML = h; $("v-tasks").dataset.h = "1"; }
 }
 async function submitProof(id){
-  const proof = $("p-"+id).value.trim(); if(!proof) return alert("Please add your proof");
+  const proof = $("p-"+id).value.trim(), shot = SHOTS[id] || "";
+  if(!proof && !shot) return alert("Please attach a screenshot or write a note as proof.");
   const tref = db.collection("tasks").doc(id), sref = db.collection("submissions").doc(me.uid + "_" + id);
   try{
     await db.runTransaction(async tx => {
@@ -523,9 +552,10 @@ async function submitProof(id){
       if(!t.exists || !t.data().active) throw new Error("This task is no longer available.");
       const td = t.data(), lim = Number(td.limit || 0), taken = Number(td.taken || 0);
       if(lim > 0 && taken >= lim) throw new Error("Task ended: all spots are filled.");
-      tx.set(sref, {uid:me.uid, email:me.email, taskId:id, taskTitle:td.title, reward:Number(td.reward), proof, status:"pending", at:Date.now()});
+      tx.set(sref, {uid:me.uid, email:me.email, taskId:id, taskTitle:td.title, reward:Number(td.reward), proof, shot, status:"pending", at:Date.now()});
       tx.update(tref, {taken: taken + 1});
     });
+    delete SHOTS[id];
   }catch(e){ alert(e.message); }
   tasksHtml = null; $("v-tasks").dataset.h = ""; loadTasks();
 }
@@ -549,7 +579,7 @@ function loadRefer(){
   if(!ud.refCode) ensureCode();
   const c = ud.refCode || "…", link = location.origin + location.pathname + "?ref=" + c;
   $("v-refer").innerHTML = `<div class="card"><h3>Invite friends, earn Rs ${CFG.refBonus}</h3>
-    <div class="mu">You get Rs ${CFG.refBonus} when your friend's first task is approved.</div>
+    <div class="mu">You get Rs ${CFG.refBonus} when your friend's account (plan) is approved.</div>
     <div class="code">${esc(c)}</div>
     ${ud.refCode ? `<div class="row"><button onclick="cp('${esc(c)}')">Copy code</button><button class="g" onclick="cp('${esc(link)}')">Copy invite link</button></div>` : `<div class="mu">Creating your code…</div>`}</div>
     <div class="card stat pl"><div><b>${ud.refCount||0}</b><span class="mu">Friends joined</span></div><div><b>Rs ${ud.refEarned||0}</b><span class="mu">Earned</span></div></div>`;

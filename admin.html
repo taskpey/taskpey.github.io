@@ -95,7 +95,7 @@ textarea{font-family:inherit}
       <div class="mu">Payment number</div><input id="s-num">
       <div class="mu">Account title</div><input id="s-name">
       <h3>Referral &amp; withdrawal</h3>
-      <div class="mu">Referral bonus per friend (Rs), paid when the friend's first task is approved</div><input id="s-ref" type="number">
+      <div class="mu">Referral bonus per friend (Rs), paid when the friend's account (plan) is approved</div><input id="s-ref" type="number">
       <div class="mu">Minimum withdrawal (Rs)</div><input id="s-min" type="number">
       <div class="mu">Withdrawal tax (%) - deducted from every withdrawal</div><input id="s-tax" type="number" min="0" max="50" step="0.5">
       <button onclick="saveSettings()">Save settings</button><div id="sok" class="mu"></div></div>
@@ -299,6 +299,7 @@ async function load0(){
   USERS = u.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
   if(rc){ const have = new Set(rc.docs.map(d => d.id)), miss = USERS.filter(x => x.refCode && !have.has(x.refCode)).slice(0, 400);
     if(miss.length){ const bt = db.batch(); miss.forEach(x => bt.set(db.collection("refCodes").doc(x.refCode), {uid:x.id})); bt.commit().catch(() => {}); } }
+  backfillRef();
   const nocode = USERS.filter(x => !x.refCode).slice(0, 50);
   if(nocode.length){
     nocode.forEach(x => { x.refCode = Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join(""); });
@@ -327,6 +328,7 @@ async function load0(){
   let h = ""; s.forEach(d => { const x = d.data();
     h += `<div class="card l"><b>${esc(x.taskTitle)}</b> · Rs ${esc(x.reward)}<div class="mu">${esc(x.email)}</div>
       <div>${/^https?:\/\//.test(x.proof) ? `<a href="${esc(x.proof)}" target="_blank" rel="noopener">${esc(x.proof)}</a>` : esc(x.proof)}</div>
+      ${/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x.shot || "") ? `<img src="${x.shot}" alt="screenshot" style="max-width:100%;max-height:240px;border-radius:12px;margin-top:6px;border:1px solid var(--bd)" onclick="openShot(this.src)"><div class="mu">Tap the screenshot to enlarge</div>` : ""}
       <div class="row"><button onclick="appSub('${d.id}',true)">Approve</button><button class="r" onclick="appSub('${d.id}',false)">Reject</button></div></div>`; });
   $("asub").innerHTML = h || '<div class="mu">No pending proofs</div>';
 
@@ -353,7 +355,7 @@ function renderUsers(){
     <b>${esc(u.email)}</b> ${u.banned ? '<span class="tag bad">banned</span>' : ''}
     <span class="tag ${u.verified ? "" : "no"}">${u.verified ? ic("check") + "verified" : "unverified"}</span> <span class="tag ${u.activated ? "" : "no"}">${u.activated ? "plan active" : "no plan"}</span>
     ${u.fullName || u.country ? `<div class="mu">${esc(u.fullName||"")}${u.fullName && u.country ? " \u00b7 " : ""}${esc(u.country||"")}</div>` : ""}
-    <div class="mu">Referral code: <b>${esc(u.refCode||"-")}</b></div>
+    <div class="mu">Referral code: <b>${esc(u.refCode||"-")}</b>${u.referredBy ? " \u00b7 invited with code <b>" + esc(u.referredBy) + "</b>" + (u.refPaid ? " (commission paid)" : "") : ""}</div>
     <div class="mu">Balance Rs ${esc(u.balance||0)} · Friends ${esc(u.refCount||0)} · Joined ${new Date(u.createdAt||0).toLocaleDateString()}</div>
     <div class="row"><button class="g" onclick="adjBal('${u.id}',1)">${ic("plus")}Add Rs</button><button class="r" onclick="adjBal('${u.id}',-1)">${ic("minus")}Deduct</button>
       <button class="g" onclick="setActive('${u.id}',${!u.activated})">${ic("bolt")}${u.activated ? "Deactivate" : "Activate"}</button>
@@ -381,44 +383,62 @@ async function ban(id, v){
   await db.collection("users").doc(id).update({banned:v}); load();
 }
 
+function openShot(src){
+  const o = document.createElement("div");
+  o.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:80;display:grid;place-items:center;padding:12px";
+  o.innerHTML = `<img src="${src}" style="max-width:100%;max-height:100%;border-radius:10px">`;
+  o.onclick = () => o.remove(); document.body.appendChild(o);
+}
+// Referral commission: friend ka plan approve hote hi invite karne wale ko milta hai (sirf ek baar)
+async function payReferral(uid){
+  try{
+    const u0 = (await db.collection("users").doc(uid).get()).data();
+    if(!u0 || !u0.referredBy || u0.refPaid) return false;
+    const q = await db.collection("users").where("refCode","==",u0.referredBy).limit(1).get();
+    if(q.empty || q.docs[0].id === uid) return false;
+    const rq = q.docs[0].ref, uref = db.collection("users").doc(uid);
+    return await db.runTransaction(async tx => {
+      const [u, r] = await Promise.all([tx.get(uref), tx.get(rq)]);
+      if(u.data().refPaid) return false;
+      const rd = r.data();
+      tx.update(uref, {refPaid:true});
+      tx.update(rq, {balance:(rd.balance||0)+CFG.refBonus, refEarned:(rd.refEarned||0)+CFG.refBonus, refCount:(rd.refCount||0)+1});
+      return true;
+    });
+  }catch(e){ console.warn(e); return false; }
+}
+let paying = false;
+async function backfillRef(){
+  if(paying) return; paying = true; let any = false;
+  for(const x of USERS.filter(u => u.activated && u.referredBy && !u.refPaid).slice(0, 20)){ if(await payReferral(x.id)) any = true; }
+  paying = false; if(any) setTimeout(load, 300);
+}
 async function appPay(uid, ok){
   const b = db.batch();
   b.update(db.collection("payments").doc(uid), {status: ok ? "approved" : "rejected"});
   if(ok) b.update(db.collection("users").doc(uid), {activated:true, activatedAt:Date.now()});
-  try{ await b.commit(); }catch(e){ alert(e.message); }
+  try{ await b.commit(); if(ok) await payReferral(uid); }catch(e){ alert(e.message); }
   load();
 }
 async function setActive(id, v){
   if(!confirm(v ? "Activate this user's plan?" : "Deactivate this user's plan?")) return;
-  await db.collection("users").doc(id).update({activated:v}); load();
+  await db.collection("users").doc(id).update({activated:v}); if(v) await payReferral(id); load();
 }
 
 async function appSub(id, ok){
-  const ref = db.collection("submissions").doc(id);
-  let rq = null;
-  if(ok){
-    const s0 = (await ref.get()).data();
-    const u0 = (await db.collection("users").doc(s0.uid).get()).data();
-    if(u0.referredBy && !u0.refPaid){
-      const q = await db.collection("users").where("refCode","==",u0.referredBy).limit(1).get();
-      if(!q.empty && q.docs[0].id !== s0.uid) rq = q.docs[0].ref;
-    }
-  }
+  const ref = db.collection("submissions").doc(id); let uid = null;
   try{
     await db.runTransaction(async tx => {
       const s = await tx.get(ref); const x = s.data(); if(x.status !== "pending") return;
+      uid = x.uid;
       const uref = db.collection("users").doc(x.uid);
-      const u = await tx.get(uref); const r = (ok && rq) ? await tx.get(rq) : null;
+      const u = await tx.get(uref);
       const td = await tx.get(db.collection("tasks").doc(x.taskId));
-      if(ok){
-        const upd = {balance: (u.data().balance||0) + x.reward};
-        if(r){ upd.refPaid = true;
-          tx.update(rq, {balance:(r.data().balance||0)+CFG.refBonus, refEarned:(r.data().refEarned||0)+CFG.refBonus, refCount:(r.data().refCount||0)+1}); }
-        tx.update(uref, upd);
-      }
+      if(ok) tx.update(uref, {balance: (u.data().balance||0) + x.reward});
       if(!ok && td.exists) tx.update(td.ref, {taken: Math.max(0, (td.data().taken || 0) - 1)});
       tx.update(ref, {status: ok ? "approved" : "rejected"});
     });
+    if(ok && uid) await payReferral(uid);
   }catch(e){ alert(e.message); }
   load();
 }
