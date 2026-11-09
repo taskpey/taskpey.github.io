@@ -97,6 +97,7 @@ textarea{font-family:inherit}
       <h3>Referral &amp; withdrawal</h3>
       <div class="mu">Referral bonus per friend (Rs), paid when the friend's first task is approved</div><input id="s-ref" type="number">
       <div class="mu">Minimum withdrawal (Rs)</div><input id="s-min" type="number">
+      <div class="mu">Withdrawal tax (%) - deducted from every withdrawal</div><input id="s-tax" type="number" min="0" max="50" step="0.5">
       <button onclick="saveSettings()">Save settings</button><div id="sok" class="mu"></div></div>
   </div>
 
@@ -121,6 +122,8 @@ textarea{font-family:inherit}
       <input id="tl" placeholder="https://..." inputmode="url">
       <div class="mu">3. Reward for the user (Rs)</div>
       <input id="tr" type="number" placeholder="e.g. 5">
+      <div class="mu">4. Limit: how many users can do this task (leave empty for unlimited)</div>
+      <input id="tlim" type="number" min="1" placeholder="e.g. 50">
       <div class="mu">Extra instruction (optional), e.g. what to comment</div>
       <textarea id="td" placeholder="e.g. Comment: Nice video! 🔥"></textarea>
       <button onclick="addTask()">Create task</button></div>
@@ -134,7 +137,7 @@ textarea{font-family:inherit}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 const ADMIN_EMAIL = "umardrazofficial01@gmail.com";
-const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500};
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5};
 let CFG = {...DEF};
 const firebaseConfig = {
   apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
@@ -256,8 +259,8 @@ function show(t){
 
 async function saveSettings(){
   const n = {planFee:Number($("s-fee").value), payMethod:$("s-method").value.trim(), payNumber:$("s-num").value.trim(),
-    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value)};
-  if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0)) return alert("Please fill every field correctly.");
+    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value), withdrawTax:Number($("s-tax").value)};
+  if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0) || !(n.withdrawTax >= 0 && n.withdrawTax <= 50)) return alert("Please fill every field correctly.");
   try{ await db.collection("settings").doc("config").set(n); CFG = n; $("sok").textContent = "Saved. Users will see the new values."; }
   catch(e){ alert(e.message); }
 }
@@ -267,10 +270,12 @@ async function addTask(){
   if(!p) return alert("Please choose what the user should do.");
   if(!/^https?:\/\//i.test(link)) return alert("Please paste the " + p.target + " link (it must start with https://).");
   if(!(r > 0)) return alert("Please enter the reward in Rs.");
+  const lim = Math.floor(Number($("tlim").value) || 0);
+  if($("tlim").value && !(lim >= 1)) return alert("Limit must be 1 or more, or leave it empty.");
   try{
-    await db.collection("tasks").add({platform:p.pl, preset:p.id, title:p.title, desc:p.how, openLabel:p.open, note:$("td").value.trim(), link, reward:r, active:true, at:Date.now()});
+    await db.collection("tasks").add({platform:p.pl, preset:p.id, title:p.title, desc:p.how, openLabel:p.open, note:$("td").value.trim(), link, reward:r, limit:lim, taken:0, active:true, at:Date.now()});
   }catch(e){ return alert(e.message); }
-  ["tl","tr","td"].forEach(i => $(i).value = ""); $("tp").value = ""; tpChange(); load();
+  ["tl","tr","td","tlim"].forEach(i => $(i).value = ""); $("tp").value = ""; tpChange(); load();
 }
 
 async function load(){
@@ -289,11 +294,18 @@ async function load0(){
     db.collection("refCodes").get().catch(() => null)]);
   CFG = {...DEF, ...(cs.exists ? cs.data() : {})};
   $("s-fee").value = CFG.planFee; $("s-method").value = CFG.payMethod; $("s-num").value = CFG.payNumber;
-  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw;
+  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax;
 
   USERS = u.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
   if(rc){ const have = new Set(rc.docs.map(d => d.id)), miss = USERS.filter(x => x.refCode && !have.has(x.refCode)).slice(0, 400);
     if(miss.length){ const bt = db.batch(); miss.forEach(x => bt.set(db.collection("refCodes").doc(x.refCode), {uid:x.id})); bt.commit().catch(() => {}); } }
+  const nocode = USERS.filter(x => !x.refCode).slice(0, 50);
+  if(nocode.length){
+    nocode.forEach(x => { x.refCode = Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join(""); });
+    const b2 = db.batch();
+    nocode.forEach(x => { b2.update(db.collection("users").doc(x.id), {refCode:x.refCode}); b2.set(db.collection("refCodes").doc(x.refCode), {uid:x.id}); });
+    b2.commit().catch(() => nocode.forEach(x => { delete x.refCode; }));
+  }
   const wds = w.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.at||0) - (a.at||0));
   const pend = wds.filter(x => x.status === "pending");
 
@@ -318,16 +330,18 @@ async function load0(){
       <div class="row"><button onclick="appSub('${d.id}',true)">Approve</button><button class="r" onclick="appSub('${d.id}',false)">Reject</button></div></div>`; });
   $("asub").innerHTML = h || '<div class="mu">No pending proofs</div>';
 
-  $("awd").innerHTML = pend.map(x => `<div class="card l"><b>Rs ${esc(x.amount)}</b> · ${esc(x.method)} · ${esc(x.number)}<div class="mu">${esc(x.email)}</div>
+  const taxOf = a => { const f = Math.ceil(Number(a) * (CFG.withdrawTax || 0) / 100); return {fee:f, net:Number(a) - f}; };
+  $("awd").innerHTML = pend.map(x => { const tx_ = taxOf(x.amount); return `<div class="card l"><b>Pay Rs ${tx_.net}</b> <span class="mu">(Rs ${esc(x.amount)} - ${CFG.withdrawTax||0}% tax Rs ${tx_.fee})</span> · ${esc(x.method)} · ${esc(x.number)}<div class="mu">${esc(x.email)}</div>
       <div class="mu">Send the money via JazzCash/Easypaisa first, then tap "Paid".</div>
-      <div class="row"><button onclick="appWd('${x.id}',true)">Paid</button><button class="r" onclick="appWd('${x.id}',false)">Reject</button></div></div>`).join("")
+      <div class="row"><button onclick="appWd('${x.id}',true)">Paid</button><button class="r" onclick="appWd('${x.id}',false)">Reject</button></div></div>`; }).join("")
     || '<div class="mu">No pending requests</div>';
   $("whist").innerHTML = wds.filter(x => x.status !== "pending").map(x =>
-    `<div class="card l">Rs ${esc(x.amount)} · ${esc(x.method)} · ${esc(x.number)} <span class="tag">${esc(x.status)}</span>
+    `<div class="card l">Rs ${esc(x.amount)}${x.net != null ? " (paid Rs " + esc(x.net) + " after tax)" : ""} · ${esc(x.method)} · ${esc(x.number)} <span class="tag">${esc(x.status)}</span>
       <div class="mu">${esc(x.email)} · ${new Date(x.at||0).toLocaleDateString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
 
   h = ""; t.forEach(d => { const x = d.data();
-    h += `<div class="card l"><div class="th">${pbadge(x.platform,30)}<b style="flex:1">${esc(x.title)}</b> <span class="tag">Rs ${esc(x.reward)}</span> <span class="tag ${x.active ? "" : "no"}">${x.active ? "live" : "closed"}</span></div>
+    h += `<div class="card l"><div class="th">${pbadge(x.platform,30)}<b style="flex:1">${esc(x.title)}</b> <span class="tag">Rs ${esc(x.reward)}</span> ${x.limit > 0 ? `<span class="tag ${(x.taken||0) >= x.limit ? "bad" : ""}">${x.taken||0}/${x.limit}</span>` : `<span class="tag no">${x.taken||0} done</span>`}
+      <span class="tag ${x.active && !(x.limit > 0 && (x.taken||0) >= x.limit) ? "" : "no"}">${!x.active ? "closed" : (x.limit > 0 && (x.taken||0) >= x.limit) ? "ended (full)" : "live"}</span></div>
       <div class="row"><button class="g" onclick="toggleTask('${d.id}',${!x.active})">${x.active ? "Close" : "Make live"}</button></div></div>`; });
   $("atasks").innerHTML = h;
   show(tab);
@@ -395,12 +409,14 @@ async function appSub(id, ok){
       const s = await tx.get(ref); const x = s.data(); if(x.status !== "pending") return;
       const uref = db.collection("users").doc(x.uid);
       const u = await tx.get(uref); const r = (ok && rq) ? await tx.get(rq) : null;
+      const td = await tx.get(db.collection("tasks").doc(x.taskId));
       if(ok){
         const upd = {balance: (u.data().balance||0) + x.reward};
         if(r){ upd.refPaid = true;
           tx.update(rq, {balance:(r.data().balance||0)+CFG.refBonus, refEarned:(r.data().refEarned||0)+CFG.refBonus, refCount:(r.data().refCount||0)+1}); }
         tx.update(uref, upd);
       }
+      if(!ok && td.exists) tx.update(td.ref, {taken: Math.max(0, (td.data().taken || 0) - 1)});
       tx.update(ref, {status: ok ? "approved" : "rejected"});
     });
   }catch(e){ alert(e.message); }
@@ -414,7 +430,8 @@ async function appWd(id, ok){
       if(ok){ const uref = db.collection("users").doc(x.uid); const u = await tx.get(uref);
         if((u.data().balance||0) < x.amount) throw new Error("User balance is too low");
         tx.update(uref, {balance: u.data().balance - x.amount}); }
-      tx.update(ref, {status: ok ? "paid" : "rejected"});
+      const fee = Math.ceil(Number(x.amount) * (CFG.withdrawTax || 0) / 100);
+      tx.update(ref, ok ? {status:"paid", fee, net:Number(x.amount) - fee} : {status:"rejected"});
     });
   }catch(e){ alert(e.message); }
   load();

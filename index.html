@@ -155,7 +155,8 @@ textarea{font-family:inherit}
     <div class="card"><h3>Withdraw money</h3>
       <select id="wm"><option>JazzCash</option><option>Easypaisa</option></select>
       <input id="wn" placeholder="Account number">
-      <input id="wa" type="number" placeholder="Amount (Rs)">
+      <input id="wa" type="number" placeholder="Amount (Rs)" oninput="taxPreview()">
+      <div class="note" id="wtax" style="display:none"></div>
       <button onclick="withdraw()">Request withdrawal</button>
       <div class="mu" id="wmin"></div></div>
     <div id="wlist"></div>
@@ -176,7 +177,7 @@ textarea{font-family:inherit}
 /* ====== SETTINGS ====== */
 const NAME = "TaskPey";
 // Default values. Admin panel (Settings tab) se badal sakte ho, wo yahan override ho jayengi.
-const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500};
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5};
 let CFG = {...DEF};
 const firebaseConfig = {
   apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
@@ -371,7 +372,7 @@ async function boot(u){
       // fast path: show the app instantly from saved data, refresh quietly in the background
       me = u; ud = c.ud; if(c.cfg) CFG = {...DEF, ...c.cfg};
       $("auth").classList.add("hide"); $("ld").classList.add("hide"); $("lo").classList.remove("hide");
-      mountApp(); show("home", true); refreshBg(u);
+      mountApp(); show("home", true); ensureCode(); refreshBg(u);
       return;
     }
     await onUser(u);
@@ -416,7 +417,7 @@ async function onUser(u){
   if(!d.data().activated){ showActivate(); return; }
   mountApp();
   ud = d.data(); writeCache(u.uid, ud);
-  show("home", true);
+  show("home", true); ensureCode();
   loadTasks().catch(() => {});
 }
 
@@ -469,15 +470,25 @@ async function loadHome(){
   const q = await db.collection("withdrawals").where("uid","==",me.uid).get();
   let h = "<h3>My withdrawals</h3>";
   q.forEach(d => { const w = d.data();
-    h += `<div class="card">Rs ${esc(w.amount)} · ${esc(w.method)} <span class="tag">${esc(w.status)}</span></div>`; });
+    h += `<div class="card">Rs ${esc(w.amount)}${w.net != null ? " \u2192 you get Rs " + esc(w.net) : ""} · ${esc(w.method)} <span class="tag">${esc(w.status)}</span></div>`; });
   $("wlist").innerHTML = q.empty ? "" : h;
+}
+const taxCalc = a => { const fee = Math.ceil(a * (CFG.withdrawTax || 0) / 100); return {fee, net:a - fee}; };
+function taxPreview(){
+  const a = Number($("wa").value), el = $("wtax");
+  if(!(a > 0) || !(CFG.withdrawTax > 0)){ el.style.display = "none"; return; }
+  const c = taxCalc(a);
+  el.style.display = "block"; el.innerHTML = `Tax (${CFG.withdrawTax}%): <b>Rs ${c.fee}</b> \u00b7 You will receive: <b>Rs ${c.net}</b>`;
 }
 async function withdraw(){
   const amount = Number($("wa").value), number = $("wn").value.trim();
   if(!number || !(amount >= CFG.minWithdraw)) return alert("Enter account number and amount (minimum Rs "+CFG.minWithdraw+")");
   if(amount > ud.balance) return alert("Insufficient balance");
-  await db.collection("withdrawals").add({uid:me.uid, email:me.email, amount, method:$("wm").value, number, status:"pending", at:Date.now()});
-  $("wa").value = ""; loadHome();
+  const c = taxCalc(amount);
+  if(!confirm("Withdraw Rs " + amount + "?\nTax (" + (CFG.withdrawTax || 0) + "%): Rs " + c.fee + "\nYou will receive: Rs " + c.net)) return;
+  try{ await db.collection("withdrawals").add({uid:me.uid, email:me.email, amount, fee:c.fee, net:c.net, method:$("wm").value, number, status:"pending", at:Date.now()}); }
+  catch(e){ return alert(e.message); }
+  $("wa").value = ""; taxPreview(); loadHome();
 }
 
 /* ---------- Tasks ---------- */
@@ -490,7 +501,9 @@ async function loadTasks(){
   const done = {}; ss.forEach(s => done[s.data().taskId] = s.data().status);
   let h = "";
   ts.forEach(d => { const t = d.data(), st = done[d.id];
-    h += `<div class="card"><div class="th">${pbadge(t.platform)}<h3>${esc(t.title)}</h3><span class="tag">Rs ${esc(t.reward)}</span></div>
+    const lim = Number(t.limit || 0), left = lim - Number(t.taken || 0), full = lim > 0 && left <= 0;
+    if(full && !st) return;   // task ended: hidden for users who did not take part
+    h += `<div class="card"><div class="th">${pbadge(t.platform)}<h3>${esc(t.title)}</h3><span class="tag">Rs ${esc(t.reward)}</span>${lim > 0 && !full ? `<span class="tag no">${left} left</span>` : ""}${full ? `<span class="tag bad">Task ended</span>` : ""}</div>
       <div class="mu">${esc(t.desc)}</div>
       ${t.note ? `<div class="note">\u{1F4DD} ${esc(t.note)}</div>` : ""}
       ${/^https?:\/\//i.test(t.link || "") ? `<div class="row"><a href="${esc(t.link)}" target="_blank" rel="noopener"><button class="g">${esc(t.openLabel || "Open link")}</button></a></div>` : ""}
@@ -502,20 +515,43 @@ async function loadTasks(){
 }
 async function submitProof(id){
   const proof = $("p-"+id).value.trim(); if(!proof) return alert("Please add your proof");
-  const t = (await db.collection("tasks").doc(id).get()).data();
+  const tref = db.collection("tasks").doc(id), sref = db.collection("submissions").doc(me.uid + "_" + id);
   try{
-    await db.collection("submissions").doc(me.uid+"_"+id).set({uid:me.uid, email:me.email, taskId:id, taskTitle:t.title, reward:Number(t.reward), proof, status:"pending", at:Date.now()});
-    loadTasks();
-  }catch(e){ alert("Already submitted, or error: "+e.message); }
+    await db.runTransaction(async tx => {
+      const [t, s0] = await Promise.all([tx.get(tref), tx.get(sref)]);
+      if(s0.exists) throw new Error("You already submitted this task.");
+      if(!t.exists || !t.data().active) throw new Error("This task is no longer available.");
+      const td = t.data(), lim = Number(td.limit || 0), taken = Number(td.taken || 0);
+      if(lim > 0 && taken >= lim) throw new Error("Task ended: all spots are filled.");
+      tx.set(sref, {uid:me.uid, email:me.email, taskId:id, taskTitle:td.title, reward:Number(td.reward), proof, status:"pending", at:Date.now()});
+      tx.update(tref, {taken: taken + 1});
+    });
+  }catch(e){ alert(e.message); }
+  tasksHtml = null; $("v-tasks").dataset.h = ""; loadTasks();
 }
 
 /* ---------- Refer ---------- */
+let codeBusy = false;
+async function ensureCode(){
+  if(!ud || ud.refCode || !me || codeBusy) return;
+  codeBusy = true;
+  try{
+    let code, n = 0;
+    do{ code = genCode(); n++; } while((await db.collection("refCodes").doc(code).get()).exists && n < 5);
+    await db.collection("users").doc(me.uid).update({refCode: code});
+    ud.refCode = code; writeCache(me.uid, ud);
+    await db.collection("refCodes").doc(code).set({uid: me.uid}).catch(() => {});
+    if(curTab === "refer") loadRefer();
+  }catch(e){ console.warn(e); }
+  codeBusy = false;
+}
 function loadRefer(){
-  const c = ud.refCode || "—", link = location.origin + location.pathname + "?ref=" + c;
+  if(!ud.refCode) ensureCode();
+  const c = ud.refCode || "…", link = location.origin + location.pathname + "?ref=" + c;
   $("v-refer").innerHTML = `<div class="card"><h3>Invite friends, earn Rs ${CFG.refBonus}</h3>
     <div class="mu">You get Rs ${CFG.refBonus} when your friend's first task is approved.</div>
     <div class="code">${esc(c)}</div>
-    <div class="row"><button onclick="cp('${esc(c)}')">Copy code</button><button class="g" onclick="cp('${esc(link)}')">Copy invite link</button></div></div>
+    ${ud.refCode ? `<div class="row"><button onclick="cp('${esc(c)}')">Copy code</button><button class="g" onclick="cp('${esc(link)}')">Copy invite link</button></div>` : `<div class="mu">Creating your code…</div>`}</div>
     <div class="card stat pl"><div><b>${ud.refCount||0}</b><span class="mu">Friends joined</span></div><div><b>Rs ${ud.refEarned||0}</b><span class="mu">Earned</span></div></div>`;
 }
 function cp(t){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => alert("Copied!")).catch(() => prompt("Copy this:", t)); }
