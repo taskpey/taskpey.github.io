@@ -91,6 +91,7 @@ textarea{font-family:inherit}
 
   <div id="t-set" class="hide">
     <div class="card"><h3 style="margin-top:0">Plan &amp; payment</h3>
+      <div class="mu">Dollar rate (1 USD = how many Rs). Users see everything in dollars using this rate</div><input id="s-usd" type="number" step="any">
       <div class="mu">Plan fee (Rs)</div><input id="s-fee" type="number">
       <div class="mu">Payment method (e.g. Easypaisa)</div><input id="s-method">
       <div class="mu">Payment number</div><input id="s-num">
@@ -122,8 +123,9 @@ textarea{font-family:inherit}
       <div id="tprev"></div>
       <div class="mu">2. Link <span id="tlh"></span></div>
       <input id="tl" placeholder="https://..." inputmode="url">
-      <div class="mu">3. Reward for the user (Rs)</div>
-      <input id="tr" type="number" placeholder="e.g. 5">
+      <div class="mu">3. Reward for the user in dollars ($), decimals allowed</div>
+      <input id="tr" type="number" step="any" inputmode="decimal" placeholder="e.g. 0.2344" oninput="rwPrev()">
+      <div class="mu" id="rwp"></div>
       <div class="mu">4. Limit: how many users can do this task (leave empty for unlimited)</div>
       <input id="tlim" type="number" min="1" placeholder="e.g. 50">
       <div class="mu">Extra instruction (optional), e.g. what to comment</div>
@@ -139,7 +141,7 @@ textarea{font-family:inherit}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 const ADMIN_EMAIL = "umardrazofficial01@gmail.com";
-const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, usdRate:280, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
 let CFG = {...DEF};
 const firebaseConfig = {
   apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
@@ -174,6 +176,10 @@ const IC = {
   plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>'};
 const ic = k => `<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
 let USERS = [], tab = "users";
+const r6 = n => Math.round((Number(n) || 0) * 1e6) / 1e6;
+const rs = n => "Rs " + (Math.round((Number(n) || 0) * 100) / 100);
+const rt = () => Number(CFG.usdRate) > 0 ? Number(CFG.usdRate) : DEF.usdRate;
+function rwPrev(){ const v = Number($("tr").value); $("rwp").textContent = v > 0 ? "= " + rs(r6(v * rt())) + " (rate: 1 USD = Rs " + rt() + ")" : ""; }
 $("lo").innerHTML = ic("out") + "Logout";
 const PLAT = {
   instagram:{n:"Instagram", bg:"linear-gradient(135deg,#f9a03f,#e1306c 55%,#7b3fe4)", g:'<rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17" cy="7" r="1" fill="#fff" stroke="none"/>'},
@@ -261,24 +267,24 @@ function show(t){
 
 async function saveSettings(){
   const n = {planFee:Number($("s-fee").value), payMethod:$("s-method").value.trim(), payNumber:$("s-num").value.trim(),
-    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value), withdrawTax:Number($("s-tax").value), waLink:$("s-wa").value.trim()};
-  if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0) || !(n.withdrawTax >= 0 && n.withdrawTax <= 50)) return alert("Please fill every field correctly.");
+    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value), withdrawTax:Number($("s-tax").value), usdRate:Number($("s-usd").value), waLink:$("s-wa").value.trim()};
+  if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0) || !(n.withdrawTax >= 0 && n.withdrawTax <= 50) || !(n.usdRate > 0)) return alert("Please fill every field correctly.");
   if(n.waLink && !/^https:\/\/(chat\.)?whatsapp\.com\//i.test(n.waLink)) return alert("WhatsApp link must start with https://chat.whatsapp.com/");
   try{ await db.collection("settings").doc("config").set(n); CFG = n; $("sok").textContent = "Saved. Users will see the new values."; }
   catch(e){ alert(e.message); }
 }
 
 async function addTask(){
-  const p = PMAP[$("tp").value], link = $("tl").value.trim(), r = Number($("tr").value);
+  const p = PMAP[$("tp").value], link = $("tl").value.trim(), r = r6(Number($("tr").value) * rt());
   if(!p) return alert("Please choose what the user should do.");
   if(!/^https?:\/\//i.test(link)) return alert("Please paste the " + p.target + " link (it must start with https://).");
-  if(!(r > 0)) return alert("Please enter the reward in Rs.");
+  if(!(r > 0)) return alert("Please enter the reward in dollars, e.g. 0.2344");
   const lim = Math.floor(Number($("tlim").value) || 0);
   if($("tlim").value && !(lim >= 1)) return alert("Limit must be 1 or more, or leave it empty.");
   try{
     await db.collection("tasks").add({platform:p.pl, preset:p.id, title:p.title, desc:p.how, openLabel:p.open, note:$("td").value.trim(), link, reward:r, limit:lim, taken:0, active:true, at:Date.now()});
   }catch(e){ return alert(e.message); }
-  ["tl","tr","td","tlim"].forEach(i => $(i).value = ""); $("tp").value = ""; tpChange(); load();
+  ["tl","tr","td","tlim"].forEach(i => $(i).value = ""); $("rwp").textContent = ""; $("tp").value = ""; tpChange(); load();
 }
 
 async function load(){
@@ -298,7 +304,7 @@ async function load0(){
     db.collection("profiles").get().catch(() => null)]);
   CFG = {...DEF, ...(cs.exists ? cs.data() : {})};
   $("s-fee").value = CFG.planFee; $("s-method").value = CFG.payMethod; $("s-num").value = CFG.payNumber;
-  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax; $("s-wa").value = CFG.waLink || "";
+  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax; $("s-usd").value = CFG.usdRate; $("s-wa").value = CFG.waLink || "";
 
   USERS = u.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
   if(rc){ const have = new Set(rc.docs.map(d => d.id)), miss = USERS.filter(x => x.refCode && !have.has(x.refCode)).slice(0, 400);
@@ -331,7 +337,7 @@ async function load0(){
     <div class="mu">TID ${esc(x.tid)} · ${new Date(x.at||0).toLocaleDateString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
 
   let h = ""; s.forEach(d => { const x = d.data();
-    h += `<div class="card l"><b>${esc(x.taskTitle)}</b> · Rs ${esc(x.reward)}<div class="mu">${esc(x.email)}</div>
+    h += `<div class="card l"><b>${esc(x.taskTitle)}</b> · ${rs(x.reward)}<div class="mu">${esc(x.email)}</div>
       <div>${/^https?:\/\//.test(x.proof) ? `<a href="${esc(x.proof)}" target="_blank" rel="noopener">${esc(x.proof)}</a>` : esc(x.proof)}</div>
       ${/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x.shot || "") ? `<img src="${x.shot}" alt="screenshot" style="max-width:100%;max-height:240px;border-radius:12px;margin-top:6px;border:1px solid var(--bd)" onclick="openShot(this.src)"><div class="mu">Tap the screenshot to enlarge</div>` : ""}
       <div class="row"><button onclick="appSub('${d.id}',true)">Approve</button><button class="r" onclick="appSub('${d.id}',false)">Reject</button></div></div>`; });
@@ -347,7 +353,7 @@ async function load0(){
       <div class="mu">${esc(x.email)} · ${new Date(x.at||0).toLocaleDateString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
 
   h = ""; t.forEach(d => { const x = d.data();
-    h += `<div class="card l"><div class="th">${pbadge(x.platform,30)}<b style="flex:1">${esc(x.title)}</b> <span class="tag">Rs ${esc(x.reward)}</span> ${x.limit > 0 ? `<span class="tag ${(x.taken||0) >= x.limit ? "bad" : ""}">${x.taken||0}/${x.limit}</span>` : `<span class="tag no">${x.taken||0} done</span>`}
+    h += `<div class="card l"><div class="th">${pbadge(x.platform,30)}<b style="flex:1">${esc(x.title)}</b> <span class="tag">${rs(x.reward)}</span> ${x.limit > 0 ? `<span class="tag ${(x.taken||0) >= x.limit ? "bad" : ""}">${x.taken||0}/${x.limit}</span>` : `<span class="tag no">${x.taken||0} done</span>`}
       <span class="tag ${x.active && !(x.limit > 0 && (x.taken||0) >= x.limit) ? "" : "no"}">${!x.active ? "closed" : (x.limit > 0 && (x.taken||0) >= x.limit) ? "ended (full)" : "live"}</span></div>
       <div class="row"><button class="g" onclick="toggleTask('${d.id}',${!x.active})">${x.active ? "Close" : "Make live"}</button></div></div>`; });
   $("atasks").innerHTML = h;
@@ -361,8 +367,8 @@ function renderUsers(){
     <span class="tag ${u.verified ? "" : "no"}">${u.verified ? ic("check") + "verified" : "unverified"}</span> <span class="tag ${u.activated ? "" : "no"}">${u.activated ? "plan active" : "no plan"}</span>
     ${u.fullName || u.country ? `<div class="mu">${esc(u.fullName||"")}${u.fullName && u.country ? " \u00b7 " : ""}${esc(u.country||"")}</div>` : ""}
     <div class="mu">Referral code: <b>${esc(u.refCode||"-")}</b>${u.referredBy ? " \u00b7 invited with code <b>" + esc(u.referredBy) + "</b>" + (u.refPaid ? " (commission paid)" : "") : ""}</div>
-    <div class="mu">Earned Rs ${esc(u.totalEarned ?? "-")} · Withdrawn Rs ${esc(u.totalWithdrawn ?? "-")}</div>
-    <div class="mu">Balance Rs ${esc(u.balance||0)} · Friends ${esc(u.refCount||0)} · Joined ${new Date(u.createdAt||0).toLocaleDateString()}</div>
+    <div class="mu">Earned ${u.totalEarned == null ? "-" : rs(u.totalEarned)} · Withdrawn ${u.totalWithdrawn == null ? "-" : rs(u.totalWithdrawn)}</div>
+    <div class="mu">Balance ${rs(u.balance)} · Friends ${esc(u.refCount||0)} · Joined ${new Date(u.createdAt||0).toLocaleDateString()}</div>
     <div class="row"><button class="g" onclick="adjBal('${u.id}',1)">${ic("plus")}Add Rs</button><button class="r" onclick="adjBal('${u.id}',-1)">${ic("minus")}Deduct</button>
       <button class="g" onclick="setActive('${u.id}',${!u.activated})">${ic("bolt")}${u.activated ? "Deactivate" : "Activate"}</button>
       ${u.email === ADMIN_EMAIL ? "" : `<button class="${u.banned ? "g" : "r"}" onclick="ban('${u.id}',${!u.banned})">${u.banned ? "Unban" : "Ban user"}</button>`}</div>
@@ -370,13 +376,13 @@ function renderUsers(){
 }
 async function adjBal(id, sign){
   const u = USERS.find(x => x.id === id); if(!u) return;
-  const a = Number(prompt((sign > 0 ? "Add balance to " : "Deduct balance from ") + u.email + "\nCurrent balance: Rs " + (u.balance || 0) + "\nEnter amount (Rs):"));
+  const a = Number(prompt((sign > 0 ? "Add balance to " : "Deduct balance from ") + u.email + "\nCurrent balance: " + rs(u.balance) + "\nEnter amount (Rs):"));
   if(!(a > 0)) return;
   if(!confirm((sign > 0 ? "Add Rs " + a + " to " : "Deduct Rs " + a + " from ") + u.email + "?")) return;
   const ref = db.collection("users").doc(id); let before = 0, after = 0;
   try{
     await db.runTransaction(async tx => {
-      const s = await tx.get(ref); before = s.data().balance || 0; after = before + sign * a;
+      const s = await tx.get(ref); before = s.data().balance || 0; after = r6(before + sign * a);
       if(after < 0) throw new Error("Balance cannot go below Rs 0 (current: Rs " + before + ")");
       tx.update(ref, {balance: after});
     });
@@ -409,7 +415,7 @@ async function payReferral(uid){
       if(u.data().refPaid) return false;
       const rd = r.data();
       tx.update(uref, {refPaid:true});
-      tx.update(rq, {balance:(rd.balance||0)+CFG.refBonus, refEarned:(rd.refEarned||0)+CFG.refBonus, refCount:(rd.refCount||0)+1, totalEarned:inc(CFG.refBonus)});
+      tx.update(rq, {balance:r6((rd.balance||0)+CFG.refBonus), refEarned:(rd.refEarned||0)+CFG.refBonus, refCount:(rd.refCount||0)+1, totalEarned:inc(CFG.refBonus)});
       if(rp.exists) tx.update(rpref, {earned:inc(CFG.refBonus), team:inc(1)});
       return true;
     });
@@ -443,7 +449,7 @@ async function syncProfiles(pf, w){
       Object.assign(x, upd);
       const want = {refUid:x.referrerUid || ruid || "", team:x.refCount || 0, earned:te, active:!!x.activated}, p = have[x.id];
       if(!p) ops.push(b => b.set(db.collection("profiles").doc(x.id), {uid:x.id, name:(x.fullName || "").trim() || (x.email || "").split("@")[0], photo:x.photo || "", at:x.createdAt || Date.now(), ...want}));
-      else if(p.refUid !== want.refUid || p.team !== want.team || p.earned !== want.earned || p.active !== want.active) ops.push(b => b.update(db.collection("profiles").doc(x.id), want));
+      else if(p.refUid !== want.refUid || p.team !== want.team || Math.abs((p.earned || 0) - (want.earned || 0)) > 1e-6 || p.active !== want.active) ops.push(b => b.update(db.collection("profiles").doc(x.id), want));
     });
     for(let i = 0; i < ops.length; i += 100){ const b = db.batch(); ops.slice(i, i + 100).forEach(f => f(b)); await b.commit(); }
     $("syn").textContent = ops.length ? "Profiles synced (" + ops.length + " updates)." : "";
@@ -478,7 +484,7 @@ async function appSub(id, ok){
       const u = await tx.get(uref);
       const pref = db.collection("profiles").doc(x.uid), pr = await tx.get(pref);
       const td = await tx.get(db.collection("tasks").doc(x.taskId));
-      if(ok){ tx.update(uref, {balance: (u.data().balance||0) + x.reward, totalEarned: inc(x.reward)}); if(pr.exists) tx.update(pref, {earned: inc(x.reward)}); }
+      if(ok){ tx.update(uref, {balance: r6((u.data().balance||0) + x.reward), totalEarned: inc(x.reward)}); if(pr.exists) tx.update(pref, {earned: inc(x.reward)}); }
       if(!ok && td.exists) tx.update(td.ref, {taken: Math.max(0, (td.data().taken || 0) - 1)});
       tx.update(ref, {status: ok ? "approved" : "rejected"});
     });
@@ -493,7 +499,7 @@ async function appWd(id, ok){
       const s = await tx.get(ref); const x = s.data(); if(x.status !== "pending") return;
       if(ok){ const uref = db.collection("users").doc(x.uid); const u = await tx.get(uref);
         if((u.data().balance||0) < x.amount) throw new Error("User balance is too low");
-        tx.update(uref, {balance: u.data().balance - x.amount, totalWithdrawn: inc(x.amount)}); }
+        tx.update(uref, {balance: r6(u.data().balance - x.amount), totalWithdrawn: inc(x.amount)}); }
       const fee = Math.ceil(Number(x.amount) * (CFG.withdrawTax || 0) / 100);
       tx.update(ref, ok ? {status:"paid", fee, net:Number(x.amount) - fee} : {status:"rejected"});
     });

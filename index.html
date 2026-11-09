@@ -154,13 +154,13 @@ textarea{font-family:inherit}
 
 <div id="app" class="hide">
   <div id="v-home">
-    <div class="card hero"><div class="mu">Available balance</div><div class="bal" id="bal">Rs 0</div></div>
+    <div class="card hero"><div class="mu">Available balance</div><div class="bal" id="bal">$0.00</div></div>
     <div class="card stat pl" id="hstats"></div>
     <div class="card" id="wacard"></div>
     <div class="card"><h3>Withdraw money</h3>
       <select id="wm"><option>JazzCash</option><option>Easypaisa</option></select>
       <input id="wn" placeholder="Account number">
-      <input id="wa" type="number" placeholder="Amount (Rs)" oninput="taxPreview()">
+      <input id="wa" type="number" step="any" inputmode="decimal" placeholder="Amount ($)" oninput="taxPreview()">
       <div class="note" id="wtax" style="display:none"></div>
       <button onclick="withdraw()">Request withdrawal</button>
       <div class="mu" id="wmin"></div></div>
@@ -182,7 +182,7 @@ textarea{font-family:inherit}
 /* ====== SETTINGS ====== */
 const NAME = "TaskPey";
 // Default values. Admin panel (Settings tab) se badal sakte ho, wo yahan override ho jayengi.
-const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, usdRate:280, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
 let CFG = {...DEF};
 const firebaseConfig = {
   apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
@@ -215,6 +215,10 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth(), db = firebase.firestore();
 try{ db.settings({experimentalForceLongPolling:true}); }catch(e){ console.warn(e); }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rate = () => Number(CFG.usdRate) > 0 ? Number(CFG.usdRate) : DEF.usdRate;
+// PKR (database) -> Dollar text for users, up to 5 decimals (e.g. $0.2344, $12.50)
+const usd = p => { let s = ((Number(p) || 0) / rate()).toFixed(5).replace(/0+$/, ""); const d = s.indexOf("."); const dec = s.length - d - 1; if(dec < 2) s += "0".repeat(2 - dec); return "$" + s; };
+const usd2 = p => "$" + ((Number(p) || 0) / rate()).toFixed(2);
 let me = null, ud = null;
 const X = {
   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/>',
@@ -451,7 +455,8 @@ async function showActivate(){
     return;
   }
   a.innerHTML = `<h3>Activate your account</h3>
-    <div class="mu">One-time plan: <b>Rs ${CFG.planFee}</b>. It unlocks tasks, withdrawals and your referral code. Earnings are <b>not guaranteed</b>: they depend on available tasks and on approval of your work.</div>
+    <div style="text-align:center;margin:10px 0 4px"><div class="mu">Investment plan (one-time)</div><div class="bal">${usd2(CFG.planFee)}</div><div class="mu">Rs ${CFG.planFee}</div></div>
+    <div class="mu">It unlocks tasks, withdrawals and your referral code. Earnings are <b>not guaranteed</b>: they depend on available tasks and on approval of your work.</div>
     ${st === "rejected" ? '<div class="mu" style="color:#dc2626;margin-top:8px">Your last payment could not be verified. Please check the details and submit again.</div>' : ""}
     <div class="card"><div class="mu">Send Rs ${CFG.planFee} to (${esc(CFG.payMethod)}):</div><div class="code" style="font-size:20px;letter-spacing:1px">${esc(CFG.payNumber)}</div><div class="mu" style="text-align:center">${esc(CFG.payName)}</div></div>
     <select id="pm"><option>${esc(CFG.payMethod)}</option></select>
@@ -471,9 +476,9 @@ async function submitPay(){
 
 /* ---------- Home ---------- */
 async function loadHome(){
-  $("wmin").textContent = "Minimum Rs " + CFG.minWithdraw;
-  $("bal").textContent = "Rs " + ud.balance; waCard();
-  const sd = (ic, n, l) => `<div><span class="si">${xi(ic)}</span><b>Rs ${esc(n)}</b>${l}</div>`;
+  $("wmin").textContent = "Minimum " + usd(CFG.minWithdraw);
+  $("bal").textContent = usd(ud.balance); waCard();
+  const sd = (ic, n, l) => `<div><span class="si">${xi(ic)}</span><b>${usd(n)}</b>${l}</div>`;
   const paint = (paid, tasksEarned) => {
     const tw = ud.totalWithdrawn != null ? ud.totalWithdrawn : paid;
     const te = tasksEarned != null ? tasksEarned + (Number(ud.refEarned) || 0) : (ud.totalEarned != null ? ud.totalEarned : (Number(ud.balance) || 0) + paid);
@@ -486,7 +491,7 @@ async function loadHome(){
   paint(paid, te);
   let h = "<h3>My withdrawals</h3>";
   q.forEach(d => { const w = d.data();
-    h += `<div class="card">Rs ${esc(w.amount)}${w.net != null ? " \u2192 you get Rs " + esc(w.net) : ""} · ${esc(w.method)} <span class="tag">${esc(w.status)}</span></div>`; });
+    h += `<div class="card">${usd(w.amount)}${w.net != null ? " \u2192 you get " + usd(w.net) : ""} · ${esc(w.method)} <span class="tag">${esc(w.status)}</span></div>`; });
   $("wlist").innerHTML = q.empty ? "" : h;
 }
 const waOk = l => /^https:\/\/(chat\.)?whatsapp\.com\//i.test(l || "");
@@ -498,18 +503,19 @@ function waCard(){
     <a href="${esc(l)}" target="_blank" rel="noopener"><button style="width:100%;margin-top:10px">Join now</button></a>`;
 }
 const taxCalc = a => { const fee = Math.ceil(a * (CFG.withdrawTax || 0) / 100); return {fee, net:a - fee}; };
+const wdPkr = () => Math.floor((Number($("wa").value) || 0) * rate());   // dollars typed by user -> whole PKR
 function taxPreview(){
-  const a = Number($("wa").value), el = $("wtax");
+  const a = wdPkr(), el = $("wtax");
   if(!(a > 0) || !(CFG.withdrawTax > 0)){ el.style.display = "none"; return; }
   const c = taxCalc(a);
-  el.style.display = "block"; el.innerHTML = `Tax (${CFG.withdrawTax}%): <b>Rs ${c.fee}</b> \u00b7 You will receive: <b>Rs ${c.net}</b>`;
+  el.style.display = "block"; el.innerHTML = `Tax (${CFG.withdrawTax}%): <b>${usd(c.fee)}</b> \u00b7 You will receive: <b>${usd(c.net)}</b> <span class="mu">(Rs ${c.net})</span>`;
 }
 async function withdraw(){
-  const amount = Number($("wa").value), number = $("wn").value.trim();
-  if(!number || !(amount >= CFG.minWithdraw)) return alert("Enter account number and amount (minimum Rs "+CFG.minWithdraw+")");
+  const amount = wdPkr(), number = $("wn").value.trim();
+  if(!number || !(amount >= CFG.minWithdraw)) return alert("Enter account number and amount (minimum " + usd(CFG.minWithdraw) + ")");
   if(amount > ud.balance) return alert("Insufficient balance");
   const c = taxCalc(amount);
-  if(!confirm("Withdraw Rs " + amount + "?\nTax (" + (CFG.withdrawTax || 0) + "%): Rs " + c.fee + "\nYou will receive: Rs " + c.net)) return;
+  if(!confirm("Withdraw " + usd(amount) + "?\nTax (" + (CFG.withdrawTax || 0) + "%): " + usd(c.fee) + "\nYou will receive: " + usd(c.net) + " (Rs " + c.net + ")")) return;
   try{ await db.collection("withdrawals").add({uid:me.uid, email:me.email, amount, fee:c.fee, net:c.net, method:$("wm").value, number, status:"pending", at:Date.now()}); }
   catch(e){ return alert(e.message); }
   $("wa").value = ""; taxPreview(); loadHome();
@@ -552,7 +558,7 @@ async function loadTasks(){
   ts.forEach(d => { const t = d.data(), st = done[d.id];
     const lim = Number(t.limit || 0), left = lim - Number(t.taken || 0), full = lim > 0 && left <= 0;
     if(full && !st) return;   // task ended: hidden for users who did not take part
-    h += `<div class="card"><div class="th">${pbadge(t.platform)}<h3>${esc(t.title)}</h3><span class="tag">Rs ${esc(t.reward)}</span>${lim > 0 && !full ? `<span class="tag no">${left} left</span>` : ""}${full ? `<span class="tag bad">Task ended</span>` : ""}</div>
+    h += `<div class="card"><div class="th">${pbadge(t.platform)}<h3>${esc(t.title)}</h3><span class="tag">${usd(t.reward)}</span>${lim > 0 && !full ? `<span class="tag no">${left} left</span>` : ""}${full ? `<span class="tag bad">Task ended</span>` : ""}</div>
       <div class="mu">${esc(t.desc)}</div>
       ${t.note ? `<div class="note">\u{1F4DD} ${esc(t.note)}</div>` : ""}
       ${/^https?:\/\//i.test(t.link || "") ? `<div class="row"><a href="${esc(t.link)}" target="_blank" rel="noopener"><button class="g">${esc(t.openLabel || "Open link")}</button></a></div>` : ""}
@@ -602,11 +608,11 @@ async function ensureCode(){
 function loadRefer(){
   if(!ud.refCode) ensureCode();
   const c = ud.refCode || "…", link = location.origin + location.pathname + "?ref=" + c;
-  $("v-refer").innerHTML = `<div class="card"><h3>Invite friends, earn Rs ${CFG.refBonus}</h3>
-    <div class="mu">You get Rs ${CFG.refBonus} when your friend's account (plan) is approved.</div>
+  $("v-refer").innerHTML = `<div class="card"><h3>Invite friends, earn ${usd(CFG.refBonus)}</h3>
+    <div class="mu">You get ${usd(CFG.refBonus)} when your friend's account (plan) is approved.</div>
     <div class="code">${esc(c)}</div>
     ${ud.refCode ? `<div class="row"><button onclick="cp('${esc(c)}')">Copy code</button><button class="g" onclick="cp('${esc(link)}')">Copy invite link</button></div>` : `<div class="mu">Creating your code…</div>`}</div>
-    <div class="card stat pl"><div><b>${ud.refCount||0}</b><span class="mu">Friends joined</span></div><div><b>Rs ${ud.refEarned||0}</b><span class="mu">Earned</span></div></div>
+    <div class="card stat pl"><div><b>${ud.refCount||0}</b><span class="mu">Friends joined</span></div><div><b>${usd(ud.refEarned||0)}</b><span class="mu">Earned</span></div></div>
     <div id="flist"></div>`;
   loadFriends();
 }
@@ -619,7 +625,7 @@ async function loadFriends(){
     const okImg = p => /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p || "");
     let h = `<h3>My friends (${arr.length})</h3>` + (arr.length ? "" : `<div class="card mu">No friends have joined with your code yet.</div>`);
     arr.forEach(f => { h += `<div class="card"><div class="fr"><div class="fav">${okImg(f.photo) ? `<img src="${f.photo}" alt="">` : xi("user")}</div>
-      <div class="pt"><b>${esc(f.name || "Friend")}</b><span>Team: ${esc(f.team || 0)} members</span><span>Total earning: <em style="font-style:normal;font-weight:700;color:var(--pr2)">Rs ${esc(f.earned || 0)}</em></span></div>
+      <div class="pt"><b>${esc(f.name || "Friend")}</b><span>Team: ${esc(f.team || 0)} members</span><span>Total earning: <em style="font-style:normal;font-weight:700;color:var(--pr2)">${usd(f.earned || 0)}</em></span></div>
       <span class="tag ${f.active ? "" : "no"}">${f.active ? "Active" : "Not active yet"}</span></div></div>`; });
     friendsHtml = h; if($("flist") && curTab === "refer") $("flist").innerHTML = h;
   }catch(e){ console.warn(e); }
@@ -643,7 +649,7 @@ function loadProfile(){
       <div class="av">${photo ? `<img src="${photo}" alt="">` : xi("user")}<button class="cam" onclick="$('pf').click()" aria-label="Change photo">${xi("cam")}</button></div>
       <div class="pinfo"><h2>${esc(un)} ${xi("badge")}</h2>
         <div class="mu">Member since ${new Date(ud.createdAt || Date.now()).toLocaleDateString()}</div>
-        <div class="row"><span class="tag">${xi("mail")}Email verified</span><span class="tag">${xi("wallet")}Balance: Rs ${esc(ud.balance)}</span></div></div></div></div>
+        <div class="row"><span class="tag">${xi("mail")}Email verified</span><span class="tag">${xi("wallet")}Balance: ${usd(ud.balance)}</span></div></div></div></div>
     <div class="sec" style="margin:16px 4px 4px"><span class="pi">${xi("gear")}</span><div class="pt"><b style="font-size:18px">Account Information</b><span>Manage your account settings</span></div></div>
     ${row("user", "Full Name", ud.fullName ? esc(ud.fullName) : "Tap to add your name", "editField('name')")}
     ${row("globe", "Country", ud.country ? esc(ud.country) + " " + flagOf(ud.country) : "Tap to select your country", "editField('country')")}
