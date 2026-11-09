@@ -164,12 +164,16 @@ nav button.on svg{animation:pop 1.8s ease-in-out infinite}
 #cfab{position:fixed;right:14px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:40;height:50px;padding:0 18px;overflow:visible!important;box-shadow:0 8px 22px rgba(29,78,216,.55);animation:flt 3s ease-in-out infinite}
 #cfab::after{display:none!important}
 #cfab .bd{position:absolute;top:-6px;right:-4px;background:#dc2626;color:#fff;border-radius:99px;font-size:12px;min-width:20px;height:20px;display:grid;place-items:center;padding:0 5px;animation:pop 1s infinite}.bd:empty{display:none}
-#cpan{position:fixed;left:0;right:0;bottom:0;z-index:60;max-width:560px;margin:0 auto;height:min(78vh,580px);display:flex;flex-direction:column;background:rgba(255,255,255,.97);border-radius:24px 24px 0 0;box-shadow:0 -10px 40px rgba(4,24,110,.45);animation:sheet .35s cubic-bezier(.2,.8,.2,1) both}
+#cpan,#hpan{position:fixed;left:0;right:0;bottom:0;z-index:60;max-width:560px;margin:0 auto;height:min(78vh,580px);display:flex;flex-direction:column;background:rgba(255,255,255,.97);border-radius:24px 24px 0 0;box-shadow:0 -10px 40px rgba(4,24,110,.45);animation:sheet .35s cubic-bezier(.2,.8,.2,1) both}
 .ch{display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(135deg,#22d3ee,#1d4ed8);color:#fff;border-radius:24px 24px 0 0}
 .ch .dot{width:11px;height:11px;border-radius:50%;background:#4ade80;animation:ping 1.6s infinite}
 @keyframes ping{0%{box-shadow:0 0 0 0 rgba(74,222,128,.8)}100%{box-shadow:0 0 0 10px rgba(74,222,128,0)}}
-#cmsg{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
-#cpan .cin{padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid #dbe5ff}
+#cmsg,#hmsg{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+#cpan .cin,#hpan .cin{padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid #dbe5ff}
+#hfab{position:fixed;right:14px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:40;height:50px;padding:0 18px;overflow:visible!important;box-shadow:0 8px 22px rgba(29,78,216,.55);animation:flt 3s ease-in-out infinite}
+#hfab::after{display:none!important}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-top:1px solid #dbe5ff;max-height:132px;overflow-y:auto}
+.chips button{padding:7px 12px;font-size:13px}
 </style>
 </head>
 <body>
@@ -258,6 +262,9 @@ nav button.on svg{animation:pop 1.8s ease-in-out infinite}
 <button id="cfab" class="hide" onclick="toggleChat()" aria-label="Live chat support"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Support<span class="bd" id="cbd"></span></button>
 <div id="cpan" class="hide"><div class="ch"><span class="dot"></span><div style="flex:1"><b>TaskPey Support</b><div style="font-size:12px;opacity:.9">Live chat · we reply instantly</div></div><button class="g" style="padding:6px 12px" onclick="toggleChat()">&#10005;</button></div><div id="cmsg"></div>
 <div class="cin"><input id="cin" maxlength="500" placeholder="Type your message…" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">Send</button></div></div>
+<button id="hfab" class="hide" onclick="toggleHelp()" aria-label="Help and support"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Support</button>
+<div id="hpan" class="hide"><div class="ch"><span class="dot"></span><div style="flex:1"><b>TaskPey Help</b><div style="font-size:12px;opacity:.9">Step-by-step guide &middot; A to Z</div></div><button class="g" style="padding:6px 12px" onclick="toggleHelp()">&#10005;</button></div><div id="hmsg"></div><div class="chips" id="hchips"></div>
+<div class="cin"><input id="hin" maxlength="100" placeholder="Ask: account, payment, TID…" onkeydown="if(event.key==='Enter')helpSend()"><button onclick="helpSend()">Send</button></div></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -476,7 +483,7 @@ auth.onAuthStateChanged(boot);
 setTimeout(() => { if(!$("ld").classList.contains("hide") && !$("ldsp").classList.contains("hide")) $("ldm").textContent = "Slow internet \u2014 please wait\u2026"; }, 6000);
 
 async function onUser(u){
-  me = u; if(!u) chatOff(); $("auth").classList.toggle("hide", !!u); $("lo").classList.toggle("hide", !u);
+  me = u; helpShow(!u); if(!u) chatOff(); $("auth").classList.toggle("hide", !!u); $("lo").classList.toggle("hide", !u);
   $("verify").classList.add("hide"); $("needref").classList.add("hide"); $("app").classList.add("hide"); $("banned").classList.add("hide"); $("activate").classList.add("hide");
   $("ld").classList.add("hide");
   if(!u){ try{ localStorage.removeItem(CK); }catch(e){} return; }
@@ -488,7 +495,7 @@ async function onUser(u){
   if(!d.exists){
     const rc = cleanCode(lsGet("tp_ref")); let ok = false, rUid = "";
     if(rc.length === 6){ try{ const r0 = await db.collection("refCodes").doc(rc).get(); ok = r0.exists; rUid = ok ? (r0.data().uid || "") : ""; }catch(e){} }
-    if(!ok){ $("ld").classList.add("hide"); $("nr").value = rc; $("needref").classList.remove("hide"); return; }
+    if(!ok){ $("ld").classList.add("hide"); $("nr").value = rc; $("needref").classList.remove("hide"); helpShow(true); return; }
     const co = lsGet("tp_co");
     await ur.set({email:u.email, balance:0, verified:false, refCode:genCode(), referredBy:rc, referrerUid:rUid, refEarned:0, refCount:0, createdAt:Date.now(),
       country:(COUNTRIES.some(c => c[0] === co) ? co : ""), fullName:lsGet("tp_fn") || ""});
@@ -499,7 +506,7 @@ async function onUser(u){
   $("ld").classList.add("hide");
   if(d.data().banned){ $("banned").classList.remove("hide"); return; }
   if(!d.data().verified){
-    $("vem").textContent = u.email; $("verify").classList.remove("hide");
+    $("vem").textContent = u.email; $("verify").classList.remove("hide"); helpShow(true);
     const o = getOtp();
     if(!o || Date.now() > o.exp){
       try{ await sendOtp(); $("verr").textContent = "Code sent to your email."; }
@@ -819,20 +826,123 @@ async function notifyAdmin(t){   // email to admin (max 1 per 3 minutes); needs 
   if(!EMAILJS.supportTemplateId || Date.now() - Number(lsGet("tp_cn") || 0) < 180000) return; lsSet("tp_cn", Date.now());
   try{ await loadEmailJS(); await emailjs.send(EMAILJS.serviceId, EMAILJS.supportTemplateId, {to_email:ADMIN_MAIL, from_email:me.email, user_name:(ud && ud.fullName) || "", message:t, app_name:NAME}); }catch(e){ console.warn(e); }
 }
-const BOT = [
-  [/^(hi|hello|hey|salam|assalam|aoa)\b/i, () => "Hi! \u{1F44B} Welcome to TaskPey support. Ask me about the plan, tasks, withdrawals or referrals."],
-  [/withdraw|cash ?out|jazzcash|easypaisa|paisa|payout/i, () => `Withdrawals: minimum ${usd(CFG.minWithdraw)}, ${CFG.withdrawTax}% tax. Go to Home \u2192 Withdraw money. The admin pays manually and the status shows under "My withdrawals".`],
-  [/task|proof|screenshot|reward|approve|reject/i, () => "Open Tasks, finish the task, attach a screenshot (or note) and tap Submit proof. The reward is added after the admin approves it. Each task can be submitted once."],
-  [/refer|invite|friend|bonus|code/i, () => `Share your code or link from the Refer tab. You get ${usd(CFG.refBonus)} when your friend's plan is approved.`],
-  [/plan|activate|activation|fee|payment|tid|invest/i, () => `The one-time plan is ${usd2(CFG.planFee)} (Rs ${CFG.planFee}). Send it to ${CFG.payMethod} ${CFG.payNumber} (${CFG.payName}), then enter your account number and TID. The admin approves it, usually within 24 hours.`],
+const DONE = "We're working on your request now. Your issue will be solved shortly, and one of our agents will talk to you here soon. \u{1F64F}";
+// Each topic: keyword -> ask "what is the issue?" with options -> short answer -> "we are working on it"
+const TOPICS = {
+  wd:{re:/w[a-z]{0,3}draw|cash ?out|jazz|easypaisa|payout|paisa|paise|pesy/i, name:"withdrawal", live:true,
+    opts:[
+      {l:"Pending", re:/pend|wait|time|late|how long|how much|kitna|der|dair|intezar/i, t:"Pending withdrawals are paid manually by our team."},
+      {l:"Rejected", re:/reject|cancel|declin/i, t:"A rejected withdrawal is usually caused by a wrong account number or method."},
+      {l:"Approved/Paid but money not received", re:/approv|paid|receiv|not (got|come|came)|nahi|nhi|ni a|pas?y|payment/i, t:"If it shows paid but you did not receive it, we will trace the payment."}],
+    more:"Please send your account number, method (JazzCash/Easypaisa), amount and date so we can check it."},
+  task:{re:/task|proof|screenshot|submission|submit/i, name:"task",
+    opts:[
+      {l:"Submission pending", re:/pend|wait|time|late|review/i, t:"Submissions are reviewed manually by our team."},
+      {l:"Submission rejected", re:/reject|declin/i, t:"A task is usually rejected when the proof is unclear or incomplete."},
+      {l:"Approved but reward not added", re:/approv|reward|balance|not (added|got|come)|nahi|nhi|pas?y/i, t:"The reward is added to your balance right after approval."}],
+    more:"Please tell us the task name and what happened."},
+  plan:{re:/plan|activat|fee|tid|invest|payment/i, name:"plan / activation",
+    opts:[
+      {l:"Payment pending", re:/pend|wait|time|late|review/i, t:"Plan payments are checked manually by our team."},
+      {l:"Payment rejected", re:/reject|declin|wrong/i, t:"A payment is usually rejected when the TID or sender number does not match."},
+      {l:"Approved but account not active", re:/approv|active|activate|not (active|work)|nahi|nhi/i, t:"After approval your account should become active."}],
+    more:"Please send your sender account number, TID and amount so we can check it."},
+  ref:{re:/refer|invite|friend|bonus|code/i, name:"referral",
+    opts:[
+      {l:"Bonus not received", re:/bonus|not (got|receiv|add)|nahi|nhi|pas?y/i, t:"The referral bonus is added when your friend's plan is approved."},
+      {l:"Friend joined but not counted", re:/count|joined|join|show|list/i, t:"Your friend must join with your code and get their plan approved to be counted."},
+      {l:"Code not working", re:/work|valid|invalid|error/i, t:"Codes are 6 characters (letters and numbers)."}],
+    more:"Please send your referral code and your friend's email so we can check it."}
+};
+const SIMPLE = [
+  [/^(hi|hello|hey|salam|assalam|aoa)\b/i, () => "Hi! \u{1F44B} Welcome to TaskPey support. Tell me what you need help with: plan, tasks, withdrawals or referrals."],
   [/otp|verify|verification/i, () => "Check Spam for the 6-digit code (valid 10 minutes) or tap Resend code."],
   [/password|forgot|login/i, () => 'Tap "Forgot password?" on the login page and we will email you a reset link.'],
   [/ban|block/i, () => "If your account is banned, our team will review it. Please send your registered email and what happened."],
   [/thank|shukr/i, () => "You're welcome! \u{1F60A}"]
 ];
+let botFlow = null;
+const topicOf = t => Object.keys(TOPICS).find(k => TOPICS[k].re.test(t));
+async function wdLive(){
+  try{
+    const q = await db.collection("withdrawals").where("uid","==",me.uid).get();
+    const a = q.docs.map(d => d.data()).sort((x, y) => (y.at || 0) - (x.at || 0))[0];
+    return a ? ` Your latest withdrawal (${usd(a.amount)}, ${a.method}) is currently: ${a.status}.` : " We could not find any withdrawal request on your account.";
+  }catch(e){ return ""; }
+}
+async function botSay(arr){
+  let at = Date.now();
+  for(const text of arr){
+    try{ await db.collection("chats").doc(me.uid).collection("msgs").add({from:"bot", text:String(text).slice(0, 500), at:at++}); }catch(e){ console.warn(e); }
+  }
+}
 async function botReply(t){
-  const hit = BOT.find(b => b[0].test(t)), r = hit ? hit[1]() : "Thanks! I've passed your message to our team. They will reply here soon. \u{1F64F}";
-  try{ await db.collection("chats").doc(me.uid).collection("msgs").add({from:"bot", text:r, at:Date.now()}); }catch(e){ console.warn(e); }
+  const ask = k => { botFlow = {k}; const T = TOPICS[k];
+    return [`Sorry for the trouble! What is the issue with your ${T.name}?\n` + T.opts.map((o, i) => `${i + 1}) ${o.l}`).join("\n") + `\n${T.opts.length + 1}) Something else\nReply with a number or write your issue.`]; };
+  if(botFlow){
+    const T = TOPICS[botFlow.k], n = t.trim().match(/^(\d)$/);
+    let o = n ? T.opts[Number(n[1]) - 1] : null;
+    if(!o && !n) o = T.opts.slice().reverse().find(x => x.re.test(t));
+    if(!o && !n){ const k2 = topicOf(t); if(k2 && k2 !== botFlow.k) return botSay(ask(k2)); }
+    const k = botFlow.k; botFlow = null;
+    const live = T.live && o ? await wdLive() : "";
+    return botSay([o ? o.t + live + " " + T.more : "Thanks for explaining. " + T.more, DONE]);
+  }
+  const gk = guideKey(t);
+  if(["tid","sender","method","pay"].includes(gk) && !/reject|pend|wrong|problem|issue|not |nahi|nhi/i.test(t)) return botSay([guideText(gk)]);
+  const hit = SIMPLE.find(b => b[0].test(t));
+  if(hit) return botSay([hit[1]()]);
+  const k = topicOf(t);
+  if(k) return botSay(ask(k));
+  return botSay(["Thanks! Please tell us your issue (plan, tasks, withdrawals or referrals) and we will help.", DONE]);
+}
+
+/* ---------- Help guide (works before login too, no database needed) ---------- */
+const GUIDE = {
+  signup: "How to create your account:\n1) Enter your full name, country, email and password.\n2) Enter the 6-character referral code of the friend who invited you (required).\n3) Tap Create Account.\n4) Enter the 6-digit code we email you (check Spam too).\n5) Pay the one-time plan to activate your account.",
+  ref: "Referral code: a 6-character code (letters and numbers) that your friend gets in their Refer tab. Ask the friend who invited you for it, or open their invite link and the code fills in automatically. Without a valid code you cannot create an account.",
+  pw: "Password rules: 8 or more characters with an uppercase letter, a lowercase letter, a number and a special character (@ # $ !).",
+  otp: "After you create the account we email a 6-digit code. Check Spam too. It is valid for 10 minutes. Did not get it? Tap Resend code (you can ask for a new one after 1 minute). 5 wrong tries lock the code, then tap Resend.",
+  method: "Payment method = the wallet/app you use to send the plan money (for example Easypaisa or JazzCash). Choose the method shown on the activation screen and send the amount to the number shown there.",
+  sender: "Sender number = YOUR own wallet/account number that you sent the money FROM. Type that number in the 'Your account number (sender)' box.",
+  tid: "TID = Transaction ID, the unique ID of your payment. After you send the money you get a confirmation SMS (and a receipt in the app) with a Transaction ID. Copy it exactly into the TID box (at least 6 characters).",
+  login: "Wrong password? Tap 'Forgot password?' on the login page and we will email you a reset link (check Spam). If you have no account yet, tap Create account."
+};
+const guideText = k => {
+  if(k !== "pay") return GUIDE[k];
+  return me
+    ? `Plan payment A to Z:\n1) Open ${CFG.payMethod} and send Rs ${CFG.planFee} to ${CFG.payNumber} (${CFG.payName}).\n2) Copy the Transaction ID (TID) from the confirmation SMS.\n3) Type your own account number (sender) and the TID, then tap Submit payment details.\n4) We check it, usually within 24 hours, and activate your account.`
+    : "Plan payment A to Z:\n1) Create your account and verify your email. Then the plan amount and the number to send it to appear on the activation screen.\n2) Send the amount from your Easypaisa/JazzCash app.\n3) Copy the Transaction ID (TID) from the confirmation SMS.\n4) Type your own account number (sender) and the TID, then tap Submit payment details.\n5) We check it, usually within 24 hours, and activate your account.";
+};
+const guideKey = t => {
+  if(/\btid\b|transaction/i.test(t)) return "tid";
+  if(/sender/i.test(t)) return "sender";
+  if(/method/i.test(t)) return "method";
+  if(/(how|kaise|kese|kese).*(pay|send|bhej|activate)|pay(ment)? steps|payment kaise/i.test(t)) return "pay";
+  if(/otp|email code|6.?digit|verification code/i.test(t)) return "otp";
+  if(/password/i.test(t)) return "pw";
+  if(/refer|invite|code/i.test(t)) return "ref";
+  if(/login|log in|forgot/i.test(t)) return "login";
+  if(/account|sign ?up|register|create|join/i.test(t)) return "signup";
+  return "";
+};
+const HELPCHIPS = [["signup","Create account"],["ref","Referral code"],["pw","Password rules"],["otp","Email code (OTP)"],["pay","Plan payment steps"],["method","Payment method"],["sender","Sender number"],["tid","What is TID?"],["login","Login problem"]];
+let hOpen = false, hInit = false;
+function hAdd(c, t){ const m = $("hmsg"); m.insertAdjacentHTML("beforeend", `<div class="mb ${c}">${esc(t)}</div>`); m.scrollTop = 1e9; }
+function helpShow(v){ $("hfab").classList.toggle("hide", !v); if(!v){ hOpen = false; $("hpan").classList.add("hide"); } }
+function toggleHelp(){
+  hOpen = !hOpen; $("hpan").classList.toggle("hide", !hOpen);
+  if(hOpen && !hInit){
+    hInit = true;
+    hAdd("o", "Hi! \u{1F44B} I can guide you step by step, from creating your account to paying the plan. Tap a button below or type your question. After you log in and verify your email you can also chat with our support team.");
+    $("hchips").innerHTML = HELPCHIPS.map(c => `<button class="g" onclick="helpAsk('${c[0]}','${c[1]}')">${c[1]}</button>`).join("");
+  }
+}
+function helpAsk(k, label){ hAdd("u", label); setTimeout(() => hAdd("o", guideText(k)), 250); }
+function helpSend(){
+  const t = $("hin").value.trim(); if(!t) return; $("hin").value = ""; hAdd("u", t);
+  const k = guideKey(t);
+  setTimeout(() => hAdd("o", k ? guideText(k) : "Tap one of the buttons below, or ask about: account, referral code, password, email code, payment, method, sender number or TID."), 250);
 }
 </script>
 </body>
