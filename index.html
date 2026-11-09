@@ -87,6 +87,9 @@ textarea{font-family:inherit}
 .th{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}.th h3{margin:0;flex:1;min-width:0}
 .note{background:var(--soft);color:var(--pr2);border-radius:12px;padding:8px 10px;font-size:14px;margin:8px 0}
 .err{color:#dc2626!important}
+.fr{display:flex;align-items:center;gap:12px}
+.fav{width:54px;height:54px;border-radius:50%;border:3px solid #22c55e;background:var(--soft);display:grid;place-items:center;overflow:hidden;flex:none;color:var(--pr)}
+.fav img{width:100%;height:100%;object-fit:cover}.fav .ic{width:28px;height:28px}
 #rf:not(:placeholder-shown),#nr:not(:placeholder-shown){text-transform:uppercase;letter-spacing:2px;font-weight:700}
 </style>
 </head>
@@ -152,6 +155,7 @@ textarea{font-family:inherit}
 <div id="app" class="hide">
   <div id="v-home">
     <div class="card hero"><div class="mu">Available balance</div><div class="bal" id="bal">Rs 0</div></div>
+    <div class="card stat pl" id="hstats"></div>
     <div class="card"><h3>Withdraw money</h3>
       <select id="wm"><option>JazzCash</option><option>Easypaisa</option></select>
       <input id="wn" placeholder="Account number">
@@ -242,6 +246,7 @@ const PLAT = {
 const pbadge = (k, sz) => { const p = PLAT[k] || {bg:"#16a34a", e:"\u{1F3AF}"};
   return `<span class="pb" style="background:${p.bg};${sz ? `width:${sz}px;height:${sz}px` : ""}">${p.g ? `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p.g}</svg>` : p.e}</span>`; };
 const xi = k => `<svg class="ic" viewBox="0 0 24 24">${X[k]}</svg>`;
+X.trend = '<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>';
 $("lo").innerHTML = xi("out") + "Logout";
 const COUNTRIES = [["Pakistan","PK"],["India","IN"],["Bangladesh","BD"],["Afghanistan","AF"],["Saudi Arabia","SA"],["United Arab Emirates","AE"],["Qatar","QA"],["Kuwait","KW"],["Oman","OM"],["Bahrain","BH"],["United Kingdom","GB"],["United States","US"],["Canada","CA"],["Australia","AU"],["Germany","DE"],["France","FR"],["Italy","IT"],["Spain","ES"],["Netherlands","NL"],["Ireland","IE"],["Sweden","SE"],["Norway","NO"],["Turkey","TR"],["Malaysia","MY"],["Indonesia","ID"],["Singapore","SG"],["China","CN"],["Japan","JP"],["South Korea","KR"],["Sri Lanka","LK"],["Nepal","NP"],["Iran","IR"],["Iraq","IQ"],["Jordan","JO"],["Lebanon","LB"],["Egypt","EG"],["Nigeria","NG"],["South Africa","ZA"],["Brazil","BR"],["Mexico","MX"],["Russia","RU"],["Other",""]];
 const flagOf = n => { const c = (COUNTRIES.find(x => x[0] === n) || [])[1]; return c ? String.fromCodePoint(...[...c].map(ch => 127397 + ch.charCodeAt(0))) : "\u{1F30D}"; };
@@ -372,7 +377,7 @@ async function boot(u){
       // fast path: show the app instantly from saved data, refresh quietly in the background
       me = u; ud = c.ud; if(c.cfg) CFG = {...DEF, ...c.cfg};
       $("auth").classList.add("hide"); $("ld").classList.add("hide"); $("lo").classList.remove("hide");
-      mountApp(); show("home", true); ensureCode(); refreshBg(u);
+      mountApp(); show("home", true); ensureCode(); ensureProfile(); refreshBg(u);
       return;
     }
     await onUser(u);
@@ -393,11 +398,11 @@ async function onUser(u){
   if(cs && cs.exists) CFG = {...DEF, ...cs.data()};
   let d = d0;
   if(!d.exists){
-    const rc = cleanCode(lsGet("tp_ref")); let ok = false;
-    if(rc.length === 6){ try{ ok = (await db.collection("refCodes").doc(rc).get()).exists; }catch(e){} }
+    const rc = cleanCode(lsGet("tp_ref")); let ok = false, rUid = "";
+    if(rc.length === 6){ try{ const r0 = await db.collection("refCodes").doc(rc).get(); ok = r0.exists; rUid = ok ? (r0.data().uid || "") : ""; }catch(e){} }
     if(!ok){ $("ld").classList.add("hide"); $("nr").value = rc; $("needref").classList.remove("hide"); return; }
     const co = lsGet("tp_co");
-    await ur.set({email:u.email, balance:0, verified:false, refCode:genCode(), referredBy:rc, refEarned:0, refCount:0, createdAt:Date.now(),
+    await ur.set({email:u.email, balance:0, verified:false, refCode:genCode(), referredBy:rc, referrerUid:rUid, refEarned:0, refCount:0, createdAt:Date.now(),
       country:(COUNTRIES.some(c => c[0] === co) ? co : ""), fullName:lsGet("tp_fn") || ""});
     ["tp_ref","tp_co","tp_fn"].forEach(lsDel);
     d = await ur.get();
@@ -417,7 +422,7 @@ async function onUser(u){
   if(!d.data().activated){ showActivate(); return; }
   mountApp();
   ud = d.data(); writeCache(u.uid, ud);
-  show("home", true); ensureCode();
+  show("home", true); ensureCode(); ensureProfile();
   loadTasks().catch(() => {});
 }
 
@@ -467,7 +472,15 @@ async function submitPay(){
 async function loadHome(){
   $("wmin").textContent = "Minimum Rs " + CFG.minWithdraw;
   $("bal").textContent = "Rs " + ud.balance;
+  const sd = (ic, n, l) => `<div><span class="si">${xi(ic)}</span><b>Rs ${esc(n)}</b>${l}</div>`;
+  const paint = paid => {
+    const tw = ud.totalWithdrawn != null ? ud.totalWithdrawn : paid, te = ud.totalEarned != null ? ud.totalEarned : (Number(ud.balance) || 0) + paid;
+    $("hstats").innerHTML = sd("trend", te, "Total earning") + sd("wallet", tw, "Total withdrawal");
+  };
+  paint(0);
   const q = await db.collection("withdrawals").where("uid","==",me.uid).get();
+  let paid = 0; q.forEach(d => { const w = d.data(); if(w.status === "paid") paid += Number(w.amount) || 0; });
+  paint(paid);
   let h = "<h3>My withdrawals</h3>";
   q.forEach(d => { const w = d.data();
     h += `<div class="card">Rs ${esc(w.amount)}${w.net != null ? " \u2192 you get Rs " + esc(w.net) : ""} · ${esc(w.method)} <span class="tag">${esc(w.status)}</span></div>`; });
@@ -582,7 +595,31 @@ function loadRefer(){
     <div class="mu">You get Rs ${CFG.refBonus} when your friend's account (plan) is approved.</div>
     <div class="code">${esc(c)}</div>
     ${ud.refCode ? `<div class="row"><button onclick="cp('${esc(c)}')">Copy code</button><button class="g" onclick="cp('${esc(link)}')">Copy invite link</button></div>` : `<div class="mu">Creating your code…</div>`}</div>
-    <div class="card stat pl"><div><b>${ud.refCount||0}</b><span class="mu">Friends joined</span></div><div><b>Rs ${ud.refEarned||0}</b><span class="mu">Earned</span></div></div>`;
+    <div class="card stat pl"><div><b>${ud.refCount||0}</b><span class="mu">Friends joined</span></div><div><b>Rs ${ud.refEarned||0}</b><span class="mu">Earned</span></div></div>
+    <div id="flist"></div>`;
+  loadFriends();
+}
+let friendsHtml = null;
+async function loadFriends(){
+  if(friendsHtml !== null && $("flist")) $("flist").innerHTML = friendsHtml;
+  try{
+    const q = await db.collection("profiles").where("refUid", "==", me.uid).get();
+    const arr = q.docs.map(d => d.data()).sort((a, b) => (b.at || 0) - (a.at || 0));
+    const okImg = p => /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p || "");
+    let h = `<h3>My friends (${arr.length})</h3>` + (arr.length ? "" : `<div class="card mu">No friends have joined with your code yet.</div>`);
+    arr.forEach(f => { h += `<div class="card"><div class="fr"><div class="fav">${okImg(f.photo) ? `<img src="${f.photo}" alt="">` : xi("user")}</div>
+      <div class="pt"><b>${esc(f.name || "Friend")}</b><span>Team: ${esc(f.team || 0)} members</span><span>Total earning: <em style="font-style:normal;font-weight:700;color:var(--pr2)">Rs ${esc(f.earned || 0)}</em></span></div>
+      <span class="tag ${f.active ? "" : "no"}">${f.active ? "Active" : "Not active yet"}</span></div></div>`; });
+    friendsHtml = h; if($("flist") && curTab === "refer") $("flist").innerHTML = h;
+  }catch(e){ console.warn(e); }
+}
+let profDone = false;
+async function ensureProfile(){
+  if(profDone || !ud || !me) return; profDone = true;
+  try{
+    const r = db.collection("profiles").doc(me.uid), sn = await r.get(); if(sn.exists) return;
+    await r.set({uid:me.uid, name:(ud.fullName || "").trim() || (me.email || "").split("@")[0], photo:ud.photo || "", refUid:ud.referrerUid || "", team:0, earned:0, active:false, at:Date.now()});
+  }catch(e){ console.warn(e); }
 }
 function cp(t){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => alert("Copied!")).catch(() => prompt("Copy this:", t)); }
 
@@ -616,7 +653,7 @@ async function saveField(k){
   const v = $("mv").value.trim();
   if(k === "name" && v.length < 2) return alert("Please enter your full name.");
   if(k === "country" && !v) return alert("Please select your country.");
-  try{ await db.collection("users").doc(me.uid).update(k === "name" ? {fullName: v.slice(0,40)} : {country: v}); Object.assign(ud, k === "name" ? {fullName: v.slice(0,40)} : {country: v}); closeM(); show("profile", true); }
+  try{ await db.collection("users").doc(me.uid).update(k === "name" ? {fullName: v.slice(0,40)} : {country: v}); Object.assign(ud, k === "name" ? {fullName: v.slice(0,40)} : {country: v}); if(k === "name") db.collection("profiles").doc(me.uid).update({name: v.slice(0,40)}).catch(() => {}); closeM(); show("profile", true); }
   catch(e){ alert(e.message); }
 }
 async function changePw(){
@@ -632,7 +669,7 @@ $("pf").onchange = e => {
     const m = Math.min(img.width, img.height);
     c.getContext("2d").drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, 240, 240);
     URL.revokeObjectURL(url);
-    try{ const ph = c.toDataURL("image/jpeg", .75); await db.collection("users").doc(me.uid).update({photo: ph}); ud.photo = ph; show("profile", true); }
+    try{ const ph = c.toDataURL("image/jpeg", .75); await db.collection("users").doc(me.uid).update({photo: ph}); ud.photo = ph; db.collection("profiles").doc(me.uid).update({photo: ph}).catch(() => {}); show("profile", true); }
     catch(err){ alert(err.message); }
   };
   img.onerror = () => alert("Please choose an image file.");

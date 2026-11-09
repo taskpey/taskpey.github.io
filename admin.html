@@ -284,14 +284,15 @@ async function load(){
   catch(e){ $("stats").innerHTML = '<div style="padding:10px;color:#dc2626">Could not load: ' + esc(e.message) + '</div>'; }
 }
 async function load0(){
-  const [s, w, t, u, p, cs, rc] = await Promise.all([
+  const [s, w, t, u, p, cs, rc, pf] = await Promise.all([
     db.collection("submissions").where("status","==","pending").get(),
     db.collection("withdrawals").get(),
     db.collection("tasks").get(),
     db.collection("users").get(),
     db.collection("payments").get(),
     db.collection("settings").doc("config").get(),
-    db.collection("refCodes").get().catch(() => null)]);
+    db.collection("refCodes").get().catch(() => null),
+    db.collection("profiles").get().catch(() => null)]);
   CFG = {...DEF, ...(cs.exists ? cs.data() : {})};
   $("s-fee").value = CFG.planFee; $("s-method").value = CFG.payMethod; $("s-num").value = CFG.payNumber;
   $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax;
@@ -300,6 +301,7 @@ async function load0(){
   if(rc){ const have = new Set(rc.docs.map(d => d.id)), miss = USERS.filter(x => x.refCode && !have.has(x.refCode)).slice(0, 400);
     if(miss.length){ const bt = db.batch(); miss.forEach(x => bt.set(db.collection("refCodes").doc(x.refCode), {uid:x.id})); bt.commit().catch(() => {}); } }
   backfillRef();
+  syncProfiles(pf, w);
   const nocode = USERS.filter(x => !x.refCode).slice(0, 50);
   if(nocode.length){
     nocode.forEach(x => { x.refCode = Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join(""); });
@@ -356,6 +358,7 @@ function renderUsers(){
     <span class="tag ${u.verified ? "" : "no"}">${u.verified ? ic("check") + "verified" : "unverified"}</span> <span class="tag ${u.activated ? "" : "no"}">${u.activated ? "plan active" : "no plan"}</span>
     ${u.fullName || u.country ? `<div class="mu">${esc(u.fullName||"")}${u.fullName && u.country ? " \u00b7 " : ""}${esc(u.country||"")}</div>` : ""}
     <div class="mu">Referral code: <b>${esc(u.refCode||"-")}</b>${u.referredBy ? " \u00b7 invited with code <b>" + esc(u.referredBy) + "</b>" + (u.refPaid ? " (commission paid)" : "") : ""}</div>
+    <div class="mu">Earned Rs ${esc(u.totalEarned ?? "-")} · Withdrawn Rs ${esc(u.totalWithdrawn ?? "-")}</div>
     <div class="mu">Balance Rs ${esc(u.balance||0)} · Friends ${esc(u.refCount||0)} · Joined ${new Date(u.createdAt||0).toLocaleDateString()}</div>
     <div class="row"><button class="g" onclick="adjBal('${u.id}',1)">${ic("plus")}Add Rs</button><button class="r" onclick="adjBal('${u.id}',-1)">${ic("minus")}Deduct</button>
       <button class="g" onclick="setActive('${u.id}',${!u.activated})">${ic("bolt")}${u.activated ? "Deactivate" : "Activate"}</button>
@@ -398,14 +401,43 @@ async function payReferral(uid){
     if(q.empty || q.docs[0].id === uid) return false;
     const rq = q.docs[0].ref, uref = db.collection("users").doc(uid);
     return await db.runTransaction(async tx => {
-      const [u, r] = await Promise.all([tx.get(uref), tx.get(rq)]);
+      const rpref = db.collection("profiles").doc(rq.id);
+      const [u, r, rp] = await Promise.all([tx.get(uref), tx.get(rq), tx.get(rpref)]);
       if(u.data().refPaid) return false;
       const rd = r.data();
       tx.update(uref, {refPaid:true});
-      tx.update(rq, {balance:(rd.balance||0)+CFG.refBonus, refEarned:(rd.refEarned||0)+CFG.refBonus, refCount:(rd.refCount||0)+1});
+      tx.update(rq, {balance:(rd.balance||0)+CFG.refBonus, refEarned:(rd.refEarned||0)+CFG.refBonus, refCount:(rd.refCount||0)+1, totalEarned:inc(CFG.refBonus)});
+      if(rp.exists) tx.update(rpref, {earned:inc(CFG.refBonus), team:inc(1)});
       return true;
     });
   }catch(e){ console.warn(e); return false; }
+}
+const inc = n => firebase.firestore.FieldValue.increment(n);
+// Har user ka public profile (naam, photo, team, total earning) invite karne walon ko dikhane ke liye
+let syncing = false;
+async function syncProfiles(pf, w){
+  if(syncing || !pf) return; syncing = true;
+  try{
+    const have = {}; pf.docs.forEach(d => have[d.id] = d.data());
+    const byCode = {}; USERS.forEach(x => { if(x.refCode) byCode[x.refCode] = x.id; });
+    const paid = {}; w.docs.forEach(d => { const x = d.data(); if(x.status === "paid") paid[x.uid] = (paid[x.uid] || 0) + (Number(x.amount) || 0); });
+    const ops = [];
+    USERS.forEach(x => {
+      const pd = paid[x.id] || 0, te = x.totalEarned != null ? x.totalEarned : (Number(x.balance) || 0) + pd, tw = x.totalWithdrawn != null ? x.totalWithdrawn : pd;
+      const ruid = x.referredBy ? (byCode[x.referredBy] || "") : "";
+      const upd = {};
+      if(x.totalEarned == null) upd.totalEarned = te;
+      if(x.totalWithdrawn == null) upd.totalWithdrawn = tw;
+      if(ruid && x.referrerUid !== ruid) upd.referrerUid = ruid;
+      if(Object.keys(upd).length) ops.push(b => b.update(db.collection("users").doc(x.id), upd));
+      Object.assign(x, upd);
+      const want = {refUid:x.referrerUid || ruid || "", team:x.refCount || 0, earned:te, active:!!x.activated}, p = have[x.id];
+      if(!p) ops.push(b => b.set(db.collection("profiles").doc(x.id), {uid:x.id, name:(x.fullName || "").trim() || (x.email || "").split("@")[0], photo:x.photo || "", at:x.createdAt || Date.now(), ...want}));
+      else if(p.refUid !== want.refUid || p.team !== want.team || p.earned !== want.earned || p.active !== want.active) ops.push(b => b.update(db.collection("profiles").doc(x.id), want));
+    });
+    for(let i = 0; i < ops.length; i += 100){ const b = db.batch(); ops.slice(i, i + 100).forEach(f => f(b)); await b.commit(); }
+  }catch(e){ console.warn(e); }
+  syncing = false;
 }
 let paying = false;
 async function backfillRef(){
@@ -433,8 +465,9 @@ async function appSub(id, ok){
       uid = x.uid;
       const uref = db.collection("users").doc(x.uid);
       const u = await tx.get(uref);
+      const pref = db.collection("profiles").doc(x.uid), pr = await tx.get(pref);
       const td = await tx.get(db.collection("tasks").doc(x.taskId));
-      if(ok) tx.update(uref, {balance: (u.data().balance||0) + x.reward});
+      if(ok){ tx.update(uref, {balance: (u.data().balance||0) + x.reward, totalEarned: inc(x.reward)}); if(pr.exists) tx.update(pref, {earned: inc(x.reward)}); }
       if(!ok && td.exists) tx.update(td.ref, {taken: Math.max(0, (td.data().taken || 0) - 1)});
       tx.update(ref, {status: ok ? "approved" : "rejected"});
     });
@@ -449,7 +482,7 @@ async function appWd(id, ok){
       const s = await tx.get(ref); const x = s.data(); if(x.status !== "pending") return;
       if(ok){ const uref = db.collection("users").doc(x.uid); const u = await tx.get(uref);
         if((u.data().balance||0) < x.amount) throw new Error("User balance is too low");
-        tx.update(uref, {balance: u.data().balance - x.amount}); }
+        tx.update(uref, {balance: u.data().balance - x.amount, totalWithdrawn: inc(x.amount)}); }
       const fee = Math.ceil(Number(x.amount) * (CFG.withdrawTax || 0) / 100);
       tx.update(ref, ok ? {status:"paid", fee, net:Number(x.amount) - fee} : {status:"rejected"});
     });
