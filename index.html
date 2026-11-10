@@ -224,6 +224,7 @@ button.sm{padding:7px 14px;font-size:13px}
     <div id="lerr" class="mu err" style="margin-top:8px"></div>
     <div style="margin-top:8px"><a href="#" onclick="forgot();return false">Forgot password?</a></div>
     <div class="or"><span>OR</span></div><div class="mu" style="text-align:center;margin-top:16px">New here? <a href="#" onclick="showAuth('signup');return false"><b>Create account</b></a></div>
+    <div class="mu" style="text-align:center;margin-top:8px"><a href="terms.html" target="_blank">About &amp; Terms</a></div>
     <div class="mu" style="text-align:center;margin-top:14px">Created by <b>NOVA REEF STUDIO</b></div>
   </div>
   <div id="signup" class="card hide">
@@ -236,6 +237,7 @@ button.sm{padding:7px 14px;font-size:13px}
     <div class="mu">Password: 8+ characters, with uppercase, lowercase, a number and a special character (@ # $ ! etc.)</div>
     <input id="rf" placeholder="Referral code (required)" maxlength="6" autocapitalize="characters">
     <button id="sb" style="width:100%;margin-top:8px" onclick="signup()">Create Account</button>
+    <div class="mu" style="text-align:center;margin-top:10px">By creating an account you agree to our <a href="terms.html" target="_blank"><b>About &amp; Terms</b></a>.</div>
     <div id="aerr" class="mu err" style="margin-top:8px"></div>
     <div class="mu" style="text-align:center;margin-top:16px">Already have an account? <a href="#" onclick="showAuth('login');return false"><b>Login</b></a></div>
     <div class="mu" style="text-align:center;margin-top:14px">Created by <b>NOVA REEF STUDIO</b></div>
@@ -626,7 +628,8 @@ async function showActivate(){
   }
   a.innerHTML = `<h3>Activate your account</h3>
     ${(Number((window.__uDoc || {}).signupBonus) || 0) > 0 ? `<div class="note">\u{1F381} Signup bonus <b>${usd(window.__uDoc.signupBonus)}</b> (Rs ${esc(window.__uDoc.signupBonus)}) is already in your wallet.</div>` : ""}
-    <div style="text-align:center;margin:10px 0 4px"><div class="mu">Investment plan (one-time)</div><div class="bal">${usd2(CFG.planFee)}</div><div class="mu">Rs ${CFG.planFee}</div></div>
+    <div style="text-align:center;margin:10px 0 4px"><div class="mu">Membership fee (one-time)</div><div class="bal">${usd2(CFG.planFee)}</div><div class="mu">Rs ${CFG.planFee}</div></div>
+    <div class="note" style="margin:8px 0">This is a one-time membership fee for access to the member area. It is <b>not an investment</b> and no profit or return is promised. Earnings depend on the tasks available and are not guaranteed. <a href="terms.html" target="_blank">Read About &amp; Terms</a></div>
     <div class="mu">It unlocks tasks, withdrawals and your referral code. Earnings are <b>not guaranteed</b>: they depend on available tasks and on approval of your work.</div>
     ${st === "rejected" ? '<div class="mu" style="color:#dc2626;margin-top:8px">Your last payment could not be verified. Please check the details and submit again.</div>' : ""}
     <div class="card"><div class="mu">Send Rs ${CFG.planFee} to (${esc(CFG.payMethod)}):</div><div class="code" style="font-size:20px;letter-spacing:1px">${esc(CFG.payNumber)}</div><div class="mu" style="text-align:center">${esc(CFG.payName)}</div></div>
@@ -808,7 +811,7 @@ function loadRefer(){
   if(!ud.refCode) ensureCode();
   const c = ud.refCode || "…", link = location.origin + location.pathname + "?ref=" + c;
   $("v-refer").innerHTML = `<div class="card"><h3>Invite friends, earn ${usd(CFG.refBonus)}</h3>
-    <div class="mu">You get ${usd(CFG.refBonus)} when your friend's account (plan) is approved.</div>
+    <div class="mu">You get ${usd(CFG.refBonus)} when your friend's membership is approved.</div>
     <div class="code">${esc(c)}</div>
     ${ud.refCode ? `<div class="row"><button onclick="cp('${esc(c)}')">Copy code</button><button class="g" onclick="cp('${esc(link)}')">Copy invite link</button></div>` : `<div class="mu">Creating your code…</div>`}</div>
     <div class="card stat pl"><div><b>${ud.refCount||0}</b><span class="mu">Friends joined</span></div><div><b>${usd(ud.refEarned||0)}</b><span class="mu">Earned</span></div></div>
@@ -857,6 +860,7 @@ function loadProfile(){
     ${row("image", "Update Profile Picture", "Change your profile photo", "$('pf').click()")}
     ${row("user", ALT ? "Open main account" : "Add another account", ALT ? "Opens your main account in a new tab" : "Use a second account in this browser (new tab)", "otherAcc()")}
     ${waOk(CFG.waLink) ? `<a class="prow" href="${esc(CFG.waLink)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="pi" style="background:none">${pbadge("whatsapp", 46)}</span><div class="pt"><b>WhatsApp Community</b><span>Join our official community</span></div>${xi("chev")}</a>` : ""}
+    <a class="prow" href="terms.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="pi">${xi("shield")}</span><div class="pt"><b>About &amp; Terms</b><span>How TaskPey works, fees and rules</span></div>${xi("chev")}</a>
     <div class="pstat"><span class="pi">${xi("shield")}</span><div class="pt"><b style="font-size:17px">Account Status</b><span style="white-space:normal">Your account is verified &amp; active</span></div><span class="tag">${xi("check")}Verified</span></div>
     <div class="mu" style="text-align:center;margin:14px 0">${NAME} \u00b7 Created by <b>NOVA REEF STUDIO</b></div>`;
 }
@@ -910,7 +914,7 @@ function initChat(){
   if(!me || chatUnsub) return; $("cfab").classList.remove("hide"); chatFirst = true;
   chatUnsub = db.collection("chats").doc(me.uid).collection("msgs").orderBy("at").limitToLast(100).onSnapshot(sn => {
     const a = sn.docs.map(d => d.data());
-    $("cmsg").innerHTML = a.length ? a.map(bub).join("") : bub({from:"bot", text:"Hi! \u{1F44B} I'm TaskPey support. Ask me about your plan, tasks, withdrawals or referrals."});
+    $("cmsg").innerHTML = a.length ? a.map(bub).join("") : bub({from:"bot", text:"Hi! \u{1F44B} I'm TaskPey support. Ask me about your membership, tasks, withdrawals or referrals."});
     $("cmsg").scrollTop = 1e9;
     const l = a[a.length - 1];
     if(!chatFirst && !chatOpen && l && l.from !== "user"){ chatN++; $("cbd").textContent = chatN; }
@@ -952,21 +956,21 @@ const TOPICS = {
       {l:"Submission rejected", re:/reject|declin/i, t:"A task is usually rejected when the proof is unclear or incomplete."},
       {l:"Approved but reward not added", re:/approv|reward|balance|not (added|got|come)|nahi|nhi|pas?y/i, t:"The reward is added to your balance right after approval."}],
     more:"Please tell us the task name and what happened."},
-  plan:{re:/plan|activat|fee|tid|invest|payment/i, name:"plan / activation",
+  plan:{re:/plan|activat|fee|tid|invest|payment/i, name:"membership / activation",
     opts:[
-      {l:"Payment pending", re:/pend|wait|time|late|review/i, t:"Plan payments are checked manually by our team."},
+      {l:"Payment pending", re:/pend|wait|time|late|review/i, t:"Membership payments are checked manually by our team."},
       {l:"Payment rejected", re:/reject|declin|wrong/i, t:"A payment is usually rejected when the TID or sender number does not match."},
       {l:"Approved but account not active", re:/approv|active|activate|not (active|work)|nahi|nhi/i, t:"After approval your account should become active."}],
     more:"Please send your sender account number, TID and amount so we can check it."},
   ref:{re:/refer|invite|friend|bonus|code/i, name:"referral",
     opts:[
-      {l:"Bonus not received", re:/bonus|not (got|receiv|add)|nahi|nhi|pas?y/i, t:"The referral bonus is added when your friend's plan is approved."},
-      {l:"Friend joined but not counted", re:/count|joined|join|show|list/i, t:"Your friend must join with your code and get their plan approved to be counted."},
+      {l:"Bonus not received", re:/bonus|not (got|receiv|add)|nahi|nhi|pas?y/i, t:"The referral bonus is added when your friend's membership is approved."},
+      {l:"Friend joined but not counted", re:/count|joined|join|show|list/i, t:"Your friend must join with your code and get their membership approved to be counted."},
       {l:"Code not working", re:/work|valid|invalid|error/i, t:"Codes are 6 characters (letters and numbers)."}],
     more:"Please send your referral code and your friend's email so we can check it."}
 };
 const SIMPLE = [
-  [/^(hi|hello|hey|salam|assalam|aoa)\b/i, () => "Hi! \u{1F44B} Welcome to TaskPey support. Tell me what you need help with: plan, tasks, withdrawals or referrals."],
+  [/^(hi|hello|hey|salam|assalam|aoa)\b/i, () => "Hi! \u{1F44B} Welcome to TaskPey support. Tell me what you need help with: membership, tasks, withdrawals or referrals."],
   [/otp|verify|verification/i, () => "Check Spam for the 6-digit code (valid 10 minutes) or tap Resend code."],
   [/password|forgot|login/i, () => 'Tap "Forgot password?" on the login page and we will email you a reset link.'],
   [/ban|block/i, () => "If your account is banned, our team will review it. Please send your registered email and what happened."],
@@ -1010,16 +1014,16 @@ async function botReply(t){
   if(hit) return botSay([hit[1]()]);
   const k = topicOf(t);
   if(k) return botSay(ask(k));
-  return botSay(["Thanks! Please tell us your issue (plan, tasks, withdrawals or referrals) and we will help."]);
+  return botSay(["Thanks! Please tell us your issue (membership, tasks, withdrawals or referrals) and we will help."]);
 }
 
 /* ---------- Help guide (works before login too, no database needed) ---------- */
 const GUIDE = {
-  signup: "How to create your account:\n1) Enter your full name, country, email and password.\n2) Enter the 6-character referral code of the friend who invited you (required).\n3) Tap Create Account.\n4) Enter the 6-digit code we email you (check Spam too).\n5) Pay the one-time plan to activate your account.",
+  signup: "How to create your account:\n1) Enter your full name, country, email and password.\n2) Enter the 6-character referral code of the friend who invited you (required).\n3) Tap Create Account.\n4) Enter the 6-digit code we email you (check Spam too).\n5) Pay the one-time membership fee to activate your account.",
   ref: "Referral code: a 6-character code (letters and numbers) that your friend gets in their Refer tab. Ask the friend who invited you for it, or open their invite link and the code fills in automatically. Without a valid code you cannot create an account.",
   pw: "Password rules: 8 or more characters with an uppercase letter, a lowercase letter, a number and a special character (@ # $ !).",
   otp: "After you create the account we email a 6-digit code. Check Spam too. It is valid for 10 minutes. Did not get it? Tap Resend code (you can ask for a new one after 1 minute). 5 wrong tries lock the code, then tap Resend.",
-  method: "Payment method = the wallet/app you use to send the plan money (for example Easypaisa or JazzCash). Choose the method shown on the activation screen and send the amount to the number shown there.",
+  method: "Payment method = the wallet/app you use to send the membership fee (for example Easypaisa or JazzCash). Choose the method shown on the activation screen and send the amount to the number shown there.",
   sender: "Sender number = YOUR own wallet/account number that you sent the money FROM. Type that number in the 'Your account number (sender)' box.",
   tid: "TID = Transaction ID, the unique ID of your payment. After you send the money you get a confirmation SMS (and a receipt in the app) with a Transaction ID. Copy it exactly into the TID box (at least 6 characters).",
   login: "Wrong password? Tap 'Forgot password?' on the login page and we will email you a reset link (check Spam). If you have no account yet, tap Create account."
@@ -1027,8 +1031,8 @@ const GUIDE = {
 const guideText = k => {
   if(k !== "pay") return GUIDE[k];
   return me
-    ? `Plan payment A to Z:\n1) Open ${CFG.payMethod} and send Rs ${CFG.planFee} to ${CFG.payNumber} (${CFG.payName}).\n2) Copy the Transaction ID (TID) from the confirmation SMS.\n3) Type your own account number (sender) and the TID, then tap Submit payment details.\n4) We check it, usually within 24 hours, and activate your account.`
-    : "Plan payment A to Z:\n1) Create your account and verify your email. Then the plan amount and the number to send it to appear on the activation screen.\n2) Send the amount from your Easypaisa/JazzCash app.\n3) Copy the Transaction ID (TID) from the confirmation SMS.\n4) Type your own account number (sender) and the TID, then tap Submit payment details.\n5) We check it, usually within 24 hours, and activate your account.";
+    ? `Membership payment A to Z:\n1) Open ${CFG.payMethod} and send Rs ${CFG.planFee} to ${CFG.payNumber} (${CFG.payName}).\n2) Copy the Transaction ID (TID) from the confirmation SMS.\n3) Type your own account number (sender) and the TID, then tap Submit payment details.\n4) We check it, usually within 24 hours, and activate your account.`
+    : "Membership payment A to Z:\n1) Create your account and verify your email. Then the membership fee and the number to send it to appear on the activation screen.\n2) Send the amount from your Easypaisa/JazzCash app.\n3) Copy the Transaction ID (TID) from the confirmation SMS.\n4) Type your own account number (sender) and the TID, then tap Submit payment details.\n5) We check it, usually within 24 hours, and activate your account.";
 };
 const guideKey = t => {
   if(/\btid\b|transaction/i.test(t)) return "tid";
@@ -1042,7 +1046,7 @@ const guideKey = t => {
   if(/account|sign ?up|register|create|join/i.test(t)) return "signup";
   return "";
 };
-const HELPCHIPS = [["signup","Create account"],["ref","Referral code"],["pw","Password rules"],["otp","Email code (OTP)"],["pay","Plan payment steps"],["method","Payment method"],["sender","Sender number"],["tid","What is TID?"],["login","Login problem"]];
+const HELPCHIPS = [["signup","Create account"],["ref","Referral code"],["pw","Password rules"],["otp","Email code (OTP)"],["pay","Membership payment steps"],["method","Payment method"],["sender","Sender number"],["tid","What is TID?"],["login","Login problem"]];
 let hOpen = false, hInit = false;
 function hAdd(c, t){ const m = $("hmsg"); m.insertAdjacentHTML("beforeend", `<div class="mb ${c}">${esc(t)}</div>`); m.scrollTop = 1e9; }
 function helpShow(v){ $("hfab").classList.toggle("hide", !v); if(!v){ hOpen = false; $("hpan").classList.add("hide"); } }
@@ -1050,7 +1054,7 @@ function toggleHelp(){
   hOpen = !hOpen; $("hpan").classList.toggle("hide", !hOpen);
   if(hOpen && !hInit){
     hInit = true;
-    hAdd("o", "Hi! \u{1F44B} I can guide you step by step, from creating your account to paying the plan. Tap a button below or type your question. After you log in and verify your email you can also chat with our support team.");
+    hAdd("o", "Hi! \u{1F44B} I can guide you step by step, from creating your account to paying the membership fee. Tap a button below or type your question. After you log in and verify your email you can also chat with our support team.");
     $("hchips").innerHTML = HELPCHIPS.map(c => `<button class="g" onclick="helpAsk('${c[0]}','${c[1]}')">${c[1]}</button>`).join("");
   }
 }

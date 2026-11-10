@@ -178,25 +178,29 @@ button.g{color:#cfe8ff}.tag{color:#7dd3fc}.note,a{color:#7dd3fc}
       <div class="cin" style="margin-top:8px"><input id="crin" placeholder="Type your reply…" onkeydown="if(event.key==='Enter')sendReply()"><button onclick="sendReply()">Send</button></div></div>
   </div>
   <div id="t-set" class="hide">
-    <div class="card"><h3 style="margin-top:0">Plan &amp; payment</h3>
+    <div class="card"><h3 style="margin-top:0">Membership fee &amp; payment</h3>
       <div class="mu">Dollar rate (1 USD = how many Rs). Users see everything in dollars using this rate</div><input id="s-usd" type="number" step="any">
       <div class="mu">Signup bonus for every new user (Rs). It is added to their wallet automatically. Use 0 to switch it off</div><input id="s-sb" type="number" min="0" max="1000" step="any">
-      <div class="mu">Plan fee (Rs)</div><input id="s-fee" type="number">
+      <div class="mu">Membership fee (Rs)</div><input id="s-fee" type="number">
       <div class="mu">Payment method (e.g. Easypaisa)</div><input id="s-method">
       <div class="mu">Payment number</div><input id="s-num">
       <div class="mu">Account title</div><input id="s-name">
       <h3>Referral &amp; withdrawal</h3>
-      <div class="mu">Referral bonus per friend (Rs), paid when the friend's account (plan) is approved</div><input id="s-ref" type="number">
+      <div class="mu">Referral bonus per friend (Rs), paid when the friend's membership is approved</div><input id="s-ref" type="number">
       <div class="mu">Minimum withdrawal (Rs)</div><input id="s-min" type="number">
       <div class="mu">WhatsApp community link (leave empty to hide)</div><input id="s-wa" inputmode="url" placeholder="https://chat.whatsapp.com/...">
       <div class="mu">Withdrawal tax (%) - deducted from every withdrawal</div><input id="s-tax" type="number" min="0" max="50" step="0.5">
       <h3>Support chat</h3>
       <div class="mu">Auto-reply bot (turn OFF if you deploy the AI Cloud Function)</div><select id="s-bot"><option value="1">ON - instant FAQ replies</option><option value="0">OFF</option></select>
       <button onclick="saveSettings()">Save settings</button><div id="sok" class="mu"></div></div>
+    <div class="card"><h3 style="margin-top:0">Records (CSV for Excel / Google Sheets)</h3>
+      <div class="mu">Download your payment and withdrawal records and keep them safe, for example once a week.</div>
+      <div class="row"><button class="g" onclick="exportPayments()">Payments</button><button class="g" onclick="exportWithdrawals()">Withdrawals</button><button class="g" onclick="exportLogs()">Balance changes</button><button class="g" onclick="exportUsers()">Users</button></div>
+      <div id="expmsg" class="mu"></div></div>
   </div>
 
   <div id="t-pay" class="hide">
-    <h3>Pending plan payments</h3><div id="apay"></div>
+    <h3>Pending membership payments</h3><div id="apay"></div>
     <h3>History</h3><div id="phist"></div>
   </div>
 
@@ -269,6 +273,43 @@ const IC = {
   plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>'};
 const ic = k => `<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
 let USERS = [], tab = "users";
+let ALLPAY = [], ALLWD = [];
+const fmtD = v => v ? new Date(v).toLocaleString("en-GB", {hour12:false}) : "";
+function csvCell(v){
+  let s = v == null ? "" : String(v);
+  if(typeof v === "string" && /^[=+\-@]/.test(s)) s = "'" + s;   // stop spreadsheet formula injection
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+function downloadCsv(name, head, rows){
+  const csv = "\ufeff" + [head].concat(rows).map(r => r.map(csvCell).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+  a.download = name + "-" + new Date().toISOString().slice(0, 10) + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  $("expmsg").textContent = rows.length + " rows saved as " + a.download + " (check your Downloads).";
+}
+function exportPayments(){
+  downloadCsv("taskpey-payments", ["Date","Email","Method","Sender number","TID","Amount (Rs)","Status"],
+    ALLPAY.slice().sort((a, b) => (b.at || 0) - (a.at || 0)).map(x => [fmtD(x.at), x.email, x.method, x.sender, x.tid, x.amount, x.status]));
+}
+function exportWithdrawals(){
+  downloadCsv("taskpey-withdrawals", ["Date","Email","Method","Account name","Account number","Amount (Rs)","Tax (Rs)","Net to pay (Rs)","Status"],
+    ALLWD.slice().sort((a, b) => (b.at || 0) - (a.at || 0)).map(x => {
+      const fee = x.fee != null ? x.fee : Math.ceil(Number(x.amount) * (CFG.withdrawTax || 0)) / 100;
+      return [fmtD(x.at), x.email, x.method, x.holder, x.number, x.amount, fee, x.net != null ? x.net : Math.round((Number(x.amount) - fee) * 100) / 100, x.status];
+    }));
+}
+async function exportLogs(){
+  try{
+    const s = await db.collection("balanceLogs").orderBy("at", "desc").limit(2000).get();
+    downloadCsv("taskpey-balance-changes", ["Date","User email","Change (Rs)","Before (Rs)","After (Rs)","By"], s.docs.map(d => { const x = d.data(); return [fmtD(x.at), x.email, x.amount, x.before, x.after, x.by]; }));
+  }catch(e){ alert(e.message); }
+}
+function exportUsers(){
+  downloadCsv("taskpey-users", ["Joined","Email","Name","Country","Balance (Rs)","Total earned (Rs)","Total withdrawn (Rs)","Referral code","Invited with code","Member","Banned"],
+    USERS.map(x => [fmtD(x.createdAt), x.email, x.fullName, x.country, x.balance, x.totalEarned, x.totalWithdrawn, x.refCode, x.referredBy, x.activated ? "yes" : "no", x.banned ? "yes" : "no"]));
+}
 const r6 = n => Math.round((Number(n) || 0) * 1e6) / 1e6;
 const rs = n => "Rs " + (Math.round((Number(n) || 0) * 100) / 100);
 const rt = () => Number(CFG.usdRate) > 0 ? Number(CFG.usdRate) : DEF.usdRate;
@@ -396,6 +437,7 @@ async function load0(){
     db.collection("refCodes").get().catch(() => null),
     db.collection("profiles").get().catch(() => null)]);
   CFG = {...DEF, ...(cs.exists ? cs.data() : {})};
+  ALLPAY = p.docs.map(d => ({id:d.id, ...d.data()})); ALLWD = w.docs.map(d => ({id:d.id, ...d.data()}));
   $("s-fee").value = CFG.planFee; $("s-method").value = CFG.payMethod; $("s-num").value = CFG.payNumber;
   $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax; $("s-usd").value = CFG.usdRate; $("s-sb").value = CFG.signupBonus ?? 15; $("s-wa").value = CFG.waLink || ""; $("s-bot").value = CFG.chatBot === false ? "0" : "1";
 
@@ -463,7 +505,7 @@ function renderUsers(){
   const k = $("us").value.toLowerCase();
   $("ulist").innerHTML = USERS.filter(u => (u.email||"").toLowerCase().includes(k)).map(u => `<div class="card l">
     <b>${esc(u.email)}</b> ${u.banned ? '<span class="tag bad">banned</span>' : ''}
-    <span class="tag ${u.verified ? "" : "no"}">${u.verified ? ic("check") + "verified" : "unverified"}</span> <span class="tag ${u.activated ? "" : "no"}">${u.activated ? "plan active" : "no plan"}</span>
+    <span class="tag ${u.verified ? "" : "no"}">${u.verified ? ic("check") + "verified" : "unverified"}</span> <span class="tag ${u.activated ? "" : "no"}">${u.activated ? "member" : "no plan"}</span>
     ${u.fullName || u.country ? `<div class="mu">${esc(u.fullName||"")}${u.fullName && u.country ? " \u00b7 " : ""}${esc(u.country||"")}</div>` : ""}
     <div class="mu">Referral code: <b>${esc(u.refCode||"-")}</b>${u.referredBy ? " \u00b7 invited with code <b>" + esc(u.referredBy) + "</b>" + (u.refPaid ? " (commission paid)" : "") : ""}</div>
     <div class="mu">Earned ${u.totalEarned == null ? "-" : rs(u.totalEarned)} · Withdrawn ${u.totalWithdrawn == null ? "-" : rs(u.totalWithdrawn)}</div>
@@ -569,7 +611,7 @@ async function appPay(uid, ok){
   load();
 }
 async function setActive(id, v){
-  if(!confirm(v ? "Activate this user's plan?" : "Deactivate this user's plan?")) return;
+  if(!confirm(v ? "Activate this user's membership?" : "Deactivate this user's membership?")) return;
   await db.collection("users").doc(id).update({activated:v}); if(v) await payReferral(id); load();
 }
 
