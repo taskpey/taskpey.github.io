@@ -167,6 +167,72 @@ button:not(.g):not(.r):not(.cam):not(.eye)::after{display:none}
 .tabs button.on{background:linear-gradient(180deg,#ff1a1a,#a80000)}
 .lbr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.lbr .rk{width:30px;font-weight:800;text-align:center}.lbr b{flex:1;min-width:120px}
 button.wait{pointer-events:none;opacity:.8}
+
+/* ===== Professional admin design ===== */
+:root{--card:#2a0b0e;--bd:rgba(255,255,255,.09);--soft:rgba(255,255,255,.07);--mu:#b9999b;--tx:#f7ecec;--sh:none}
+body{background:#150305;background-image:radial-gradient(70% 38% at 80% -5%,rgba(217,10,10,.35),transparent 70%)}
+body::before,body::after,.bg{display:none!important}
+.w{max-width:680px;padding:12px 12px 90px}
+.hdr{padding:6px 2px 12px}.hdr .logo{width:42px;height:42px;border-radius:12px;box-shadow:none}
+h1{font-size:20px;font-style:normal;letter-spacing:-.2px}h1 span{color:#ff5a5a}.hdr .mu{font-size:12.5px;color:#b9999b}
+#lo{padding:8px 12px;font-size:13px}
+/* one-line tab bar */
+.tabs{display:flex!important;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:10px -12px 12px;padding:8px 12px;position:sticky;top:0;z-index:6;background:rgba(21,3,5,.94);border-bottom:1px solid var(--bd);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;flex-direction:row;gap:7px;padding:9px 14px;font-size:13.5px;font-weight:600;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--bd);box-shadow:none;color:#e9d3d3}
+.tabs button .ic{width:16px;height:16px;color:#ff8a8a}
+.tabs button.on{background:#d90a0a;color:#fff;border-color:#d90a0a;box-shadow:none}.tabs button.on .ic{color:#fff}
+.tabs .nb{background:#fff;color:#a80000;font-weight:700;font-size:11px;padding:0 7px;line-height:18px}.tabs button:not(.on) .nb{background:#d90a0a;color:#fff}
+/* stats */
+.stat{display:grid!important;grid-template-columns:repeat(5,1fr);gap:0;padding:12px 4px}
+.stat>div{font-size:10.5px;letter-spacing:.3px;text-transform:uppercase;color:var(--mu)}
+.stat b{font-size:19px;margin-top:2px;text-transform:none}.stat .si{display:grid;place-items:center;margin:0 auto 4px;width:28px;height:28px;border-radius:9px;background:rgba(217,10,10,.18)}
+.stat .si .ic{width:15px;height:15px;color:#ff8a8a}
+.wsum{grid-template-columns:repeat(4,1fr)}
+/* cards */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;box-shadow:none;animation:none!important;padding:14px 14px}
+.card.l{border-left:3px solid #d90a0a}.wbox{border-top:2px solid #d90a0a}
+.card b{color:#fff}.mu{color:var(--mu);font-size:13px;line-height:1.45}
+h3{font-size:16px;font-weight:700;color:#fff}.card h3{color:#fff}
+/* buttons */
+button{border-radius:10px;padding:9px 14px;font-size:13.5px;font-weight:600;gap:6px;box-shadow:none;background:#d90a0a;border:1px solid transparent;letter-spacing:.1px}
+button:hover{filter:brightness(1.08);box-shadow:none}
+button .ic{width:15px;height:15px}
+button.g{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#f1dcdc}
+button.r{background:transparent;border:1px solid #ef4444;color:#ff8f8f}
+button:not(.g):not(.r)[onclick*=",true)"]{background:#16a34a}
+button:not(.g)[onclick*=",false)"]{background:transparent;border:1px solid #ef4444;color:#ff8f8f}
+.row{gap:8px;margin-top:12px}.row>button{flex:1 1 calc(50% - 8px);min-width:0;white-space:nowrap}
+#t-lb .row>button,#t-set .row>button{flex:1 1 auto}
+.tabs button,#lo,.xb{flex:none}
+/* chips */
+.tag{border-radius:6px;font-size:11.5px;font-weight:600;padding:2px 8px;background:rgba(255,255,255,.08);color:#f0d6d6;animation:none}
+.tag.bad{background:rgba(220,38,38,.9);color:#fff}.tag.no{background:rgba(255,255,255,.05);color:var(--mu)}
+/* forms */
+input,textarea,select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:10px;padding:11px 14px;font-size:14.5px;box-shadow:none}
+input::placeholder,textarea::placeholder{color:#8f7173}
+input:focus,textarea:focus,select:focus{outline:0;border-color:#ff4d4d;box-shadow:0 0 0 3px rgba(217,10,10,.25)}
+select option{color:#111;background:#fff}
+#auth{max-width:420px;margin:20px auto}
+
+/* ===== Left sidebar menu (one item per line) ===== */
+.w{max-width:1000px}
+#panel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 12px;align-items:start}
+#panel.hide{display:none}
+#stats,#syn{grid-column:1/-1}
+#tabs{grid-column:1;grid-row:3;display:flex!important;flex-direction:column;flex-wrap:nowrap;overflow:visible;gap:4px;margin:4px 0 0;padding:8px;position:sticky;top:8px;z-index:6;width:132px;background:var(--card);border:1px solid var(--bd);border-radius:14px}
+#panel>[id^="t-"]{grid-column:2;grid-row:3;min-width:0}
+#tabs button{width:100%;justify-content:flex-start;gap:9px;padding:10px 10px;border-radius:10px;font-size:13.5px;font-weight:600;background:transparent;border:0;color:#e9d3d3;white-space:nowrap}
+#tabs button:hover{background:rgba(255,255,255,.07);filter:none}
+#tabs button.on{background:#d90a0a;color:#fff}
+#tabs button .ic{width:18px;height:18px;flex:none}
+#tabs .nb{margin-left:auto}
+#tabs .sbt{color:#b9999b;font-weight:500;border-bottom:1px solid var(--bd);border-radius:10px 10px 0 0;margin-bottom:4px}
+#panel.mini #tabs{width:52px;padding:6px}
+#panel.mini #tabs button{font-size:0;justify-content:center;padding:11px 0;position:relative}
+#panel.mini #tabs .nb{position:absolute;top:2px;right:2px;margin:0;font-size:10px;line-height:15px;padding:0 5px}
+.row>button{flex:1 1 104px}
+@media(max-width:480px){#panel{gap:0 8px}#tabs{width:146px;padding:6px}#tabs button{font-size:13px;gap:8px;padding:10px 7px}#tabs .nb{padding:0 5px;font-size:10.5px;line-height:16px}.card{padding:12px}}
 </style>
 </head>
 <body>
@@ -452,6 +518,10 @@ async function load(){
   try{ await load0(); }
   catch(e){ $("stats").innerHTML = '<div style="padding:10px;color:#dc2626">Could not load: ' + esc(e.message) + '</div>'; }
 }
+
+const SBT = '<button class="g sbt" onclick="toggleSb()" aria-label="Collapse menu"><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu</button>';
+function toggleSb(){ const m = $("panel").classList.toggle("mini"); try{ localStorage.setItem("sb_mini", m ? "1" : ""); }catch(e){} }
+try{ if(localStorage.getItem("sb_mini")) $("panel").classList.add("mini"); }catch(e){}
 let lastMaint = 0;
 function maintain(w){
   if(Date.now() - lastMaint < 600000) return; lastMaint = Date.now();
@@ -472,7 +542,7 @@ function maintain(w){
 }
 async function load0(){
   const [s, w, t, u, p, cs] = await Promise.all([
-    db.collection("submissions").where("status","==","pending").get(),
+    db.collection("submissions").where("status","==","pending").limit(25).get(),
     db.collection("withdrawals").get(),
     db.collection("tasks").get(),
     db.collection("users").get(),
@@ -496,8 +566,9 @@ async function load0(){
 
   const sd = (k, n, l) => `<div><span class="si">${ic(k)}</span><b>${n}</b>${l}</div>`;
   $("stats").innerHTML = sd("users",USERS.length,"Users") + sd("ban",USERS.filter(x=>x.banned).length,"Banned") + sd("shield",USERS.filter(x=>x.activated).length,"Active") + sd("proofs",s.size,"Proofs") + sd("wallet",pend.length,"Withdrawals");
-  $("tabs").innerHTML = [["users","Users","users"],["lb","Leaderboard","bolt"],["pay","Payment","card"],["proofs","Proof","proofs"],["wd","Withdrawal","wallet"],["tasks","Tasks","tasks"],["chat","Support","chat"],["set","Settings","gear"]]
-    .map(x => `<button id="b-${x[0]}" onclick="show('${x[0]}')">${ic(x[2])}${x[1]}${x[0]==="chat"?'<span class="nb" id="nbc"></span>':""}</button>`).join("");
+  $("tabs").innerHTML = SBT + [["users","Users","users"],["lb","Leaderboard","bolt"],["pay","Payment","card"],["proofs","Proof","proofs"],["wd","Withdrawal","wallet"],["tasks","Tasks","tasks"],["chat","Support","chat"],["set","Settings","gear"]]
+    .map(x => `<button id="b-${x[0]}" onclick="show('${x[0]}')">${ic(x[2])}${x[1]}${x[0]==="chat"?'<span class="nb" id="nbc"></span>':`<span class="nb" id="nb-${x[0]}"></span>`}</button>`).join("");
+  [["pay", p.docs.filter(d => d.data().status === "pending").length], ["proofs", s.size], ["wd", pend.length]].forEach(a => { const e = $("nb-" + a[0]); if(e) e.textContent = a[1] || ""; });
 
   renderUsers();
   const pays = p.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.at||0) - (a.at||0));
@@ -506,22 +577,22 @@ async function load0(){
     <div class="mu">Check this payment in your JazzCash/Easypaisa first, then approve.</div>
     <div class="row"><button onclick="appPay('${x.id}',true)">Approve</button><button class="r" onclick="appPay('${x.id}',false)">Reject</button></div></div>`).join("")
     || '<div class="mu">No pending payments</div>';
-  $("phist").innerHTML = pays.filter(x => x.status !== "pending").map(x => `<div class="card l">Rs ${esc(x.amount)} · ${esc(x.email)} <span class="tag">${esc(x.status)}</span>
+  $("phist").innerHTML = pays.filter(x => x.status !== "pending").slice(0, 40).map(x => `<div class="card l">Rs ${esc(x.amount)} · ${esc(x.email)} <span class="tag">${esc(x.status)}</span>
     <div class="mu">TID ${esc(x.tid)} · ${new Date(x.at||0).toLocaleDateString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
 
   let h = ""; s.forEach(d => { const x = d.data();
     h += `<div class="card l"><b>${esc(x.taskTitle)}</b> · ${rs(x.reward)}<div class="mu">${esc(x.email)}</div>
       <div>${/^https?:\/\//.test(x.proof) ? `<a href="${esc(x.proof)}" target="_blank" rel="noopener">${esc(x.proof)}</a>` : esc(x.proof)}</div>
-      ${/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x.shot || "") ? `<img src="${x.shot}" alt="screenshot" style="max-width:100%;max-height:240px;border-radius:12px;margin-top:6px;border:1px solid var(--bd)" onclick="openShot(this.src)"><div class="mu">Tap the screenshot to enlarge</div>` : ""}
+      ${/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x.shot || "") ? `<img loading="lazy" decoding="async" src="${x.shot}" alt="screenshot" style="max-width:100%;max-height:240px;border-radius:12px;margin-top:6px;border:1px solid var(--bd)" onclick="openShot(this.src)"><div class="mu">Tap the screenshot to enlarge</div>` : ""}
       <div class="row"><button onclick="appSub('${d.id}',true)">Approve</button><button class="r" onclick="appSub('${d.id}',false)">Reject</button></div></div>`; });
-  $("asub").innerHTML = h || '<div class="mu">No pending proofs</div>';
+  $("asub").innerHTML = (s.size >= 25 ? '<div class="mu" style="margin:4px 2px">Showing the first 25 pending proofs. More appear after you review these.</div>' : "") + h || '<div class="mu">No pending proofs</div>';
 
   const taxOf = a => { const f = Math.ceil(Number(a) * (CFG.withdrawTax || 0) / 100); return {fee:f, net:Number(a) - f}; };
   $("awd").innerHTML = pend.map(x => { const tx_ = taxOf(x.amount); return `<div class="card l"><b>Pay Rs ${tx_.net}</b> <span class="mu">(Rs ${esc(x.amount)} - ${CFG.withdrawTax||0}% tax Rs ${tx_.fee})</span> · ${esc(x.method)} · ${esc(x.number)}<div class="mu">Account holder: <b>${esc(x.holder || "-")}</b></div><div class="mu">${esc(x.email)}</div>
       <div class="mu">Send the money via JazzCash/Easypaisa first, then tap "Paid".</div>
       <div class="row"><button onclick="appWd('${x.id}',true)">Paid</button><button class="r" onclick="appWd('${x.id}',false)">Reject</button></div></div>`; }).join("")
     || '<div class="mu">No pending requests</div>';
-  $("whist").innerHTML = wds.filter(x => x.status !== "pending").map(x =>
+  $("whist").innerHTML = wds.filter(x => x.status !== "pending").slice(0, 40).map(x =>
     `<div class="card l">Rs ${esc(x.amount)}${x.net != null ? " (paid Rs " + esc(x.net) + " after tax)" : ""} · ${esc(x.method)} · ${esc(x.number)} <span class="tag">${esc(x.status)}</span>
       <div class="mu">${esc(x.holder || "-")} · ${esc(x.email)} · ${new Date(x.at||0).toLocaleString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
 
