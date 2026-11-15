@@ -319,6 +319,28 @@ button.xb:not(.g):not(.r):not(.cam):not(.eye){position:absolute;top:12px;right:1
 .lr .rk.r1{background:#f5c542;color:#5a3d00}.lr .rk.r2{background:#cfd5db;color:#333}.lr .rk.r3{background:#e0a46b;color:#4a2a00}
 html[data-theme=dark] .xb{background:#3a1517}html[data-theme=dark] .xb svg{stroke:#f6eaea}
 html[data-theme=dark] .ico.ok{background:#12301c;color:#4ade80}html[data-theme=dark] .ico.wt{background:#3a2a10;color:#fbbf24}html[data-theme=dark] .ico.bad,html[data-theme=dark] .ico{background:#3a1517;color:#ff8a8a}
+
+/* ===== Engagement features ===== */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;padding:8px 14px;font-size:13.5px;box-shadow:none}.chips button.on{background:linear-gradient(180deg,#ff1a1a,#a80000);color:#fff}
+.tag.new{background:#16a34a;color:#fff;font-size:11px;letter-spacing:.4px}
+.spinc{display:flex;gap:14px;align-items:center}.spinc .pt{flex:1}
+.wheel{width:92px;height:92px;border-radius:50%;flex:none;position:relative;border:4px solid #fff;box-shadow:0 4px 14px rgba(168,0,0,.35);background:conic-gradient(#ff2a2a 0 60deg,#fff 0 120deg,#a80000 0 180deg,#ffd166 0 240deg,#ff2a2a 0 300deg,#fff 0 360deg)}
+.wheel i{position:absolute;inset:34px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px #a80000}
+.wheel.spin{animation:wsp 1.7s cubic-bezier(.15,.7,.2,1) forwards}@keyframes wsp{to{transform:rotate(1500deg)}}
+.chart{display:flex;align-items:flex-end;gap:8px;height:120px;margin-top:10px}.chart>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
+.chart i{width:100%;max-width:30px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,#ff5a5a,#a80000)}.chart span{font-size:11px;color:var(--mu)}
+.bgs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
+.bg1{display:flex;flex-direction:column;gap:3px;padding:12px;border-radius:14px;background:var(--soft);opacity:.55}.bg1.on{opacity:1;background:#e7f6ec}
+.bg1 b{font-size:14px;color:#1a1a22}.bg1 span:not(.ico){font-size:12px;color:var(--mu)}.bg1 .ico{margin-bottom:4px}
+.banner{display:flex;align-items:center;gap:10px;background:#fff;border-left:4px solid #d90a0a;border-radius:14px;padding:12px 14px;margin:0 0 10px}
+.banner .pt{flex:1}.banner b{display:block;font-size:14.5px;color:#1a1a22}.banner span{font-size:13px;color:#6b5b5b}.banner.warn{background:#fff4e0;border-color:#f59e0b}
+.xb2{background:none;box-shadow:none;color:#6b5b5b;padding:0 6px;font-size:22px}
+.cf{position:fixed;inset:0;pointer-events:none;z-index:99;overflow:hidden}
+.cf i{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;animation:cfall 2.4s ease-in forwards}
+@keyframes cfall{to{transform:translateY(105vh) rotate(var(--r));opacity:.9}}
+.lvup{padding:10px 0}
+html[data-theme=dark] .bg1.on{background:#12301c}html[data-theme=dark] .bg1 b{color:#f6eaea}html[data-theme=dark] .banner{background:#2a1214}html[data-theme=dark] .banner b{color:#f6eaea}
 </style>
 </head>
 <body>
@@ -394,6 +416,7 @@ html[data-theme=dark] .ico.ok{background:#12301c;color:#4ade80}html[data-theme=d
 
 <div id="app" class="hide">
   <div id="v-home">
+    <div id="banners"></div>
     <div class="card hero"><div class="mu">Available balance</div><div class="bal" id="bal">$0.00</div></div>
     <div class="card stat pl" id="hstats"></div>
     <div class="card" id="wacard"></div>
@@ -430,7 +453,7 @@ html[data-theme=dark] .ico.ok{background:#12301c;color:#4ade80}html[data-theme=d
 /* ====== SETTINGS ====== */
 const NAME = "TaskPey";
 // Default values. Admin panel (Settings tab) se badal sakte ho, wo yahan override ho jayengi.
-const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, dailyBonus:2, usdRate:280, signupBonus:15, chatBot:true, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, dailyBonus:2, spinMin:1, spinMax:10, missionBonus:3, announce:"", weeklyTitle:"Weekly challenge", weeklyPrizes:"", usdRate:280, signupBonus:15, chatBot:true, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
 let CFG = {...DEF};
 const firebaseConfig = {
   apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
@@ -875,11 +898,12 @@ async function loadTasks(){
     db.collection("tasks").where("active","==",true).get(),
     db.collection("submissions").where("uid","==",me.uid).get()]);
   const done = {}; ss.forEach(s => done[s.data().taskId] = s.data().status);
-  let h = "";
+  let h = ""; const plats = {};
   ts.forEach(d => { const t = d.data(), st = done[d.id];
     const lim = Number(t.limit || 0), left = lim - Number(t.taken || 0), full = lim > 0 && left <= 0;
     if(full && !st) return;   // task ended: hidden for users who did not take part
-    h += `<div class="card"><div class="th">${pbadge(t.platform)}<h3>${esc(t.title)}</h3><span class="tag">${usd(t.reward)}</span>${lim > 0 && !full ? `<span class="tag no">${left} left</span>` : ""}${full ? `<span class="tag bad">Task ended</span>` : ""}</div>
+    plats[t.platform || "other"] = 1;
+    h += `<div class="card tk" data-p="${esc(t.platform || "other")}"><div class="th">${pbadge(t.platform)}<h3>${esc(t.title)}</h3>${Date.now() - (Number(t.at) || 0) < 3 * 864e5 ? '<span class="tag new">NEW</span>' : ""}<span class="tag">${usd(t.reward)}</span>${lim > 0 && !full ? `<span class="tag no">${left} left</span>` : ""}${full ? `<span class="tag bad">Task ended</span>` : ""}</div>
       <div class="mu">${esc(t.desc)}</div>
       ${t.note ? `<div class="note">\u{1F4DD} ${esc(t.note)}</div>` : ""}
       ${/^https?:\/\//i.test(t.link || "") ? `<div class="row"><a href="${esc(t.link)}" target="_blank" rel="noopener"><button class="g">${esc(t.openLabel || "Open link")}</button></a></div>` : ""}
@@ -889,7 +913,8 @@ async function loadTasks(){
        <div class="row"><button class="g" onclick="$('f-${d.id}').click()">${xi("image")}Attach screenshot</button></div>
        <div id="pv-${d.id}"></div>
        <button onclick="submitProof('${d.id}')">Submit proof</button>`}</div>`; });
-  h = h || '<div class="card mu">No tasks available right now.</div>';
+  const pk = Object.keys(plats);
+  h = h ? (pk.length > 1 ? `<div class="chips"><button class="g on" onclick="tf('all',this)">All</button>${pk.map(k => `<button class="g" onclick="tf('${k}',this)">${esc((PLAT[k] && PLAT[k].n) || k)}</button>`).join("")}</div>` : "") + h : '<div class="card mu">No tasks available right now.</div>';
   if(h !== tasksHtml){ tasksHtml = h; $("v-tasks").innerHTML = h; $("v-tasks").dataset.h = "1"; }
 }
 async function submitProof(id){
@@ -932,7 +957,7 @@ function loadRefer(){
   $("v-refer").innerHTML = `<div class="card"><h3>Invite friends, earn ${usd(CFG.refBonus)}</h3>
     <div class="mu">You get ${usd(CFG.refBonus)} when your friend's membership is approved.</div>
     <div class="code">${esc(c)}</div>
-    ${ud.refCode ? `<div class="row"><button onclick="cp('${esc(c)}')">Copy code</button><button class="g" onclick="cp('${esc(link)}')">Copy invite link</button><button onclick="shareWA('${esc(link)}')">WhatsApp</button></div>` : `<div class="mu">Creating your code…</div>`}</div>
+    ${ud.refCode ? `<div class="row"><button onclick="cp('${esc(c)}')">Copy code</button><button class="g" onclick="cp('${esc(link)}')">Copy invite link</button><button onclick="shareWA('${esc(link)}')">WhatsApp</button><button class="g" onclick="shareCard('${esc(link)}')">Share card</button></div>` : `<div class="mu">Creating your code…</div>`}</div>
     <div class="card stat pl"><div><b>${ud.refCount||0}</b><span class="mu">Friends joined</span></div><div><b>${usd(ud.refEarned||0)}</b><span class="mu">Earned</span></div></div>
     <div class="card"><b>Next milestone: ${Math.floor((ud.refCount||0)/5)*5+5} friends</b><div class="bar"><i style="width:${((ud.refCount||0)%5)*20}%"></i></div><div class="mu">${5-((ud.refCount||0)%5)} more friend(s) to go. Total earned from referrals: ${usd(ud.refEarned||0)}</div></div>
     <div id="flist"></div>`;
@@ -1223,7 +1248,7 @@ async function loadFeed(){
   const q = (c, f) => db.collection(c).where(f, "==", me.uid).get().catch(() => null);
   const [ss, ws, fs, bs] = await Promise.all([q("submissions","uid"), q("withdrawals","uid"), q("profiles","refUid"), q("bonuses","uid")]);
   const ev = [];
-  ss && ss.forEach(d => { const s = d.data(); ev.push({id:"t"+d.id, k:"task", t:s.reviewedAt || s.updatedAt || s.at || 0, st:s.status, title:s.taskTitle || "Task", amt:s.status === "approved" ? Number(s.reward) || 0 : 0, reason:s.reason || s.adminNote || ""}); });
+  ss && ss.forEach(d => { const s = d.data(); ev.push({id:"t"+d.id, k:"task", at:Number(s.at) || 0, t:s.reviewedAt || s.updatedAt || s.at || 0, st:s.status, title:s.taskTitle || "Task", amt:s.status === "approved" ? Number(s.reward) || 0 : 0, reason:s.reason || s.adminNote || ""}); });
   ws && ws.forEach(d => { const w = d.data(); ev.push({id:"w"+d.id, k:"wd", t:w.paidAt || w.reviewedAt || w.at || 0, st:w.status, title:"Withdrawal to " + (w.method || "account"), amt:w.status === "rejected" ? 0 : -(Number(w.amount) || 0), reason:w.reason || ""}); });
   fs && fs.forEach(d => { const f = d.data(); ev.push({id:"f"+d.id, k:"friend", t:f.at || 0, st:f.active ? "active" : "joined", title:f.name || "A friend", amt:0}); });
   bs && bs.forEach(d => { const b = d.data(); ev.push({id:"b"+d.id, k:"bonus", t:b.at || 0, st:"ok", title:b.title || "Daily bonus", amt:Number(b.amount) || 0}); });
@@ -1264,17 +1289,123 @@ async function showHistory(f){
   sheet(`<h3>History</h3><div class="tabs">${T.map(t => `<button class="${t[0] === f ? "on" : ""}" onclick="showHistory('${t[0]}')">${t[1]}</button>`).join("")}</div>` + (l.length ? l.map(e => evRow(e)).join("") : '<div class="mu">Nothing here yet.</div>'));
 }
 /* ---- rewards tab: daily bonus, level, leaderboard ---- */
-function loadRewards(){
+const todayStart = () => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); };
+function weekKey(ts){ const d = new Date(ts || Date.now()), k = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - k); return d.toISOString().slice(0, 10); }
+function confetti(){
+  const c = document.createElement("div"), cols = ["#ff2a2a","#ffffff","#ffd166","#ff7a7a","#a80000"]; c.className = "cf";
+  for(let i = 0; i < 56; i++){ const e = document.createElement("i"); e.style.cssText = `left:${Math.random() * 100}%;background:${cols[i % 5]};animation-delay:${Math.random() * .5}s;--r:${Math.random() * 720 - 360}deg`; c.appendChild(e); }
+  document.body.appendChild(c); setTimeout(() => c.remove(), 3000);
+}
+async function claimReward(id, amt, title, extra){
+  const uref = db.collection("users").doc(me.uid), bref = db.collection("bonuses").doc(me.uid + "_" + id);
+  return db.runTransaction(async tx => {
+    const [u, b] = await Promise.all([tx.get(uref), tx.get(bref)]);
+    if(b.exists) throw new Error("Already claimed.");
+    const bal = (Number(u.data().balance) || 0) + amt;
+    tx.set(bref, {uid:me.uid, amount:amt, title, at:Date.now(), day:dkey()});
+    tx.update(uref, Object.assign({balance:bal}, extra || {})); return bal;
+  });
+}
+const claimedToday = id => FEED.some(e => e.id === "b" + me.uid + "_" + id);
+function missions(){
+  const t0 = todayStart(), tk = FEED.filter(e => e.k === "task" && e.at >= t0).length, fr = FEED.filter(e => e.k === "friend" && e.t >= t0).length;
+  return [{id:"m_tasks", t:"Submit 3 tasks today", p:Math.min(tk, 3), n:3}, {id:"m_checkin", t:"Claim your daily bonus", p:ud.lastCheckin === dkey() ? 1 : 0, n:1}, {id:"m_invite", t:"Invite 1 friend today", p:Math.min(fr, 1), n:1}];
+}
+async function claimMission(mid){
+  const m = missions().find(x => x.id === mid), amt = Number(CFG.missionBonus) || 0; if(!m || m.p < m.n || !amt) return;
+  try{ const bal = await claimReward(mid + "_" + dkey(), amt, "Mission: " + m.t); ud.balance = bal; writeCache(me.uid, ud); }catch(e){ return alert(e.message); }
+  confetti(); toast("Mission reward: " + usd(amt)); await loadFeed(); loadRewards();
+}
+async function spinNow(){
+  const day = dkey(); if(ud.lastSpin === day) return;
+  const mn = Number(CFG.spinMin) || 1, mx = Math.max(mn, Number(CFG.spinMax) || 10), amt = Math.floor(mn + Math.random() * (mx - mn + 1));
+  $("wheel").classList.add("spin"); let bal;
+  try{ [bal] = await Promise.all([claimReward("spin_" + day, amt, "Daily spin", {lastSpin:day}), new Promise(r => setTimeout(r, 1700))]); }
+  catch(e){ $("wheel").classList.remove("spin"); return alert(e.message); }
+  ud.lastSpin = day; ud.balance = bal; writeCache(me.uid, ud); confetti(); toast("You won " + usd(amt) + "!"); loadRewards(); setTimeout(loadFeed, 1200);
+}
+function badges(){
+  const tk = FEED.filter(e => e.k === "task" && e.st === "approved").length, wd = FEED.filter(e => e.k === "wd" && e.st === "paid").length, rf = Number(ud.refCount) || 0, st = Math.max(Number(ud.streak) || 0, Number(ud.bestStreak) || 0), L = lvl();
+  return [["first","First task","Get 1 task approved",tk >= 1,"ok"],["t10","10 tasks","10 approved tasks",tk >= 10,"ok"],["t50","50 tasks","50 approved tasks",tk >= 50,"ok"],["wd","First payout","Get your first withdrawal",wd >= 1,"wd"],
+    ["r1","Recruiter","Invite 1 friend",rf >= 1,"friend"],["r5","Team builder","Invite 5 friends",rf >= 5,"friend"],["s7","7-day streak","Check in 7 days in a row",st >= 7,"bonus"],["gold","Gold level","Earn $20 in total",L.e >= 20,"bonus"]];
+}
+function checkBadges(){
+  if(!me || !ud) return; const ok = badges().filter(b => b[3]).map(b => b[0]); let old = null; try{ old = JSON.parse(lsGet("bdg") || "null"); }catch(e){}
+  if(old){ const nw = badges().filter(b => b[3] && old.indexOf(b[0]) < 0); if(nw.length){ confetti(); toast("Badge unlocked: " + nw[0][1]); } }
+  lsSet("bdg", JSON.stringify(ok));
+}
+function levelCheck(){
+  if(!me || !ud) return; const L = lvl(), i = LV.findIndex(l => l[0] === L.n), o = lsGet("lvi");
+  if(o !== null && o !== "" && i > Number(o)){ confetti(); sheet(`<div class="lvup"><div class="ico ok" style="margin:0 auto 10px;width:56px;height:56px">${ICO.bonus}</div><h3 style="text-align:center">Level up!</h3><div class="mu" style="text-align:center">You reached <b style="color:${L.c}">${L.n}</b>. Keep going!</div></div>`); }
+  lsSet("lvi", String(i));
+}
+const _lf = loadFeed; window.loadFeed = async function(){ await _lf(); try{ checkBadges(); levelCheck(); }catch(e){} };
+async function loadRewards(){
+  if(!FEED.length) await loadFeed();
   const today = dkey(), yk = dkey(new Date(Date.now() - 864e5)), got = ud.lastCheckin === today;
-  const st = got || ud.lastCheckin === yk ? Number(ud.streak) || 0 : 0, day = got ? ((st - 1) % 7) + 1 : (st % 7), b = Number(CFG.dailyBonus) || 2, L = lvl();
-  $("v-rewards").innerHTML = `<div class="card"><h3>Daily bonus</h3><div class="mu">Check in every day. Day 7 pays 5x. Miss a day and the streak restarts.</div>
+  const st = got || ud.lastCheckin === yk ? Number(ud.streak) || 0 : 0, day = got ? ((st - 1) % 7) + 1 : (st % 7), b = Number(CFG.dailyBonus) || 2, L = lvl(), spun = ud.lastSpin === today, mb = Number(CFG.missionBonus) || 0;
+  const M = missions().map(m => { const cl = claimedToday(m.id + "_" + today), ready = m.p >= m.n && !cl;
+    return `<div class="ev"><span class="ico ${m.p >= m.n ? "ok" : "wt"}">${m.p >= m.n ? ICO.ok : ICO.wt}</span><div class="pt"><b>${m.t}</b><div class="bar" style="margin:6px 0 2px"><i style="width:${m.p / m.n * 100}%"></i></div><span>${m.p}/${m.n} \u00b7 reward ${usd(mb)}</span></div>${cl ? '<span class="tag">Claimed</span>' : `<button class="sm" ${ready ? "" : "disabled"} onclick="claimMission('${m.id}')">Claim</button>`}</div>`; }).join("");
+  const days = []; for(let i = 6; i >= 0; i--){ const d = new Date(Date.now() - i * 864e5); days.push({k:dkey(d), l:d.toLocaleDateString("en", {weekday:"short"}), v:0}); }
+  FEED.forEach(e => { if(e.amt > 0 && e.t){ const x = days.find(d => d.k === dkey(new Date(e.t))); if(x) x.v += e.amt; } });
+  const mxv = Math.max(1, ...days.map(d => d.v)), tot = days.reduce((a, d) => a + d.v, 0);
+  const warn = !got && ud.lastCheckin === yk && st > 0 ? `<div class="note">Your ${st}-day streak ends tonight. Claim today's bonus to keep it!</div>` : "";
+  $("v-rewards").innerHTML = `<div class="card"><h3>Daily bonus</h3>${warn}<div class="mu">Check in every day. Day 7 pays 5x. Miss a day and the streak restarts.</div>
     <div class="days">${[1,2,3,4,5,6,7].map(i => `<span class="${i <= day ? "on" : ""}">${i === 7 ? "x5" : "D" + i}</span>`).join("")}</div>
     <button style="width:100%" onclick="claimDaily()" ${got ? "disabled" : ""}>${got ? "Claimed today - come back tomorrow" : "Claim " + usd(b * (((st % 7) + 1) === 7 ? 5 : 1))}</button></div>
+    <div class="card spinc"><div class="wheel" id="wheel"><i></i></div><div class="pt"><h3>Daily spin</h3><div class="mu">Win ${usd(CFG.spinMin || 1)} to ${usd(CFG.spinMax || 10)} once a day.</div><button style="margin-top:8px" onclick="spinNow()" ${spun ? "disabled" : ""}>${spun ? "Spun today" : "Spin now"}</button></div></div>
+    <div class="card"><h3>Daily missions</h3>${mb > 0 ? M : '<div class="mu">Missions are not active right now.</div>'}</div>
+    <div class="card"><h3 id="wk-t">${esc(CFG.weeklyTitle || "Weekly challenge")}</h3><div class="mu">Most approved tasks this week. ${esc(CFG.weeklyPrizes || "")}</div><div class="mu" id="wk-e"></div><div id="wk"><div class="mu">Loading...</div></div></div>
+    <div class="card"><h3>Last 7 days</h3><div class="mu">Earned: ${usd(tot)}</div><div class="chart">${days.map(d => `<div><i style="height:${Math.max(4, d.v / mxv * 90)}px" title="${usd(d.v)}"></i><span>${d.l}</span></div>`).join("")}</div></div>
+    <div class="card"><h3>Badges</h3><div class="bgs">${badges().map(x => `<div class="bg1 ${x[3] ? "on" : ""}"><span class="ico ${x[3] ? "ok" : ""}">${ICO[x[4]]}</span><b>${x[1]}</b><span>${x[2]}</span></div>`).join("")}</div></div>
+    <div class="card"><h3>Recent payouts</h3><div id="po"><div class="mu">Loading...</div></div></div>
     <div class="card"><h3>Your level: <span style="color:${L.c}">${L.n}</span></h3><div class="bar"><i style="width:${L.pct}%"></i></div>
     <div class="mu">${L.nx ? `Earn ${usd(Math.max(0, (L.nx[1] - L.e) * rate()))} more to reach ${L.nx[0]}.` : "You reached the top level."}</div>
     <div class="row">${LV.map(l => `<span class="tag" style="background:${l[2]};color:#fff;opacity:${l[0] === L.n ? 1 : .55}">${l[0]} $${l[1]}+</span>`).join("")}</div></div>
     <div class="card"><h3>Leaderboard</h3><div class="tabs"><button class="on" id="lb-earned" onclick="loadBoard('earned')">Top earners</button><button id="lb-team" onclick="loadBoard('team')">Top referrers</button></div><div id="lb"><div class="mu">Loading...</div></div></div>`;
-  loadBoard("earned");
+  loadBoard("earned"); loadWeekly(); loadPayouts("po");
+}
+async function loadWeekly(){
+  const wk = weekKey(), end = new Date(wk + "T00:00:00Z").getTime() + 7 * 864e5, dl = Math.max(0, Math.ceil((end - Date.now()) / 864e5)); if($("wk-e")) $("wk-e").textContent = "Ends in " + dl + " day(s).";
+  try{
+    const q = await db.collection("profiles").orderBy("wt", "desc").limit(40).get(), r = q.docs.map(d => d.data()).filter(p => p.wk === wk && !p.hidden && p.wt > 0).slice(0, 10);
+    if($("wk")) $("wk").innerHTML = r.map((p, i) => `<div class="lr ${p.uid === me.uid ? "me" : ""}"><span class="rk r${i < 3 ? i + 1 : 0}">${i + 1}</span><b>${esc(p.name || "User")}</b><span class="tag">${p.wt} tasks</span></div>`).join("") || '<div class="mu">No one has completed a task this week yet. Be the first!</div>';
+  }catch(e){ if($("wk")) $("wk").innerHTML = '<div class="mu">Not available right now.</div>'; }
+}
+let POC = null;
+async function loadPayouts(id){
+  try{
+    if(!POC || Date.now() - POC.t > 300000){ const q = await db.collection("payouts").orderBy("at", "desc").limit(8).get(); POC = {t:Date.now(), r:q.docs.map(d => d.data())}; }
+    const h = POC.r.map(p => `<div class="ev"><span class="ico ok">${ICO.wd}</span><div class="pt"><b>${esc(p.name || "User")}</b><span>${esc(p.method || "")} \u00b7 ${p.at ? fdate(p.at) : ""}</span></div><span class="amt p">${usd(p.amount || 0)}</span></div>`).join("");
+    if($(id)) $(id).innerHTML = h || '<div class="mu">Payouts will appear here.</div>';
+  }catch(e){ if($(id)) $(id).innerHTML = '<div class="mu">Not available right now.</div>'; }
+}
+/* ---- banners on Home: announcement + streak warning ---- */
+const hsh = t => { let h = 0; for(let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return String(h); };
+function renderBanners(){
+  const el = $("banners"); if(!el || !ud) return; let h = "";
+  const a = (CFG.announce || "").trim(); if(a && lsGet("ann") !== hsh(a)) h += `<div class="banner"><div class="pt"><b>Announcement</b><span>${esc(a)}</span></div><button class="xb2" onclick="closeAnn()" aria-label="Dismiss">\u00d7</button></div>`;
+  const yk = dkey(new Date(Date.now() - 864e5));
+  if(ud.lastCheckin === yk && Number(ud.streak) > 0) h += `<div class="banner warn" onclick="show('rewards')"><div class="pt"><b>${ud.streak}-day streak at risk</b><span>Claim today's bonus before midnight to keep it.</span></div></div>`;
+  el.innerHTML = h;
+}
+function closeAnn(){ lsSet("ann", hsh((CFG.announce || "").trim())); renderBanners(); }
+const _lh = loadHome; window.loadHome = async function(){ const r = _lh.apply(this, arguments); renderBanners(); return r; };
+function tf(p, b){ document.querySelectorAll(".chips button").forEach(x => x.classList.toggle("on", x === b)); document.querySelectorAll(".tk").forEach(c => c.style.display = p === "all" || c.dataset.p === p ? "" : "none"); }
+/* ---- invite share card (image) ---- */
+async function shareCard(link){
+  const c = document.createElement("canvas"); c.width = 1080; c.height = 1350; const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 1080, 1350); g.addColorStop(0, "#ff2a2a"); g.addColorStop(.55, "#a80000"); g.addColorStop(1, "#4d0000"); x.fillStyle = g; x.fillRect(0, 0, 1080, 1350);
+  x.fillStyle = "rgba(255,255,255,.08)"; x.beginPath(); x.arc(980, 120, 320, 0, 7); x.fill(); x.beginPath(); x.arc(60, 1300, 260, 0, 7); x.fill();
+  x.fillStyle = "#fff"; x.textAlign = "center"; x.font = "italic 800 120px system-ui,sans-serif"; x.fillText("TaskPey", 540, 250);
+  x.font = "600 54px system-ui,sans-serif"; x.fillText("Complete simple tasks.", 540, 470); x.fillText("Earn real money.", 540, 545);
+  x.fillStyle = "#fff"; x.beginPath(); x.roundRect(140, 680, 800, 260, 36); x.fill();
+  x.fillStyle = "#6b5b5b"; x.font = "600 38px system-ui,sans-serif"; x.fillText("Use my invite code", 540, 760);
+  x.fillStyle = "#b30000"; x.font = "800 110px system-ui,sans-serif"; x.fillText(ud.refCode || "", 540, 890);
+  x.fillStyle = "rgba(255,255,255,.9)"; x.font = "500 34px system-ui,sans-serif"; x.fillText(link.replace(/^https?:\/\//, ""), 540, 1080);
+  const blob = await new Promise(r => c.toBlob(r, "image/png")), f = new File([blob], "taskpey-invite.png", {type:"image/png"});
+  try{ if(navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f], text:"Join TaskPey with my code " + ud.refCode + ": " + link}); return; } }catch(e){ if(e && e.name === "AbortError") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "taskpey-invite.png"; document.body.appendChild(a); a.click(); a.remove(); toast("Invite card saved");
 }
 async function loadBoard(by){
   ["earned","team"].forEach(x => { const b = $("lb-" + x); if(b) b.classList.toggle("on", x === by); });

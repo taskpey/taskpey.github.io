@@ -291,6 +291,8 @@ body.inpage #pbar{display:flex}#pbar b{font-size:18px;color:#fff}#pbar button{pa
   </div>
   <div id="t-lb" class="hide">
     <div class="card"><h3 style="margin-top:0">Leaderboard (real users)</h3><div class="mu">Top 50 by earning. Hide a user to remove them from the leaderboard users see, or change the name shown there.</div><div class="row"><button class="g" onclick="loadLB()">Refresh</button></div></div>
+    <div class="card"><h3 style="margin-top:0">Public payouts</h3><div class="mu">Users see the latest real payouts (name half hidden). New "Paid" withdrawals are added automatically. Tap below to add your last 10 paid ones.</div><div class="row"><button class="g" onclick="importPayouts()">Add last 10 paid withdrawals</button></div></div>
+    <div class="card"><h3 style="margin-top:0">Weekly challenge</h3><div class="mu">The ranking updates by itself every time you approve a task (most approved tasks this week, Monday to Sunday). Set title and prizes in Settings, and pay winners with "Add Rs".</div></div>
     <div id="lblist"></div>
   </div>
   <div id="t-set" class="hide">
@@ -308,6 +310,13 @@ body.inpage #pbar{display:flex}#pbar b{font-size:18px;color:#fff}#pbar button{pa
       <div class="mu">Withdrawal tax (%) - deducted from every withdrawal</div><input id="s-tax" type="number" min="0" max="50" step="0.5">
       <h3>Rewards</h3>
       <div class="mu">Daily check-in bonus (Rs). Day 7 pays 5x. Use 0 to switch it off</div><input id="s-db" type="number" min="0" step="any">
+      <div class="mu">Daily spin: smallest prize (Rs)</div><input id="s-smin" type="number" min="0" step="any">
+      <div class="mu">Daily spin: biggest prize (Rs)</div><input id="s-smax" type="number" min="0" step="any">
+      <div class="mu">Reward for each completed daily mission (Rs). Use 0 to switch missions off</div><input id="s-mb" type="number" min="0" step="any">
+      <h3>Weekly challenge &amp; announcement</h3>
+      <div class="mu">Weekly challenge title</div><input id="s-wt" maxlength="40">
+      <div class="mu">Prizes shown to users (e.g. 1st Rs 100, 2nd Rs 50, 3rd Rs 25). Pay the winners yourself with "Add Rs"</div><input id="s-wp" maxlength="120">
+      <div class="mu">Announcement banner shown on every user's Home (leave empty to hide)</div><textarea id="s-an" rows="2" maxlength="200"></textarea>
       <h3>Support chat</h3>
       <div class="mu">Auto-reply bot (turn OFF if you deploy the AI Cloud Function)</div><select id="s-bot"><option value="1">ON - instant FAQ replies</option><option value="0">OFF</option></select>
       <button onclick="saveSettings()">Save settings</button><div id="sok" class="mu"></div></div>
@@ -355,7 +364,7 @@ body.inpage #pbar{display:flex}#pbar b{font-size:18px;color:#fff}#pbar button{pa
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 const ADMIN_EMAIL = "umardrazofficial01@gmail.com";
-const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, dailyBonus:2, usdRate:280, signupBonus:15, chatBot:true, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
+const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, dailyBonus:2, spinMin:1, spinMax:10, missionBonus:3, announce:"", weeklyTitle:"Weekly challenge", weeklyPrizes:"", usdRate:280, signupBonus:15, chatBot:true, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
 let CFG = {...DEF};
 const firebaseConfig = {
   apiKey: "AIzaSyDgUuJhYSarW6nadSv5drymbtgMTXS_XAw",
@@ -514,6 +523,8 @@ auth.onAuthStateChanged(u => {
 
 const PT = {users:"Users", user:"User details", pay:"Payments", proofs:"Task proofs", wd:"Withdrawals", tasks:"Tasks", chat:"Support", lb:"Leaderboard", set:"Settings"};
 let CURU = "";
+function weekKey(ts){ const d = new Date(ts || Date.now()), k = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - k); return d.toISOString().slice(0, 10); }
+const maskName = t => { t = String(t || "User").trim(); return t.slice(0, 2) + "***"; };
 function show(t){
   t = t || ""; if(t.indexOf("user:") === 0){ CURU = t.slice(5); t = "user"; }
   tab = t === "user" ? "user:" + CURU : t;
@@ -529,8 +540,8 @@ window.addEventListener("hashchange", () => { let h = ""; try{ h = decodeURIComp
 
 async function saveSettings(){
   const n = {planFee:Number($("s-fee").value), payMethod:$("s-method").value.trim(), payNumber:$("s-num").value.trim(),
-    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value), withdrawTax:Number($("s-tax").value), usdRate:Number($("s-usd").value), signupBonus:Number($("s-sb").value), dailyBonus:Number($("s-db").value), waLink:$("s-wa").value.trim(), chatBot:$("s-bot").value==="1"};
-  if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0) || !(n.withdrawTax >= 0 && n.withdrawTax <= 50) || !(n.usdRate > 0) || !(n.dailyBonus >= 0) || !(n.signupBonus >= 0 && n.signupBonus <= 1000)) return alert("Please fill every field correctly.");
+    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value), withdrawTax:Number($("s-tax").value), usdRate:Number($("s-usd").value), signupBonus:Number($("s-sb").value), dailyBonus:Number($("s-db").value), spinMin:Number($("s-smin").value), spinMax:Number($("s-smax").value), missionBonus:Number($("s-mb").value), weeklyTitle:$("s-wt").value.trim(), weeklyPrizes:$("s-wp").value.trim(), announce:$("s-an").value.trim(), waLink:$("s-wa").value.trim(), chatBot:$("s-bot").value==="1"};
+  if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0) || !(n.withdrawTax >= 0 && n.withdrawTax <= 50) || !(n.usdRate > 0) || !(n.dailyBonus >= 0) || !(n.spinMin >= 0) || !(n.spinMax >= n.spinMin) || !(n.missionBonus >= 0) || !(n.signupBonus >= 0 && n.signupBonus <= 1000)) return alert("Please fill every field correctly.");
   if(n.waLink && !/^https:\/\/(chat\.)?whatsapp\.com\//i.test(n.waLink)) return alert("WhatsApp link must start with https://chat.whatsapp.com/");
   try{ await db.collection("settings").doc("config").set(n); CFG = n; $("sok").textContent = "Saved. Users will see the new values."; }
   catch(e){ alert(e.message); }
@@ -584,7 +595,7 @@ async function load0(){
   CFG = {...DEF, ...(cs.exists ? cs.data() : {})};
   ALLPAY = p.docs.map(d => ({id:d.id, ...d.data()})); ALLWD = w.docs.map(d => ({id:d.id, ...d.data()}));
   $("s-fee").value = CFG.planFee; $("s-method").value = CFG.payMethod; $("s-num").value = CFG.payNumber;
-  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax; $("s-usd").value = CFG.usdRate; $("s-sb").value = CFG.signupBonus ?? 15; $("s-db").value = CFG.dailyBonus ?? 2; $("s-wa").value = CFG.waLink || ""; $("s-bot").value = CFG.chatBot === false ? "0" : "1";
+  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax; $("s-usd").value = CFG.usdRate; $("s-sb").value = CFG.signupBonus ?? 15; $("s-db").value = CFG.dailyBonus ?? 2; $("s-smin").value = CFG.spinMin ?? 1; $("s-smax").value = CFG.spinMax ?? 10; $("s-mb").value = CFG.missionBonus ?? 3; $("s-wt").value = CFG.weeklyTitle || "Weekly challenge"; $("s-wp").value = CFG.weeklyPrizes || ""; $("s-an").value = CFG.announce || ""; $("s-wa").value = CFG.waLink || ""; $("s-bot").value = CFG.chatBot === false ? "0" : "1";
 
   USERS = u.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
   maintain(w);
@@ -768,6 +779,13 @@ async function lbRename(id){
   const p = LBL.find(x => x.id === id), n = prompt("Name shown on the leaderboard:", p ? p.name : ""); if(!n || !n.trim()) return;
   try{ await db.collection("profiles").doc(id).update({name:n.trim().slice(0, 30)}); loadLB(); }catch(e){ alert(e.message); }
 }
+
+async function importPayouts(){
+  const l = ALLWD.filter(x => x.status === "paid").sort((a, b) => (b.doneAt || b.at || 0) - (a.doneAt || a.at || 0)).slice(0, 10);
+  if(!l.length) return alert("No paid withdrawals yet.");
+  try{ const b = db.batch(); l.forEach(x => b.set(db.collection("payouts").doc(x.id), {name:maskName(x.holder || x.email), amount:Number(x.net != null ? x.net : x.amount) || 0, method:x.method || "", at:x.doneAt || x.at || Date.now()})); await b.commit(); alert("Added " + l.length + " payouts."); }
+  catch(e){ alert(e.message); }
+}
 async function appPay(uid, ok){
   const b = db.batch();
   b.update(db.collection("payments").doc(uid), {status: ok ? "approved" : "rejected"});
@@ -792,7 +810,7 @@ async function appSub(id, ok){
       const u = await tx.get(uref);
       const pref = db.collection("profiles").doc(x.uid), pr = await tx.get(pref);
       const td = await tx.get(db.collection("tasks").doc(x.taskId));
-      if(ok){ tx.update(uref, {balance: r6((u.data().balance||0) + x.reward), totalEarned: inc(x.reward)}); if(pr.exists) tx.update(pref, {earned: inc(x.reward)}); }
+      if(ok){ tx.update(uref, {balance: r6((u.data().balance||0) + x.reward), totalEarned: inc(x.reward)}); if(pr.exists){ const wk = weekKey(), pd = pr.data() || {}; tx.update(pref, {earned: inc(x.reward), wk, wt: pd.wk === wk ? (Number(pd.wt) || 0) + 1 : 1}); } }
       if(!ok && td.exists) tx.update(td.ref, {taken: Math.max(0, (td.data().taken || 0) - 1)});
       tx.update(ref, ok ? {status:"approved", reviewedAt:Date.now()} : {status:"rejected", reviewedAt:Date.now(), reason:reason.trim().slice(0, 200)});
     });
@@ -814,6 +832,7 @@ async function appWd(id, ok){
       tx.update(ref, ok ? {status:"paid", fee, net:Number(x.amount) - fee, doneAt:Date.now(), paidAt:Date.now(), reviewedAt:Date.now()} : {status:"rejected", doneAt:Date.now(), reviewedAt:Date.now(), reason:reason.trim().slice(0, 200)});
     });
   }catch(e){ alert(e.message); }
+  if(ok){ try{ const d = (await ref.get()).data(); if(d && d.status === "paid") await db.collection("payouts").doc(id).set({name:maskName(d.holder || d.email), amount:Number(d.net != null ? d.net : d.amount) || 0, method:d.method || "", at:Date.now()}); }catch(e){ console.warn(e); } }
   load();
 }
 async function toggleTask(id, v){ await db.collection("tasks").doc(id).update({active:v}); load(); }
