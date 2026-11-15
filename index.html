@@ -1393,18 +1393,49 @@ function closeAnn(){ lsSet("ann", hsh((CFG.announce || "").trim())); renderBanne
 const _lh = loadHome; window.loadHome = async function(){ const r = _lh.apply(this, arguments); renderBanners(); return r; };
 function tf(p, b){ document.querySelectorAll(".chips button").forEach(x => x.classList.toggle("on", x === b)); document.querySelectorAll(".tk").forEach(c => c.style.display = p === "all" || c.dataset.p === p ? "" : "none"); }
 /* ---- invite share card (image) ---- */
+function drawInvite(link){
+  const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d");
+  const rr = (X, Y, w, h, r) => { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); };
+  const F = (w, sz, it) => (it ? "italic " : "") + w + " " + sz + "px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
+  const fit = (t, w, sz, wt) => { let z = sz; x.font = F(wt, z); while(x.measureText(t).width > w && z > 24){ z -= 2; x.font = F(wt, z); } return z; };
+  const wrap = (t, w) => { const ws = t.split(" "), L = []; let l = ""; ws.forEach(q => { const n = l ? l + " " + q : q; if(x.measureText(n).width > w && l){ L.push(l); l = q; } else l = n; }); if(l) L.push(l); return L; };
+  const name = ((ud.fullName || "").trim() || (me.email || "A friend").split("@")[0]).slice(0, 28);
+  // background
+  const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#ff2a2a"); g.addColorStop(.5, "#a80000"); g.addColorStop(1, "#4d0000"); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = "rgba(255,255,255,.07)"; x.beginPath(); x.arc(1010, 90, 330, 0, 7); x.fill(); x.beginPath(); x.arc(40, 1290, 300, 0, 7); x.fill();
+  x.fillStyle = "rgba(255,255,255,.22)"; for(let i = 0; i < 6; i++) for(let j = 0; j < 6; j++){ x.beginPath(); x.arc(60 + i * 30, 70 + j * 30, 3, 0, 7); x.fill(); }
+  // brand
+  x.fillStyle = "#fff"; rr(330, 70, 96, 96, 26); x.fill(); x.fillStyle = "#c40000"; x.textAlign = "center"; x.font = F(800, 70); x.fillText("P", 378, 142);
+  x.fillStyle = "#fff"; x.textAlign = "left"; x.font = F(800, 76, true); x.fillText("TaskPey", 448, 142);
+  // pill
+  x.textAlign = "center"; x.fillStyle = "rgba(255,255,255,.18)"; rr(390, 205, 300, 54, 27); x.fill(); x.fillStyle = "#fff"; x.font = F(700, 24); try{ x.letterSpacing = "4px"; }catch(e){} x.fillText("YOU'RE INVITED", 540, 241); try{ x.letterSpacing = "0px"; }catch(e){}
+  // card
+  x.save(); x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = 50; x.shadowOffsetY = 20; x.fillStyle = "#fff"; rr(70, 340, 940, 780, 52); x.fill(); x.restore();
+  // avatar
+  x.fillStyle = "#fff"; x.beginPath(); x.arc(540, 340, 88, 0, 7); x.fill();
+  const ag = x.createLinearGradient(460, 260, 620, 420); ag.addColorStop(0, "#ff2a2a"); ag.addColorStop(1, "#a80000"); x.fillStyle = ag; x.beginPath(); x.arc(540, 340, 74, 0, 7); x.fill();
+  x.fillStyle = "#fff"; x.font = F(800, 82); x.fillText(name[0].toUpperCase(), 540, 369);
+  // inviter
+  x.fillStyle = "#1a1a22"; const sz = fit(name, 800, 66, 800); x.font = F(800, sz); x.fillText(name, 540, 500);
+  x.fillStyle = "#6b5b5b"; x.font = F(500, 34); x.fillText("has invited you to join TaskPey", 540, 552);
+  x.fillStyle = "#c40000"; x.font = F(800, 60); x.fillText("You are most welcome!", 540, 640);
+  x.fillStyle = "#4a4a55"; x.font = F(400, 31); wrap("Complete simple tasks, earn rewards and withdraw to JazzCash or Easypaisa.", 740).forEach((l, i) => x.fillText(l, 540, 700 + i * 44));
+  // bonus chip
+  const sb = Number(CFG.signupBonus) || 0;
+  if(sb > 0){ const t = "Welcome bonus " + usd(sb) + " on signup"; x.font = F(700, 30); const w = x.measureText(t).width + 60; x.fillStyle = "#e7f6ec"; rr(540 - w / 2, 800, w, 60, 30); x.fill(); x.fillStyle = "#15803d"; x.fillText(t, 540, 840); }
+  // code box
+  x.strokeStyle = "#d90a0a"; x.lineWidth = 3; x.setLineDash([14, 10]); rr(190, 900, 700, 180, 28); x.stroke(); x.setLineDash([]);
+  x.fillStyle = "#6b5b5b"; x.font = F(700, 24); try{ x.letterSpacing = "4px"; }catch(e){} x.fillText("YOUR INVITE CODE", 540, 950); try{ x.letterSpacing = "10px"; }catch(e){}
+  x.fillStyle = "#b30000"; x.font = F(800, 96); x.fillText(ud.refCode || "", 545, 1043); try{ x.letterSpacing = "0px"; }catch(e){}
+  // footer
+  x.fillStyle = "#fff"; rr(290, 1170, 500, 84, 42); x.fill(); x.fillStyle = "#b30000"; x.font = F(800, 36); x.fillText("Join now with this code", 540, 1224);
+  x.fillStyle = "rgba(255,255,255,.92)"; x.font = F(500, 30); x.fillText(link.replace(/^https?:\/\//, ""), 540, 1306);
+  return {c, name};
+}
 async function shareCard(link){
-  const c = document.createElement("canvas"); c.width = 1080; c.height = 1350; const x = c.getContext("2d");
-  const g = x.createLinearGradient(0, 0, 1080, 1350); g.addColorStop(0, "#ff2a2a"); g.addColorStop(.55, "#a80000"); g.addColorStop(1, "#4d0000"); x.fillStyle = g; x.fillRect(0, 0, 1080, 1350);
-  x.fillStyle = "rgba(255,255,255,.08)"; x.beginPath(); x.arc(980, 120, 320, 0, 7); x.fill(); x.beginPath(); x.arc(60, 1300, 260, 0, 7); x.fill();
-  x.fillStyle = "#fff"; x.textAlign = "center"; x.font = "italic 800 120px system-ui,sans-serif"; x.fillText("TaskPey", 540, 250);
-  x.font = "600 54px system-ui,sans-serif"; x.fillText("Complete simple tasks.", 540, 470); x.fillText("Earn real money.", 540, 545);
-  x.fillStyle = "#fff"; x.beginPath(); x.roundRect(140, 680, 800, 260, 36); x.fill();
-  x.fillStyle = "#6b5b5b"; x.font = "600 38px system-ui,sans-serif"; x.fillText("Use my invite code", 540, 760);
-  x.fillStyle = "#b30000"; x.font = "800 110px system-ui,sans-serif"; x.fillText(ud.refCode || "", 540, 890);
-  x.fillStyle = "rgba(255,255,255,.9)"; x.font = "500 34px system-ui,sans-serif"; x.fillText(link.replace(/^https?:\/\//, ""), 540, 1080);
+  const {c, name} = drawInvite(link);
   const blob = await new Promise(r => c.toBlob(r, "image/png")), f = new File([blob], "taskpey-invite.png", {type:"image/png"});
-  try{ if(navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f], text:"Join TaskPey with my code " + ud.refCode + ": " + link}); return; } }catch(e){ if(e && e.name === "AbortError") return; }
+  try{ if(navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f], text:name + " invited you to TaskPey. You are most welcome! Use my code " + ud.refCode + ": " + link}); return; } }catch(e){ if(e && e.name === "AbortError") return; }
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "taskpey-invite.png"; document.body.appendChild(a); a.click(); a.remove(); toast("Invite card saved");
 }
 async function loadBoard(by){
