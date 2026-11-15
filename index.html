@@ -298,12 +298,33 @@ html[data-theme=dark] nav,html[data-theme=dark] #cpan,html[data-theme=dark] #hpa
 html[data-theme=dark] .stat b,html[data-theme=dark] .bal,html[data-theme=dark] #login h3,html[data-theme=dark] #signup h3,html[data-theme=dark] .wm b,html[data-theme=dark] .sr b,html[data-theme=dark] .cfb h3{color:#f6eaea}
 html[data-theme=dark] .hero .bal{color:#fff}html[data-theme=dark] .seg{background:#2a1214}html[data-theme=dark] .seg button{color:#d9bcbc}html[data-theme=dark] .seg button.on{background:#3a1517;color:#ff6b6b}
 html[data-theme=dark] .mb.o{background:#2a1214;color:#f6eaea}html[data-theme=dark] button.g{background:#3a1517;color:#ff9a9a}
+
+/* ===== Professional notification / history look ===== */
+.sheet.slip{position:relative;padding-top:18px}
+.sheet.slip>h3{font-size:19px;margin:0 40px 6px 0}
+button.xb:not(.g):not(.r):not(.cam):not(.eye){position:absolute;top:12px;right:12px;overflow:visible}
+.xb{width:34px;height:34px;padding:0;border-radius:50%;background:#f3eeee;box-shadow:none;display:grid;place-items:center}
+.xb svg{width:16px;height:16px;fill:none;stroke:#444;stroke-width:2.200;stroke-linecap:round}
+.xb::after{display:none!important}
+.ev{align-items:center;gap:12px;padding:13px 4px}
+.ev .pt{flex:1;min-width:0}.ev .pt b{display:block;font-size:15px;font-weight:600;color:var(--tx)}
+.ev .pt span{display:block;font-size:13px;color:var(--mu);margin-top:1px}.ev .pt .dt{font-size:12px;opacity:.8}
+.ev .pt .err{color:#b91c1c}
+.ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;background:#fdecec;color:#b30000}
+.ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ico.ok{background:#e7f6ec;color:#15803d}.ico.bad{background:#fdecec;color:#b91c1c}.ico.wt{background:#fff3df;color:#b45309}
+.ev.nw{background:none;box-shadow:inset 3px 0 0 #d90a0a;padding-left:10px}
+.amt{font-size:14px;font-weight:700;white-space:nowrap}
+.lr .rk{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--soft);color:var(--mu)}
+.lr .rk.r1{background:#f5c542;color:#5a3d00}.lr .rk.r2{background:#cfd5db;color:#333}.lr .rk.r3{background:#e0a46b;color:#4a2a00}
+html[data-theme=dark] .xb{background:#3a1517}html[data-theme=dark] .xb svg{stroke:#f6eaea}
+html[data-theme=dark] .ico.ok{background:#12301c;color:#4ade80}html[data-theme=dark] .ico.wt{background:#3a2a10;color:#fbbf24}html[data-theme=dark] .ico.bad,html[data-theme=dark] .ico{background:#3a1517;color:#ff8a8a}
 </style>
 </head>
 <body>
 <div class="bg"><i style="--s:96px;left:-3%;top:6%;--d:14s;--l:0s"></i><i style="--s:70px;left:84%;top:12%;--d:11s;--l:-3s"></i><i style="--s:130px;left:-6%;top:38%;--d:17s;--l:-5s"></i><i style="--s:60px;left:90%;top:44%;--d:12s;--l:-2s"></i><i style="--s:84px;left:6%;top:76%;--d:15s;--l:-7s"></i><i style="--s:110px;left:78%;top:72%;--d:16s;--l:-4s"></i><i style="--s:44px;left:46%;top:90%;--d:10s;--l:-1s"></i></div>
 <div class="w">
-<div class="hdr"><div class="logo"><svg viewBox="0 0 34 34"><path d="M10 27V8h8.5a5.5 5.5 0 010 11H13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ht"><h1 id="brand"></h1><div class="mu">Earn • Invite • Withdraw</div></div><button id="bell" class="g hide" onclick="showNotifs()" aria-label="Notifications">&#128276;<span id="bellb" class="hide"></span></button><button id="lo" class="g hide" onclick="auth.signOut()"></button></div>
+<div class="hdr"><div class="logo"><svg viewBox="0 0 34 34"><path d="M10 27V8h8.5a5.5 5.5 0 010 11H13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ht"><h1 id="brand"></h1><div class="mu">Earn • Invite • Withdraw</div></div><button id="bell" class="g hide" onclick="showNotifs()" aria-label="Notifications"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0112 0v5l1.500 2h-15zM10 20.500a2 2 0 004 0"/></svg><span id="bellb" class="hide"></span></button><button id="lo" class="g hide" onclick="auth.signOut()"></button></div>
 
 <div id="auth" class="hide">
   <div class="tagl">Complete tasks.<br><span>Earn real money.</span></div>
@@ -1183,7 +1204,7 @@ function helpSend(){
 <script>
 /* ===== TaskPey extras: notifications, history, rewards, levels, leaderboard, FAQ, tutorial, dark mode, PWA ===== */
 const dkey = d => { d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); };
-function sheet(h){ $("modal").innerHTML = '<div class="sheet slip">' + h + '<div class="row"><button class="g" style="flex:1" onclick="closeM()">Close</button></div></div>'; $("modal").classList.remove("hide"); }
+function sheet(h){ $("modal").innerHTML = '<div class="sheet slip"><button class="xb" onclick="closeM()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' + h + '</div>'; $("modal").classList.remove("hide"); }
 const LV = [["Bronze",0,"#cd7f32"],["Silver",5,"#9ca3af"],["Gold",20,"#f59e0b"],["Platinum",50,"#06b6d4"]];   // thresholds in USD earned
 function lvl(){
   const e = (ud.totalEarned != null ? Number(ud.totalEarned) : (Number(ud.balance) || 0) + (Number(ud.totalWithdrawn) || 0)) / rate();
@@ -1204,7 +1225,7 @@ async function loadFeed(){
   const ev = [];
   ss && ss.forEach(d => { const s = d.data(); ev.push({id:"t"+d.id, k:"task", t:s.reviewedAt || s.updatedAt || s.at || 0, st:s.status, title:s.taskTitle || "Task", amt:s.status === "approved" ? Number(s.reward) || 0 : 0, reason:s.reason || s.adminNote || ""}); });
   ws && ws.forEach(d => { const w = d.data(); ev.push({id:"w"+d.id, k:"wd", t:w.paidAt || w.reviewedAt || w.at || 0, st:w.status, title:"Withdrawal to " + (w.method || "account"), amt:w.status === "rejected" ? 0 : -(Number(w.amount) || 0), reason:w.reason || ""}); });
-  fs && fs.forEach(d => { const f = d.data(); ev.push({id:"f"+d.id, k:"friend", t:f.at || 0, st:f.active ? "active" : "joined", title:(f.name || "A friend") + (f.active ? " is now active" : " joined with your code"), amt:0}); });
+  fs && fs.forEach(d => { const f = d.data(); ev.push({id:"f"+d.id, k:"friend", t:f.at || 0, st:f.active ? "active" : "joined", title:f.name || "A friend", amt:0}); });
   bs && bs.forEach(d => { const b = d.data(); ev.push({id:"b"+d.id, k:"bonus", t:b.at || 0, st:"ok", title:b.title || "Daily bonus", amt:Number(b.amount) || 0}); });
   if(ud && Number(ud.signupBonus) > 0) ev.push({id:"sb", k:"bonus", t:ud.createdAt || 0, st:"ok", title:"Signup bonus", amt:Number(ud.signupBonus)});
   FEED = ev.sort((a, b) => b.t - a.t);
@@ -1215,11 +1236,20 @@ async function loadFeed(){
   if(nw.length && !feedFirst) toast("New update: " + nw[0].title);
   feedFirst = false;
 }
-const EI = {task:"\u2705", wd:"\u{1F4B8}", friend:"\u{1F465}", bonus:"\u{1F381}"};
-const evText = e => e.k === "task" ? (e.st === "approved" ? "Task approved" : e.st === "rejected" ? "Task rejected" : "Task pending review") : e.k === "wd" ? (e.st === "paid" ? "Withdrawal paid" : e.st === "rejected" ? "Withdrawal rejected" : "Withdrawal pending") : e.k === "bonus" ? "Bonus received" : "Referral";
+const SV = d => `<svg viewBox="0 0 24 24">${d}</svg>`;
+const ICO = {ok:SV('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), bad:SV('<path d="M6 6l12 12M18 6L6 18"/>'), wt:SV('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+  wd:SV('<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 15h2"/>'), friend:SV('<circle cx="9" cy="8.5" r="3.3"/><path d="M3 19c.5-3.4 3-5 6-5s5.500 1.600 6 5M17 6.500a3 3 0 010 5.500M18.500 14.500c1.500.6 2.300 2 2.500 4.500"/>'), bonus:SV('<rect x="3.500" y="9" width="17" height="4" rx="1"/><path d="M12 9v11M5 13v6.500h14V13M12 9c-2.500 0-4-3.500-1.800-4.500S12 7 12 9zm0 0c0-2 .8-4.500 2.800-4 2.200 1 .5 4-2.800 4z"/>')};
+function evIcon(e){
+  let c = "wt", i = "wt";
+  if(e.k === "task"){ if(e.st === "approved"){ c = "ok"; i = "ok"; } else if(e.st === "rejected"){ c = "bad"; i = "bad"; } }
+  else if(e.k === "wd"){ i = "wd"; c = e.st === "paid" ? "ok" : e.st === "rejected" ? "bad" : "wt"; }
+  else if(e.k === "bonus"){ i = "bonus"; c = "ok"; } else { i = "friend"; c = ""; }
+  return `<span class="ico ${c}">${ICO[i]}</span>`;
+}
+const evText = e => e.k === "task" ? (e.st === "approved" ? "Task approved" : e.st === "rejected" ? "Task rejected" : "Task under review") : e.k === "wd" ? (e.st === "paid" ? "Withdrawal paid" : e.st === "rejected" ? "Withdrawal rejected" : "Withdrawal pending") : e.k === "bonus" ? "Bonus received" : (e.st === "active" ? "Referral activated" : "New referral");
 function evRow(e, nw){
   const a = e.amt ? `<span class="amt ${e.amt > 0 ? "p" : "m"}">${e.amt > 0 ? "+" : "-"}${usd(Math.abs(e.amt))}</span>` : "";
-  return `<div class="ev ${nw ? "nw" : ""}"><span class="e">${e.st === "rejected" ? "\u274c" : e.st === "pending" ? "\u23f3" : EI[e.k]}</span><div class="pt"><b>${esc(evText(e))}</b><span>${esc(e.title)} \u00b7 ${e.t ? fdate(e.t) : "-"}</span>${e.reason ? `<span class="err">Reason: ${esc(e.reason)}</span>` : ""}${e.k === "task" && e.st === "rejected" ? `<button class="sm g" onclick="closeM();show('tasks')">Submit again</button>` : ""}</div>${a}</div>`;
+  return `<div class="ev ${nw ? "nw" : ""}">${evIcon(e)}<div class="pt"><b>${esc(evText(e))}</b><span>${esc(e.title)}</span><span class="dt">${e.t ? fdate(e.t) : "-"}</span>${e.reason ? `<span class="err">Reason: ${esc(e.reason)}</span>` : ""}${e.k === "task" && e.st === "rejected" ? `<button class="sm g" onclick="closeM();show('tasks')">Submit again</button>` : ""}</div>${a}</div>`;
 }
 async function showNotifs(){
   await loadFeed(); let map = {}; try{ map = JSON.parse(lsGet("stmap") || "{}"); }catch(e){}
@@ -1250,7 +1280,7 @@ async function loadBoard(by){
   ["earned","team"].forEach(x => { const b = $("lb-" + x); if(b) b.classList.toggle("on", x === by); });
   try{
     const q = await db.collection("profiles").orderBy(by, "desc").limit(25).get(), md = ["\u{1F947}","\u{1F948}","\u{1F949}"]; let i = 0, h = "";
-    q.docs.map(d => d.data()).filter(p => !p.hidden).slice(0, 10).forEach(p => { h += `<div class="lr ${p.uid === me.uid ? "me" : ""}"><span class="rk">${md[i] || i + 1}</span><b>${esc(p.name || "User")}</b><span class="tag">${by === "earned" ? usd(p.earned || 0) : (p.team || 0) + " friends"}</span></div>`; i++; });
+    q.docs.map(d => d.data()).filter(p => !p.hidden).slice(0, 10).forEach(p => { h += `<div class="lr ${p.uid === me.uid ? "me" : ""}"><span class="rk r${i < 3 ? i + 1 : 0}">${i + 1}</span><b>${esc(p.name || "User")}</b><span class="tag">${by === "earned" ? usd(p.earned || 0) : (p.team || 0) + " friends"}</span></div>`; i++; });
     if($("lb")) $("lb").innerHTML = h || '<div class="mu">No data yet.</div>';
   }catch(e){ if($("lb")) $("lb").innerHTML = '<div class="mu">Leaderboard is not available right now.</div>'; }
 }
@@ -1267,7 +1297,7 @@ async function claimDaily(){
   }catch(e){ return alert(e.message); }
   ud.lastCheckin = today; ud.streak = res.streak; ud.balance = res.balance; writeCache(me.uid, ud);
   db.collection("bonuses").add({uid:me.uid, amount:res.amt, title:"Daily bonus (day " + (((res.streak - 1) % 7) + 1) + ")", at:Date.now()}).catch(() => {});
-  toast("Bonus added: " + usd(res.amt) + " \u{1F381}"); loadRewards(); setTimeout(loadFeed, 1200);
+  toast("Daily bonus added: " + usd(res.amt)); loadRewards(); setTimeout(loadFeed, 1200);
 }
 /* ---- referral share, dark mode, FAQ, tutorial, install ---- */
 function shareWA(link){ window.open("https://wa.me/?text=" + encodeURIComponent("Join TaskPey, complete simple tasks and earn real money! Use my invite link: " + link), "_blank"); }
@@ -1284,7 +1314,7 @@ function showFAQ(){
 function showTutorial(){
   lsSet("tut", "1");
   const S = [["1","Pick a task","Open Tasks, read the steps and complete them."],["2","Send proof","Attach a screenshot and submit. We review it."],["3","Get paid","Approved tasks add money to your balance."],["4","Withdraw","Request JazzCash or Easypaisa payout from Home."],["5","Invite & earn","Share your code from Refer and claim the daily bonus in Rewards."]];
-  sheet("<h3>How TaskPey works</h3>" + S.map(s => `<div class="ev"><span class="e">${s[0]}</span><div class="pt"><b>${s[1]}</b><span>${s[2]}</span></div></div>`).join(""));
+  sheet("<h3>How TaskPey works</h3>" + S.map(s => `<div class="ev"><span class="ico" style="font-weight:700;font-size:16px">${s[0]}</span><div class="pt"><b>${s[1]}</b><span>${s[2]}</span></div></div>`).join(""));
 }
 addEventListener("beforeinstallprompt", e => { e.preventDefault(); window.__ip = e; });
 async function installApp(){ const e = window.__ip; if(!e) return; e.prompt(); await e.userChoice.catch(() => {}); window.__ip = null; loadProfile(); }
