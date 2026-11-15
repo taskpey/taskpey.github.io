@@ -233,6 +233,30 @@ select option{color:#111;background:#fff}
 #panel.mini #tabs .nb{position:absolute;top:2px;right:2px;margin:0;font-size:10px;line-height:15px;padding:0 5px}
 .row>button{flex:1 1 104px}
 @media(max-width:480px){#panel{gap:0 8px}#tabs{width:146px;padding:6px}#tabs button{font-size:13px;gap:8px;padding:10px 7px}#tabs .nb{padding:0 5px;font-size:10.5px;line-height:16px}.card{padding:12px}}
+
+/* ===== Page-style navigation (menu -> full page, back button) ===== */
+#panel{display:block!important}#panel.hide{display:none!important}
+#tabs{display:flex!important;flex-direction:column;width:auto!important;position:static;margin:10px 0;padding:6px;gap:2px;background:var(--card);border:1px solid var(--bd);border-radius:14px}
+#tabs button{width:100%;justify-content:flex-start;gap:12px;padding:15px 12px!important;font-size:15.5px!important;font-weight:600;border-radius:10px;background:transparent;border:0;color:#f3e1e1;white-space:nowrap}
+#tabs button:not(:last-child){border-bottom:1px solid var(--bd);border-radius:0}
+#tabs button .ic{width:20px;height:20px}
+#tabs button::after{display:block!important;content:"\203a";position:static!important;width:auto!important;height:auto!important;background:none!important;animation:none!important;transform:none!important;margin-left:6px;opacity:.55;font-size:22px;line-height:1}
+#tabs .nb{margin-left:auto;font-size:12px;line-height:20px;padding:0 8px}
+#tabs button:not(:has(.nb:not(:empty)))::after{margin-left:auto!important}
+#tabs .nb:not(:empty)+*{margin-left:0}
+#tabs button.on{background:transparent;color:#f3e1e1}
+#tabs button.on .ic{color:#ff8a8a}
+body.inpage #stats,body.inpage #syn,body.inpage #tabs{display:none!important}
+body:not(.inpage) #panel>[id^="t-"]{display:none!important}
+#pbar{display:none;align-items:center;gap:12px;position:sticky;top:0;z-index:7;padding:10px 0;margin-bottom:4px;background:#150305}
+body.inpage #pbar{display:flex}#pbar b{font-size:18px;color:#fff}#pbar button{padding:8px 12px}
+.card,.urow{overflow-wrap:anywhere}
+.stat>div{font-size:9.5px;letter-spacing:0}
+.urow{display:flex;align-items:center;gap:12px;padding:12px;margin:8px 0;background:var(--card);border:1px solid var(--bd);border-radius:14px;cursor:pointer}
+.urow:active{background:#3a1215}
+.uav{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(217,10,10,.2);color:#ff8a8a;font-weight:700;flex:none}
+.ui{flex:1;min-width:0}.ui b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:14.5px}
+.chev{font-size:22px;opacity:.5}
 </style>
 </head>
 <body>
@@ -253,6 +277,8 @@ select option{color:#111;background:#fff}
   <div class="mu" id="syn" style="margin:-4px 4px 8px"></div>
   <div class="tabs" id="tabs"></div>
 
+  <div id="pbar"><button class="g" onclick="goBack()"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Back</button><b id="ptitle"></b></div>
+  <div id="t-user" class="hide"></div>
   <div id="t-users" class="hide">
     <input id="us" placeholder="Search user by email" oninput="renderUsers()">
     <div id="ulist"></div>
@@ -364,7 +390,7 @@ const IC = {
   check:'<path d="M5 12l5 5 9-10"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>'};
 const ic = k => `<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
-let USERS = [], tab = "users";
+let USERS = [], tab = ""; try{ tab = decodeURIComponent(location.hash.slice(1)); }catch(e){}
 let ALLPAY = [], ALLWD = [];
 const fmtD = v => v ? new Date(v).toLocaleString("en-GB", {hour12:false}) : "";
 function csvCell(v){
@@ -486,10 +512,20 @@ auth.onAuthStateChanged(u => {
   if(u){ $("who").textContent = u.email; load(); initChat(); }
 });
 
+const PT = {users:"Users", user:"User details", pay:"Payments", proofs:"Task proofs", wd:"Withdrawals", tasks:"Tasks", chat:"Support", lb:"Leaderboard", set:"Settings"};
+let CURU = "";
 function show(t){
-  tab = t; if(t === "lb" && !LBL.length) loadLB();
-  ["users","pay","proofs","wd","tasks","chat","lb","set"].forEach(x => { $("t-"+x).classList.toggle("hide", x!==t); $("b-"+x).classList.toggle("on", x===t); });
+  t = t || ""; if(t.indexOf("user:") === 0){ CURU = t.slice(5); t = "user"; }
+  tab = t === "user" ? "user:" + CURU : t;
+  document.body.classList.toggle("inpage", !!PT[t]);
+  Object.keys(PT).forEach(x => { const e = $("t-" + x); if(e) e.classList.toggle("hide", x !== t); });
+  $("ptitle").textContent = PT[t] || "";
+  if(t === "user") renderUser();
+  if(t === "lb" && !LBL.length) loadLB();
 }
+function go(t){ window.__nav = 1; if(decodeURIComponent(location.hash.slice(1)) === t){ show(t); window.scrollTo(0, 0); } else location.hash = t; }
+function goBack(){ if(window.__nav) history.back(); else { location.hash = ""; } }
+window.addEventListener("hashchange", () => { let h = ""; try{ h = decodeURIComponent(location.hash.slice(1)); }catch(e){} if(!$("panel").classList.contains("hide")){ show(h); window.scrollTo(0, 0); } });
 
 async function saveSettings(){
   const n = {planFee:Number($("s-fee").value), payMethod:$("s-method").value.trim(), payNumber:$("s-num").value.trim(),
@@ -519,9 +555,6 @@ async function load(){
   catch(e){ $("stats").innerHTML = '<div style="padding:10px;color:#dc2626">Could not load: ' + esc(e.message) + '</div>'; }
 }
 
-const SBT = '<button class="g sbt" onclick="toggleSb()" aria-label="Collapse menu"><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu</button>';
-function toggleSb(){ const m = $("panel").classList.toggle("mini"); try{ localStorage.setItem("sb_mini", m ? "1" : ""); }catch(e){} }
-try{ if(localStorage.getItem("sb_mini")) $("panel").classList.add("mini"); }catch(e){}
 let lastMaint = 0;
 function maintain(w){
   if(Date.now() - lastMaint < 600000) return; lastMaint = Date.now();
@@ -565,9 +598,9 @@ async function load0(){
   $("wpc").textContent = pend.length;
 
   const sd = (k, n, l) => `<div><span class="si">${ic(k)}</span><b>${n}</b>${l}</div>`;
-  $("stats").innerHTML = sd("users",USERS.length,"Users") + sd("ban",USERS.filter(x=>x.banned).length,"Banned") + sd("shield",USERS.filter(x=>x.activated).length,"Active") + sd("proofs",s.size,"Proofs") + sd("wallet",pend.length,"Withdrawals");
-  $("tabs").innerHTML = SBT + [["users","Users","users"],["lb","Leaderboard","bolt"],["pay","Payment","card"],["proofs","Proof","proofs"],["wd","Withdrawal","wallet"],["tasks","Tasks","tasks"],["chat","Support","chat"],["set","Settings","gear"]]
-    .map(x => `<button id="b-${x[0]}" onclick="show('${x[0]}')">${ic(x[2])}${x[1]}${x[0]==="chat"?'<span class="nb" id="nbc"></span>':`<span class="nb" id="nb-${x[0]}"></span>`}</button>`).join("");
+  $("stats").innerHTML = sd("users",USERS.length,"Users") + sd("ban",USERS.filter(x=>x.banned).length,"Banned") + sd("shield",USERS.filter(x=>x.activated).length,"Active") + sd("proofs",s.size,"Proofs") + sd("wallet",pend.length,"Payouts");
+  $("tabs").innerHTML = [["users","Users","users"],["lb","Leaderboard","bolt"],["pay","Payment","card"],["proofs","Proof","proofs"],["wd","Withdrawal","wallet"],["tasks","Tasks","tasks"],["chat","Support","chat"],["set","Settings","gear"]]
+    .map(x => `<button id="b-${x[0]}" onclick="go('${x[0]}')">${ic(x[2])}${x[1]}${x[0]==="chat"?'<span class="nb" id="nbc"></span>':`<span class="nb" id="nb-${x[0]}"></span>`}</button>`).join("");
   [["pay", p.docs.filter(d => d.data().status === "pending").length], ["proofs", s.size], ["wd", pend.length]].forEach(a => { const e = $("nb-" + a[0]); if(e) e.textContent = a[1] || ""; });
 
   renderUsers();
@@ -607,10 +640,7 @@ async function load0(){
 let ULIM = 40;
 const lvName = u => { const e = (u.totalEarned != null ? Number(u.totalEarned) : (Number(u.balance) || 0) + (Number(u.totalWithdrawn) || 0)) / rt(); return e >= 50 ? "Platinum" : e >= 20 ? "Gold" : e >= 5 ? "Silver" : "Bronze"; };
 function moreUsers(){ ULIM += 40; renderUsers(true); }
-function renderUsers(keep){
-  if(keep !== true) ULIM = 40;
-  const k = $("us").value.toLowerCase(), all = USERS.filter(u => (u.email||"").toLowerCase().includes(k));
-  $("ulist").innerHTML = all.slice(0, ULIM).map(u => `<div class="card l">
+const userCard = u => `<div class="card l">
     <b>${esc(u.email)}</b> ${u.banned ? '<span class="tag bad">banned</span>' : ''}
     <span class="tag ${u.verified ? "" : "no"}">${u.verified ? ic("check") + "verified" : "unverified"}</span> <span class="tag ${u.activated ? "" : "no"}">${u.activated ? "member" : "no plan"}</span>
     ${u.fullName || u.country ? `<div class="mu">${esc(u.fullName||"")}${u.fullName && u.country ? " \u00b7 " : ""}${esc(u.country||"")}</div>` : ""}
@@ -621,7 +651,18 @@ function renderUsers(keep){
     <div class="row"><button class="g" onclick="adjBal('${u.id}',1)">${ic("plus")}Add Rs</button><button class="r" onclick="adjBal('${u.id}',-1)">${ic("minus")}Deduct</button>
       <button class="g" onclick="setActive('${u.id}',${!u.activated})">${ic("bolt")}${u.activated ? "Deactivate" : "Activate"}</button>
       ${u.email === ADMIN_EMAIL ? "" : `<button class="${u.banned ? "g" : "r"}" onclick="ban('${u.id}',${!u.banned})">${u.banned ? "Unban" : "Ban user"}</button>`}</div>
-  </div>`).join("") + (all.length > ULIM ? `<button class="g" style="width:100%" onclick="moreUsers()">Show more (${all.length - ULIM} left)</button>` : "") || '<div class="mu">No users found</div>';
+  </div>`;
+function renderUsers(keep){
+  if(keep !== true) ULIM = 40;
+  const k = $("us").value.toLowerCase(), all = USERS.filter(u => (u.email||"").toLowerCase().includes(k));
+  $("ulist").innerHTML = all.slice(0, ULIM).map(u => `<div class="urow" onclick="go('user:${u.id}')"><span class="uav">${esc((u.email || "?")[0].toUpperCase())}</span>
+    <div class="ui"><b>${esc(u.email)}</b><div class="mu">${esc(u.fullName || "-")} \u00b7 ${rs(u.balance)}</div></div>
+    <span class="uc">${u.banned ? '<span class="tag bad">banned</span>' : `<span class="tag ${u.activated ? "" : "no"}">${u.activated ? "member" : "no plan"}</span>`}</span><span class="chev">&#8250;</span></div>`).join("")
+    + (all.length > ULIM ? `<button class="g" style="width:100%;margin-top:8px" onclick="moreUsers()">Show more (${all.length - ULIM} left)</button>` : "") || '<div class="mu">No users found</div>';
+}
+function renderUser(){
+  const u = USERS.find(x => x.id === CURU);
+  $("t-user").innerHTML = u ? userCard(u) : '<div class="card mu">User not found. Go back and open the list again.</div>';
 }
 async function adjBal(id, sign){
   const u = USERS.find(x => x.id === id); if(!u) return;
