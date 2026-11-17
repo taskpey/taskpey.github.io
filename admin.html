@@ -584,9 +584,27 @@ function maintain(w){
   }
   }catch(e){ console.warn(e); } }, 2500);
 }
+function renderSubs(docs){
+  docs = docs.slice().sort((a,b) => (b.data().at||0) - (a.data().at||0));
+  let h = "";
+  docs.forEach(d => { const x = d.data();
+    h += `<div class="card l"><b>${esc(x.taskTitle)}</b> · ${rs(x.reward)}<div class="mu">${esc(x.email)} · ${new Date(x.at||0).toLocaleString()}</div>
+      <div>${/^https?:\/\//.test(x.proof) ? `<a href="${esc(x.proof)}" target="_blank" rel="noopener">${esc(x.proof)}</a>` : esc(x.proof)}</div>
+      ${/^data:image\/[a-z+]+;base64,[A-Za-z0-9+\/=]+$/.test(x.shot || "") ? `<img loading="lazy" decoding="async" src="${x.shot}" alt="screenshot" style="max-width:100%;max-height:240px;border-radius:12px;margin-top:6px;border:1px solid var(--bd)" onclick="openShot(this.src)"><div class="mu">Tap the screenshot to enlarge</div>` : ""}
+      <div class="row"><button onclick="appSub('${d.id}',true)">Approve</button><button class="r" onclick="appSub('${d.id}',false)">Reject</button></div></div>`; });
+  $("asub").innerHTML = (docs.length >= 100 ? '<div class="mu" style="margin:4px 2px">Showing the first 100 pending proofs. More appear after you review these.</div>' : "") + h || '<div class="mu">No pending proofs</div>';
+  const nb = $("nb-proofs"); if(nb) nb.textContent = docs.length || "";
+}
+let subsUnsub = null;
+function watchSubs(){
+  if(subsUnsub) return;
+  subsUnsub = db.collection("submissions").where("status","==","pending").limit(100).onSnapshot(
+    snap => renderSubs(snap.docs),
+    err => { subsUnsub = null; $("asub").innerHTML = '<div style="padding:10px;color:#dc2626">Proofs could not load: ' + esc(err.message) + '</div>'; });
+}
 async function load0(){
   const [s, w, t, u, p, cs] = await Promise.all([
-    db.collection("submissions").where("status","==","pending").limit(25).get(),
+    db.collection("submissions").where("status","==","pending").limit(100).get(),
     db.collection("withdrawals").get(),
     db.collection("tasks").get(),
     db.collection("users").get(),
@@ -624,12 +642,7 @@ async function load0(){
   $("phist").innerHTML = pays.filter(x => x.status !== "pending").slice(0, 40).map(x => `<div class="card l">Rs ${esc(x.amount)} · ${esc(x.email)} <span class="tag">${esc(x.status)}</span>
     <div class="mu">TID ${esc(x.tid)} · ${new Date(x.at||0).toLocaleDateString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
 
-  let h = ""; s.forEach(d => { const x = d.data();
-    h += `<div class="card l"><b>${esc(x.taskTitle)}</b> · ${rs(x.reward)}<div class="mu">${esc(x.email)}</div>
-      <div>${/^https?:\/\//.test(x.proof) ? `<a href="${esc(x.proof)}" target="_blank" rel="noopener">${esc(x.proof)}</a>` : esc(x.proof)}</div>
-      ${/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x.shot || "") ? `<img loading="lazy" decoding="async" src="${x.shot}" alt="screenshot" style="max-width:100%;max-height:240px;border-radius:12px;margin-top:6px;border:1px solid var(--bd)" onclick="openShot(this.src)"><div class="mu">Tap the screenshot to enlarge</div>` : ""}
-      <div class="row"><button onclick="appSub('${d.id}',true)">Approve</button><button class="r" onclick="appSub('${d.id}',false)">Reject</button></div></div>`; });
-  $("asub").innerHTML = (s.size >= 25 ? '<div class="mu" style="margin:4px 2px">Showing the first 25 pending proofs. More appear after you review these.</div>' : "") + h || '<div class="mu">No pending proofs</div>';
+  renderSubs(s.docs); watchSubs();
 
   const taxOf = a => { const f = Math.ceil(Number(a) * (CFG.withdrawTax || 0) / 100); return {fee:f, net:Number(a) - f}; };
   $("awd").innerHTML = pend.map(x => { const tx_ = taxOf(x.amount); return `<div class="card l"><b>Pay Rs ${tx_.net}</b> <span class="mu">(Rs ${esc(x.amount)} - ${CFG.withdrawTax||0}% tax Rs ${tx_.fee})</span> · ${esc(x.method)} · ${esc(x.number)}<div class="mu">Account holder: <b>${esc(x.holder || "-")}</b></div><div class="mu">${esc(x.email)}</div>
