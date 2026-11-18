@@ -929,7 +929,7 @@ async function submitProof(id){
       const td = t.data(), lim = Number(td.limit || 0), taken = Number(td.taken || 0);
       if(lim > 0 && taken >= lim) throw new Error("Task ended: all spots are filled.");
       tx.set(sref, {uid:me.uid, email:me.email, taskId:id, taskTitle:td.title, reward:Number(td.reward), proof, shot, status:"pending", at:Date.now()});
-      tx.update(tref, {taken: taken + (s0.exists ? 0 : 1)});
+      tx.update(tref, {taken: taken + 1});
     });
     delete SHOTS[id];
   }catch(e){ alert(e.message); }
