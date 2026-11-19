@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- BUILD no-otp 2026-11-18 -->
 <meta charset="UTF-8">
 <meta name="theme-color" content="#8a0000">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -727,14 +728,9 @@ async function onUser(u){
   ensureRef(d.data().refCode);
   $("ld").classList.add("hide");
   if(d.data().banned){ $("banned").classList.remove("hide"); return; }
-  if(!d.data().verified){
-    $("vem").textContent = u.email; $("verify").classList.remove("hide"); helpShow(true);
-    const o = getOtp();
-    if(!o || Date.now() > o.exp){
-      try{ await sendOtp(); $("verr").textContent = "Code sent to your email."; }
-      catch(e){ $("verr").textContent = e.message || "Could not send the email. Tap Resend code."; }
-    }
-    return;
+  if(!d.data().verified){   // OTP removed: auto-verify
+    try{ await ur.update({verified:true}); d = await ur.get(); window.__uDoc = d.data(); }
+    catch(e){ console.warn(e); }
   }
   if(!d.data().activated){ showActivate(); return; }
   mountApp();
@@ -1169,7 +1165,7 @@ async function botReply(t){
 
 /* ---------- Help guide (works before login too, no database needed) ---------- */
 const GUIDE = {
-  signup: "How to create your account:\n1) Enter your full name, country, email and password.\n2) Enter the 6-character referral code of the friend who invited you (required).\n3) Tap Create Account.\n4) Enter the 6-digit code we email you (check Spam too).\n5) Pay the one-time membership fee to activate your account.",
+  signup: "How to create your account:\n1) Enter your full name, country, email and password.\n2) Enter the 6-character referral code of the friend who invited you (required).\n3) Tap Create Account.\n4) Pay the one-time membership fee to activate your account.",
   ref: "Referral code: a 6-character code (letters and numbers) that your friend gets in their Refer tab. Ask the friend who invited you for it, or open their invite link and the code fills in automatically. Without a valid code you cannot create an account.",
   pw: "Password rules: 8 or more characters with an uppercase letter, a lowercase letter, a number and a special character (@ # $ !).",
   otp: "After you create the account we email a 6-digit code. Check Spam too. It is valid for 10 minutes. Did not get it? Tap Resend code (you can ask for a new one after 1 minute). 5 wrong tries lock the code, then tap Resend.",
@@ -1196,7 +1192,7 @@ const guideKey = t => {
   if(/account|sign ?up|register|create|join/i.test(t)) return "signup";
   return "";
 };
-const HELPCHIPS = [["signup","Create account"],["ref","Referral code"],["pw","Password rules"],["otp","Email code (OTP)"],["pay","Membership payment steps"],["method","Payment method"],["sender","Sender number"],["tid","What is TID?"],["login","Login problem"]];
+const HELPCHIPS = [["signup","Create account"],["ref","Referral code"],["pw","Password rules"],["pay","Membership payment steps"],["method","Payment method"],["sender","Sender number"],["tid","What is TID?"],["login","Login problem"]];
 let hOpen = false, hInit = false;
 function hAdd(c, t){ const m = $("hmsg"); m.insertAdjacentHTML("beforeend", `<div class="mb ${c}">${esc(t)}</div>`); m.scrollTop = 1e9; }
 function helpShow(v){ $("hfab").classList.toggle("hide", !v); if(!v){ hOpen = false; $("hpan").classList.add("hide"); } }
