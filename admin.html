@@ -1,22 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- BUILD no-otp 2026-11-18 -->
 <meta charset="UTF-8">
-<meta name="theme-color" content="#8a0000">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TaskPey</title>
+<meta name="theme-color" content="#5c0000">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>TaskPey Admin</title>
 <link rel="preconnect" href="https://firestore.googleapis.com">
-<link rel="preconnect" href="https://www.gstatic.com">
-<script>try{document.documentElement.dataset.theme=localStorage.getItem("tp_theme")||"light"}catch(e){}</script>
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
-<link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
-<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
-<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js">
-<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
 <style>
 :root{--bg:#7a0000;--card:rgba(255,255,255,.88);--tx:#1a1a22;--mu:#6e5a5a;--pr:#d90a0a;--pr2:#a80000;--soft:#ffe9e9;--bd:rgba(255,160,160,.55);--sh:0 10px 28px rgba(60,0,0,.28);--g1:#ff5a5a;--g2:#a80000}
 *{box-sizing:border-box}
@@ -55,54 +45,28 @@ button.r{background:#dc2626;box-shadow:none}
 .stat b{display:block;font-size:22px;color:var(--tx);margin-top:4px}
 .si{width:38px;height:38px;border-radius:50%;background:var(--soft);color:var(--pr);display:grid;place-items:center;margin:0 auto}
 .stat.pl>div{font-size:13px}.stat.pl b{color:var(--pr);font-size:20px}
-.tabs{display:flex;gap:8px;margin:12px 0;overflow-x:auto;padding-bottom:8px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
 .tabs::-webkit-scrollbar{height:4px}.tabs::-webkit-scrollbar-thumb{background:var(--pr);border-radius:9px}
-.tabs button{flex:none;background:var(--card);color:var(--tx);border:1px solid var(--bd);box-shadow:none;border-radius:99px;white-space:nowrap}
+.tabs button{flex-direction:column;gap:6px;padding:16px 6px;font-size:16px;font-weight:700;background:var(--card);color:var(--tx);border:1px solid var(--bd);box-shadow:var(--sh);border-radius:20px;white-space:nowrap}
+.tabs button .ic{width:30px;height:30px}
 .tabs button .ic{color:var(--pr2)}
 .tabs button.on{background:linear-gradient(135deg,#ff2a2a,#a80000);color:#fff;border-color:transparent;box-shadow:0 6px 14px rgba(168,0,0,.3)}
 .tabs button.on .ic{color:#fff}
 #us{padding-left:44px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d90a0a' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") no-repeat 15px center/20px}
-nav{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;background:var(--card);border:1px solid var(--bd);border-radius:22px;padding:6px;box-shadow:0 4px 14px rgba(168,0,0,.2);max-width:580px;margin:0 auto}
+nav{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;background:var(--card);border:1px solid var(--bd);border-radius:22px;padding:6px;box-shadow:0 10px 28px rgba(168,0,0,.22);max-width:580px;margin:0 auto}
 nav button{flex:1;background:none;color:var(--mu);border-radius:16px;padding:7px 0 5px;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;box-shadow:none}
 nav button.on{color:var(--pr2);background:var(--soft)}
 nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 a{color:var(--pr2)}
 textarea{font-family:inherit}
-
-.pcard{display:flex;align-items:center;gap:14px}
-.av{position:relative;width:92px;height:92px;border-radius:50%;flex:none;border:4px solid #ff2a2a;background:var(--soft);display:grid;place-items:center;color:var(--pr);box-shadow:0 6px 16px rgba(217,10,10,.3)}
-.av img{width:100%;height:100%;border-radius:50%;object-fit:cover}
-.av .ic{width:46px;height:46px;stroke-width:1.8;fill:currentColor}
-.cam{position:absolute;right:-4px;bottom:-2px;width:32px;height:32px;border-radius:50%;background:var(--pr2);color:#fff;display:grid;place-items:center;border:2px solid var(--card);padding:0;box-shadow:none}
-.cam .ic{width:16px;height:16px}
-.pinfo{flex:1;min-width:0;border-left:1px solid var(--bd);padding-left:14px}
-.pinfo h2{margin:0;font-size:19px;display:flex;align-items:center;gap:6px;word-break:break-word;line-height:1.2}
-.pinfo h2 .ic{color:var(--pr);fill:var(--pr);stroke:#fff;width:20px;height:20px}
-.sec{display:flex;align-items:center;gap:12px}
-.pi{width:46px;height:46px;border-radius:50%;background:var(--soft);color:var(--pr);display:grid;place-items:center;flex:none}
-.pi .ic{width:24px;height:24px}
-.prow{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:11px 14px;margin:9px 0;box-shadow:var(--sh);cursor:pointer}
-.prow.ro{cursor:default}
-.pt{flex:1;min-width:0}.pt b{display:block;font-size:16px}.pt span{display:block;font-size:14px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.prow>.ic{color:var(--tx);width:20px;height:20px}
-.pstat{display:flex;align-items:center;gap:12px;background:var(--soft);border:1px solid var(--bd);border-radius:18px;padding:12px 14px;margin:12px 0}
-.pstat .pi{background:transparent}.pstat .pi .ic{width:38px;height:38px;fill:var(--pr);stroke:#fff}
-#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--card);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
-.sheet h3{margin-top:0}
-.sp{width:36px;height:36px;border:4px solid var(--soft);border-top-color:var(--pr);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}
+.sp{width:34px;height:34px;border:4px solid var(--soft);border-top-color:var(--pr);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 8px}@keyframes spin{to{transform:rotate(360deg)}}
 
 .pb{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:11px;flex:none;font-size:19px;box-shadow:0 3px 8px rgba(0,0,0,.18)}
 .pb svg{width:62%;height:62%}
 .th{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}.th h3{margin:0;flex:1;min-width:0}
 .note{background:var(--soft);color:var(--pr2);border-radius:12px;padding:8px 10px;font-size:14px;margin:8px 0}
-.err{color:#dc2626!important}
-.fr{display:flex;align-items:center;gap:12px}
-.fav{width:54px;height:54px;border-radius:50%;border:3px solid #ff2a2a;background:var(--soft);display:grid;place-items:center;overflow:hidden;flex:none;color:var(--pr)}
-.fav img{width:100%;height:100%;object-fit:cover}.fav .ic{width:28px;height:28px}
-#rf:not(:placeholder-shown),#nr:not(:placeholder-shown){text-transform:uppercase;letter-spacing:2px;font-weight:700}
 
-/* ===== Red glass theme + animations ===== */
+/* ===== Blue glass theme + animations ===== */
 body{background:linear-gradient(165deg,#7a0000 0%,#c40000 48%,#4d0000 100%);background-attachment:fixed;min-height:100vh}
 body::before{position:fixed;inset:0;height:auto;z-index:-1;background:radial-gradient(60% 50% at 18% 12%,rgba(255,90,90,.55),transparent 70%),radial-gradient(55% 45% at 88% 72%,rgba(255,60,60,.55),transparent 70%);animation:pulse 8s ease-in-out infinite alternate}
 .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
@@ -155,6 +119,15 @@ nav button.on svg{animation:pop 1.8s ease-in-out infinite}
 @keyframes sheet{from{transform:translateY(100%)}to{transform:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
+/* ===== Admin dark dashboard theme ===== */
+:root{--card:rgba(52,8,12,.72);--tx:#fff1f1;--mu:#d9aaaa;--soft:rgba(255,255,255,.1);--bd:rgba(255,255,255,.16);--pr:#ff5a5a;--pr2:#ff7a7a;--sh:0 10px 28px rgba(0,0,0,.35)}
+body{background:linear-gradient(165deg,#1a0000 0%,#6a0000 55%,#200000 100%);background-attachment:fixed}
+.card,.tabs button{border-color:rgba(255,255,255,.14)}
+input,textarea,select{color:#1a1a22}
+button.g{color:#ffd9d9}.tag{color:#ff7a7a}.note,a{color:#ff7a7a}
+.wbox .card{background:rgba(255,255,255,.06);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;animation:none}
+.wbox{border-top:3px solid #ff2a2a}.wsum b{font-size:18px}
+
 /* ===== Loading animation ===== */
 .sp{position:relative;width:70px;height:70px;border:0;border-radius:50%;margin:4px auto 14px;animation:none}
 .sp::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 25%,#ff2a2a,#d90a0a,#e11d1d);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));animation:spin .9s linear infinite}
@@ -166,294 +139,231 @@ nav button.on svg{animation:pop 1.8s ease-in-out infinite}
 @keyframes core{0%,100%{transform:scale(.7) rotate(0)}50%{transform:scale(1.1) rotate(180deg);border-radius:50%}}
 @keyframes slide{0%{left:-40%}100%{left:100%}}
 @keyframes tipf{0%,100%{opacity:.35}50%{opacity:1}}
-/* ===== Live chat ===== */
+/* ===== Support chat ===== */
 .mb{max-width:80%;padding:9px 13px;border-radius:18px;font-size:14px;line-height:1.35;word-break:break-word;white-space:pre-wrap;animation:up .3s both}
 .mb.u{align-self:flex-end;background:linear-gradient(135deg,#ff2a2a,#a80000);color:#fff;border-bottom-right-radius:6px}
 .mb.o{align-self:flex-start;background:#fdf0f0;color:#1a1a22;border-bottom-left-radius:6px}
 .mb small{display:block;font-size:11px;opacity:.7;margin-bottom:2px}
 .cin{display:flex;gap:8px}.cin input{margin:0}
-#cfab{position:fixed;right:14px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:40;height:50px;padding:0 18px;overflow:visible!important;box-shadow:0 8px 22px rgba(168,0,0,.55);animation:flt 3s ease-in-out infinite}
-#cfab::after{display:none!important}
-#cfab .bd{position:absolute;top:-6px;right:-4px;background:#dc2626;color:#fff;border-radius:99px;font-size:12px;min-width:20px;height:20px;display:grid;place-items:center;padding:0 5px;animation:pop 1s infinite}.bd:empty{display:none}
-#cpan,#hpan{position:fixed;left:0;right:0;bottom:0;z-index:60;max-width:560px;margin:0 auto;height:min(78vh,580px);display:flex;flex-direction:column;background:rgba(255,255,255,.97);border-radius:24px 24px 0 0;box-shadow:0 -10px 40px rgba(60,0,0,.45);animation:sheet .35s cubic-bezier(.2,.8,.2,1) both}
-.ch{display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(135deg,#ff2a2a,#a80000);color:#fff;border-radius:24px 24px 0 0}
-.ch .dot{width:11px;height:11px;border-radius:50%;background:#4ade80;animation:ping 1.6s infinite}
-@keyframes ping{0%{box-shadow:0 0 0 0 rgba(74,222,128,.8)}100%{box-shadow:0 0 0 10px rgba(74,222,128,0)}}
-#cmsg,#hmsg{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
-#cpan .cin,#hpan .cin{padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid #f3d3d3}
-#hfab{position:fixed;right:14px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:40;height:50px;padding:0 18px;overflow:visible!important;box-shadow:0 8px 22px rgba(168,0,0,.55);animation:flt 3s ease-in-out infinite}
-#hfab::after{display:none!important}
-.chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-top:1px solid #f3d3d3;max-height:132px;overflow-y:auto}
-.chips button{padding:7px 12px;font-size:13px}
-/* ===== Withdrawal list + slip ===== */
-.wd{padding:12px 14px}
-.wtop{display:flex;align-items:center;gap:12px}
-.wi{width:46px;height:46px;border-radius:15px;flex:none;display:grid;place-items:center;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.18)}
-.wi .ic{width:24px;height:24px}
-.wi.ep{background:linear-gradient(135deg,#34d399,#059669)}.wi.jc{background:linear-gradient(135deg,#fb923c,#dc2626)}.wi.ot{background:linear-gradient(135deg,#ff5a5a,#a80000)}
-.wm{flex:1;min-width:0}.wm b{display:block;font-size:19px;color:var(--tx)}.wm span{display:block;font-size:12.5px;color:var(--mu);margin-top:1px}
-.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;white-space:nowrap;animation:none}
-.st::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
-.st.paid{background:#dcfce7;color:#15803d}.st.pending{background:#fef3c7;color:#b45309}.st.rejected{background:#fee2e2;color:#b91c1c}
-.wbot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--bd)}
-.wbot .mu b{color:var(--pr2);font-size:15px}
-button.sm{padding:7px 14px;font-size:13px}
-.slip{max-height:88vh;overflow-y:auto}
-.slh{display:flex;align-items:center;gap:10px}
-.slh .logo{width:40px;height:40px;border-radius:12px;animation:none}.slh .logo svg{width:24px;height:24px}
-.slh b{font-size:17px;display:block;line-height:1.1}.slh span{font-size:12px;color:var(--mu)}
-.slamt{text-align:center;margin:14px 0 4px}.slamt .bal{font-size:32px;display:block}.slamt .st{margin-top:6px}
-.dash{border-top:2px dashed var(--bd);margin:12px 0;position:relative}
-.sr{display:flex;justify-content:space-between;gap:14px;padding:6px 0;font-size:14px}
-.sr span{color:var(--mu);flex:none}.sr b{text-align:right;word-break:break-word;color:var(--tx)}
-.slnote{background:var(--soft);color:var(--pr2);border-radius:12px;padding:9px 11px;font-size:13px;text-align:center;margin-top:10px}
-.slnote.paid{background:#dcfce7;color:#15803d}.slnote.rejected{background:#fee2e2;color:#b91c1c}.slnote.pending{background:#fef3c7;color:#b45309}
-/* ===== Toast + confirm (replace browser popups) ===== */
-#toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-150%);z-index:200;max-width:min(92vw,420px);display:flex;align-items:center;gap:10px;padding:11px 18px 11px 12px;border-radius:20px;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--tx);font-size:14px;font-weight:600;line-height:1.35;box-shadow:0 12px 32px rgba(60,0,0,.45);border:1px solid rgba(255,255,255,.85);opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s}
-#toast.on{transform:translate(-50%,0);opacity:1}
-#toast i{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-style:normal;font-size:15px;font-weight:800;background:linear-gradient(135deg,#ff2a2a,#a80000);box-shadow:0 0 14px rgba(255,90,90,.7)}
-#toast.err i{background:#dc2626;box-shadow:0 0 14px rgba(220,38,38,.5)}
-#cfm{position:fixed;inset:0;z-index:150;background:rgba(40,0,0,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:18px}
-.cfb{width:min(92vw,380px);background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.85);border-radius:24px;padding:20px 18px 16px;box-shadow:0 20px 50px rgba(60,0,0,.5);animation:up .3s cubic-bezier(.2,.8,.2,1) both}
-.cfb h3{margin:0 0 6px;font-size:19px;color:var(--tx)}
-.cft{color:var(--mu);font-size:14px;line-height:1.65;margin-bottom:6px}
-.cfb .row button{flex:1}
+.mb.o{background:rgba(255,255,255,.12);color:var(--tx)}
+.nb{background:#dc2626;color:#fff;border-radius:99px;font-size:12px;padding:1px 8px}.nb:empty{display:none}
+#cth{max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:6px 0}
 
-/* ===== CarrierDesk red theme (final overrides) ===== */
-body{background:linear-gradient(160deg,#a80000 0%,#7a0000 45%,#c40000 100%);background-attachment:fixed}
-body::before{background:radial-gradient(60% 45% at 85% 8%,rgba(255,60,60,.6),transparent 70%),radial-gradient(55% 45% at 10% 85%,rgba(255,30,30,.45),transparent 70%)}
-.bg::after{content:"";position:absolute;left:-30%;top:-8%;width:130%;height:46%;background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.12) 55%,transparent 75%);clip-path:polygon(0 0,62% 0,0 78%);opacity:.5;animation:sway 9s ease-in-out infinite alternate}
-.bg::before{background:radial-gradient(circle,rgba(255,170,170,.9) 2px,transparent 2.6px) 0 0/16px 16px}
-@keyframes sway{from{transform:translate3d(-3%,0,0) skewY(0)}to{transform:translate3d(5%,3%,0) skewY(-3deg)}}
-h1{font-style:italic;font-weight:800;letter-spacing:-.5px}
-h1 span{color:#ff4040}
-.logo{background:linear-gradient(135deg,#ff2a2a,#a80000);box-shadow:0 8px 24px rgba(255,40,40,.55)}
-.card,.prow,.pstat,nav,.sheet{border-radius:24px}
-.card.l{border-left-color:#d90a0a}
-.card,.prow{background:rgba(255,255,255,.96);border-color:rgba(255,255,255,.8)}
-nav{background:rgba(255,255,255,.95);border-radius:24px}
-nav button.on{background:#ffe9e9;color:#b30000}
-button{background:linear-gradient(180deg,#ff1a1a,#a80000)}
-button:hover{box-shadow:0 8px 22px rgba(255,30,30,.5)}
-button.g{background:#ffe9e9;color:#b30000}
-button.r{background:#7a0000}
-.hero{background:linear-gradient(120deg,#ff3b3b,#a80000,#e11d1d,#ff3b3b);background-size:300% 300%}
-.tabs button.on{background:linear-gradient(180deg,#ff1a1a,#a80000)}
-input,textarea,select{background:#fbf3f3;border:1.5px solid #ead3d3}
-input:focus,textarea:focus,select:focus{box-shadow:0 0 0 3px rgba(217,10,10,.28),0 0 18px rgba(255,60,60,.4)}
-#login,#signup{animation:up .6s both,flt 6s ease-in-out .6s infinite,borderglow 4s ease-in-out infinite}
-@keyframes borderglow{0%,100%{box-shadow:0 12px 30px rgba(60,0,0,.35)}50%{box-shadow:0 0 42px rgba(255,50,50,.75),0 12px 30px rgba(60,0,0,.35)}}
-#login h3,#signup h3{color:#1a1a22}
-.pinfo h2 .ic{color:#d90a0a;fill:#d90a0a}
-.stat b,.bal{color:#1a1a22}.hero .bal{color:#fff}.stat.pl b{color:#d90a0a}
-a{color:#c40000}
-.note,.slnote{background:#ffe9e9;color:#a80000}
-.av,.fav{border-color:#ff2a2a}
-.ch,#cfab,#hfab{background:linear-gradient(180deg,#ff1a1a,#a80000)}
-.mb.u{background:linear-gradient(180deg,#ff1a1a,#a80000)}
-.mb.o{background:#fbf3f3;color:#1a1a22}
-#toast i{background:linear-gradient(135deg,#ff2a2a,#a80000);box-shadow:0 0 14px rgba(255,60,60,.7)}
-
-.tagl{text-align:center;color:#fff;font-size:30px;font-weight:800;line-height:1.15;letter-spacing:-.5px;margin:6px 0 10px;text-shadow:0 2px 14px rgba(40,0,0,.4)}
-.tagl span{color:#ff6b6b}
-.seg{display:flex;background:#f0eded;border-radius:999px;padding:5px;gap:4px;margin-bottom:14px}
-.seg button{flex:1;background:transparent;color:#4a4a55;box-shadow:none;border-radius:999px;padding:12px 0;font-size:16px;font-weight:700;transition:background .3s,color .3s,box-shadow .3s}
-.seg button::after{display:none!important}
-.seg button.on{background:#fff;color:#d90a0a;box-shadow:0 4px 14px rgba(217,10,10,.28)}
-.seg button:hover{box-shadow:none}.seg button.on:hover{box-shadow:0 4px 14px rgba(217,10,10,.28)}
-
-/* ===== Speed mode: no heavy blur / endless animations ===== */
+/* ===== CarrierDesk red theme + speed mode ===== */
 html{-webkit-tap-highlight-color:transparent}
-button,a,input,select,textarea,nav{touch-action:manipulation}
-body{background-attachment:scroll}
-body::before{animation:none}
+button,a,input,select,textarea{touch-action:manipulation}
+body{background:linear-gradient(160deg,#5c0000 0%,#240000 55%,#6a0000 100%);background-attachment:scroll}
+body::before{background:radial-gradient(60% 45% at 85% 8%,rgba(255,60,60,.45),transparent 70%);animation:none}
 .card,.prow,.pstat,nav,.sheet,.bg i{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
-.bg i{box-shadow:none;will-change:transform}
-.bg i:nth-child(n+5){display:none}
-button:not(.g):not(.r):not(.cam):not(.eye)::after{display:none}
-#login,#signup{animation:up .45s both}
-.hero{animation:up .45s both}.hero .bal{animation:none}
-.si,.pb,.tag,.tabs button.on,nav button.on svg,#cfab,#hfab,#cfab .bd{animation:none}
-.card,.prow,.pstat{animation-duration:.3s}
-.card:nth-child(n),.prow:nth-child(n){animation-delay:0s}
-button{transition:transform .12s,box-shadow .2s,filter .12s}
+.bg i{box-shadow:none;will-change:transform}.bg i:nth-child(n+5){display:none}
+h1{font-style:italic;font-weight:800;letter-spacing:-.5px}h1 span{color:#ff4040}
+button{background:linear-gradient(180deg,#ff1a1a,#a80000);transition:transform .12s,box-shadow .2s,filter .12s}
+button.g{background:rgba(255,255,255,.1);color:#ffd9d9}button.r{background:#7a0000;border:1px solid #ff5a5a}
 button:active{transform:scale(.96);filter:brightness(.92)}
+button:not(.g):not(.r):not(.cam):not(.eye)::after{display:none}
+.card{animation:up .3s both}.card:nth-child(n){animation-delay:0s}
+.si,.pb,.tag,.tabs button.on,.hero .bal{animation:none}
+.logo{animation:none}#login,#signup{animation:none}
+.tabs button.on{background:linear-gradient(180deg,#ff1a1a,#a80000)}
+.lbr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.lbr .rk{width:30px;font-weight:800;text-align:center}.lbr b{flex:1;min-width:120px}
 button.wait{pointer-events:none;opacity:.8}
-button.wait::before{content:"";width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .7s linear infinite;flex:none}
-button.g.wait::before{border-color:rgba(168,0,0,.25);border-top-color:#a80000}
 
-/* ===== New features ===== */
-#bell{position:relative;padding:9px 12px;margin-right:6px}#bell.hide{display:none}
-#bellb{position:absolute;top:-5px;right:-3px;background:#dc2626;color:#fff;border-radius:99px;font-size:11px;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px}
-.bar{height:9px;border-radius:9px;background:var(--soft);margin:10px 0 6px;overflow:hidden}.bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#ff5a5a,#a80000);transition:width .6s}
-.days{display:flex;gap:6px;margin:10px 0}.days span{flex:1;text-align:center;padding:9px 0;border-radius:12px;background:var(--soft);font-size:12px;font-weight:700;color:var(--mu)}.days span.on{background:linear-gradient(180deg,#ff1a1a,#a80000);color:#fff}
-.lr{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)}.lr:last-child{border:0}.lr .rk{width:30px;font-weight:800;text-align:center}.lr b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lr.me{background:var(--soft);border-radius:12px;padding-left:6px}
-.ev{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd);align-items:flex-start}.ev:last-child{border:0}.ev .e{font-size:20px}.ev .pt span{white-space:normal}.ev.nw{background:var(--soft);border-radius:12px;padding-left:8px}.amt{font-weight:800}.amt.p{color:#15803d}.amt.m{color:#b91c1c}
-details{background:var(--soft);border-radius:14px;padding:11px 14px;margin:8px 0}summary{font-weight:700;cursor:pointer}details p{margin:8px 0 0;color:var(--mu);font-size:14px;line-height:1.5}
-.sheet .tabs{margin:6px 0}
-.sheet{background:#fff}
-html[data-theme=dark]{--card:rgba(32,13,15,.97);--tx:#f6eaea;--mu:#c8a6a6;--soft:#3a1517;--bd:rgba(255,120,120,.28)}
-html[data-theme=dark] body{background:linear-gradient(160deg,#2c0000,#110000 55%,#3a0000)}
-html[data-theme=dark] input,html[data-theme=dark] textarea,html[data-theme=dark] select{background:#2a1214;border-color:#4a2427;color:#f6eaea}
-html[data-theme=dark] nav,html[data-theme=dark] #cpan,html[data-theme=dark] #hpan,html[data-theme=dark] .cfb,html[data-theme=dark] #toast,html[data-theme=dark] .sheet{background:#1e0c0e;color:#f6eaea}
-html[data-theme=dark] .stat b,html[data-theme=dark] .bal,html[data-theme=dark] #login h3,html[data-theme=dark] #signup h3,html[data-theme=dark] .wm b,html[data-theme=dark] .sr b,html[data-theme=dark] .cfb h3{color:#f6eaea}
-html[data-theme=dark] .hero .bal{color:#fff}html[data-theme=dark] .seg{background:#2a1214}html[data-theme=dark] .seg button{color:#d9bcbc}html[data-theme=dark] .seg button.on{background:#3a1517;color:#ff6b6b}
-html[data-theme=dark] .mb.o{background:#2a1214;color:#f6eaea}html[data-theme=dark] button.g{background:#3a1517;color:#ff9a9a}
+/* ===== Professional admin design ===== */
+:root{--card:#2a0b0e;--bd:rgba(255,255,255,.09);--soft:rgba(255,255,255,.07);--mu:#b9999b;--tx:#f7ecec;--sh:none}
+body{background:#150305;background-image:radial-gradient(70% 38% at 80% -5%,rgba(217,10,10,.35),transparent 70%)}
+body::before,body::after,.bg{display:none!important}
+.w{max-width:680px;padding:12px 12px 90px}
+.hdr{padding:6px 2px 12px}.hdr .logo{width:42px;height:42px;border-radius:12px;box-shadow:none}
+h1{font-size:20px;font-style:normal;letter-spacing:-.2px}h1 span{color:#ff5a5a}.hdr .mu{font-size:12.5px;color:#b9999b}
+#lo{padding:8px 12px;font-size:13px}
+/* one-line tab bar */
+.tabs{display:flex!important;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:10px -12px 12px;padding:8px 12px;position:sticky;top:0;z-index:6;background:rgba(21,3,5,.94);border-bottom:1px solid var(--bd);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;flex-direction:row;gap:7px;padding:9px 14px;font-size:13.5px;font-weight:600;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--bd);box-shadow:none;color:#e9d3d3}
+.tabs button .ic{width:16px;height:16px;color:#ff8a8a}
+.tabs button.on{background:#d90a0a;color:#fff;border-color:#d90a0a;box-shadow:none}.tabs button.on .ic{color:#fff}
+.tabs .nb{background:#fff;color:#a80000;font-weight:700;font-size:11px;padding:0 7px;line-height:18px}.tabs button:not(.on) .nb{background:#d90a0a;color:#fff}
+/* stats */
+.stat{display:grid!important;grid-template-columns:repeat(5,1fr);gap:0;padding:12px 4px}
+.stat>div{font-size:10.5px;letter-spacing:.3px;text-transform:uppercase;color:var(--mu)}
+.stat b{font-size:19px;margin-top:2px;text-transform:none}.stat .si{display:grid;place-items:center;margin:0 auto 4px;width:28px;height:28px;border-radius:9px;background:rgba(217,10,10,.18)}
+.stat .si .ic{width:15px;height:15px;color:#ff8a8a}
+.wsum{grid-template-columns:repeat(4,1fr)}
+/* cards */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;box-shadow:none;animation:none!important;padding:14px 14px}
+.card.l{border-left:3px solid #d90a0a}.wbox{border-top:2px solid #d90a0a}
+.card b{color:#fff}.mu{color:var(--mu);font-size:13px;line-height:1.45}
+h3{font-size:16px;font-weight:700;color:#fff}.card h3{color:#fff}
+/* buttons */
+button{border-radius:10px;padding:9px 14px;font-size:13.5px;font-weight:600;gap:6px;box-shadow:none;background:#d90a0a;border:1px solid transparent;letter-spacing:.1px}
+button:hover{filter:brightness(1.08);box-shadow:none}
+button .ic{width:15px;height:15px}
+button.g{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#f1dcdc}
+button.r{background:transparent;border:1px solid #ef4444;color:#ff8f8f}
+button:not(.g):not(.r)[onclick*=",true)"]{background:#16a34a}
+button:not(.g)[onclick*=",false)"]{background:transparent;border:1px solid #ef4444;color:#ff8f8f}
+.row{gap:8px;margin-top:12px}.row>button{flex:1 1 calc(50% - 8px);min-width:0;white-space:nowrap}
+#t-lb .row>button,#t-set .row>button{flex:1 1 auto}
+.tabs button,#lo,.xb{flex:none}
+/* chips */
+.tag{border-radius:6px;font-size:11.5px;font-weight:600;padding:2px 8px;background:rgba(255,255,255,.08);color:#f0d6d6;animation:none}
+.tag.bad{background:rgba(220,38,38,.9);color:#fff}.tag.no{background:rgba(255,255,255,.05);color:var(--mu)}
+/* forms */
+input,textarea,select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:10px;padding:11px 14px;font-size:14.5px;box-shadow:none}
+input::placeholder,textarea::placeholder{color:#8f7173}
+input:focus,textarea:focus,select:focus{outline:0;border-color:#ff4d4d;box-shadow:0 0 0 3px rgba(217,10,10,.25)}
+select option{color:#111;background:#fff}
+#auth{max-width:420px;margin:20px auto}
 
-/* ===== Professional notification / history look ===== */
-.sheet.slip{position:relative;padding-top:18px}
-.sheet.slip>h3{font-size:19px;margin:0 40px 6px 0}
-button.xb:not(.g):not(.r):not(.cam):not(.eye){position:absolute;top:12px;right:12px;overflow:visible}
-.xb{width:34px;height:34px;padding:0;border-radius:50%;background:#f3eeee;box-shadow:none;display:grid;place-items:center}
-.xb svg{width:16px;height:16px;fill:none;stroke:#444;stroke-width:2.200;stroke-linecap:round}
-.xb::after{display:none!important}
-.ev{align-items:center;gap:12px;padding:13px 4px}
-.ev .pt{flex:1;min-width:0}.ev .pt b{display:block;font-size:15px;font-weight:600;color:var(--tx)}
-.ev .pt span{display:block;font-size:13px;color:var(--mu);margin-top:1px}.ev .pt .dt{font-size:12px;opacity:.8}
-.ev .pt .err{color:#b91c1c}
-.ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;background:#fdecec;color:#b30000}
-.ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.ico.ok{background:#e7f6ec;color:#15803d}.ico.bad{background:#fdecec;color:#b91c1c}.ico.wt{background:#fff3df;color:#b45309}
-.ev.nw{background:none;box-shadow:inset 3px 0 0 #d90a0a;padding-left:10px}
-.amt{font-size:14px;font-weight:700;white-space:nowrap}
-.lr .rk{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--soft);color:var(--mu)}
-.lr .rk.r1{background:#f5c542;color:#5a3d00}.lr .rk.r2{background:#cfd5db;color:#333}.lr .rk.r3{background:#e0a46b;color:#4a2a00}
-html[data-theme=dark] .xb{background:#3a1517}html[data-theme=dark] .xb svg{stroke:#f6eaea}
-html[data-theme=dark] .ico.ok{background:#12301c;color:#4ade80}html[data-theme=dark] .ico.wt{background:#3a2a10;color:#fbbf24}html[data-theme=dark] .ico.bad,html[data-theme=dark] .ico{background:#3a1517;color:#ff8a8a}
+/* ===== Left sidebar menu (one item per line) ===== */
+.w{max-width:1000px}
+#panel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 12px;align-items:start}
+#panel.hide{display:none}
+#stats,#syn{grid-column:1/-1}
+#tabs{grid-column:1;grid-row:3;display:flex!important;flex-direction:column;flex-wrap:nowrap;overflow:visible;gap:4px;margin:4px 0 0;padding:8px;position:sticky;top:8px;z-index:6;width:132px;background:var(--card);border:1px solid var(--bd);border-radius:14px}
+#panel>[id^="t-"]{grid-column:2;grid-row:3;min-width:0}
+#tabs button{width:100%;justify-content:flex-start;gap:9px;padding:10px 10px;border-radius:10px;font-size:13.5px;font-weight:600;background:transparent;border:0;color:#e9d3d3;white-space:nowrap}
+#tabs button:hover{background:rgba(255,255,255,.07);filter:none}
+#tabs button.on{background:#d90a0a;color:#fff}
+#tabs button .ic{width:18px;height:18px;flex:none}
+#tabs .nb{margin-left:auto}
+#tabs .sbt{color:#b9999b;font-weight:500;border-bottom:1px solid var(--bd);border-radius:10px 10px 0 0;margin-bottom:4px}
+#panel.mini #tabs{width:52px;padding:6px}
+#panel.mini #tabs button{font-size:0;justify-content:center;padding:11px 0;position:relative}
+#panel.mini #tabs .nb{position:absolute;top:2px;right:2px;margin:0;font-size:10px;line-height:15px;padding:0 5px}
+.row>button{flex:1 1 104px}
+@media(max-width:480px){#panel{gap:0 8px}#tabs{width:146px;padding:6px}#tabs button{font-size:13px;gap:8px;padding:10px 7px}#tabs .nb{padding:0 5px;font-size:10.5px;line-height:16px}.card{padding:12px}}
 
-/* ===== Engagement features ===== */
-.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
-.chips button{flex:none;padding:8px 14px;font-size:13.5px;box-shadow:none}.chips button.on{background:linear-gradient(180deg,#ff1a1a,#a80000);color:#fff}
-.tag.new{background:#16a34a;color:#fff;font-size:11px;letter-spacing:.4px}
-.spinc{display:flex;gap:14px;align-items:center}.spinc .pt{flex:1}
-.wheel{width:92px;height:92px;border-radius:50%;flex:none;position:relative;border:4px solid #fff;box-shadow:0 4px 14px rgba(168,0,0,.35);background:conic-gradient(#ff2a2a 0 60deg,#fff 0 120deg,#a80000 0 180deg,#ffd166 0 240deg,#ff2a2a 0 300deg,#fff 0 360deg)}
-.wheel i{position:absolute;inset:34px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px #a80000}
-.wheel.spin{animation:wsp 1.7s cubic-bezier(.15,.7,.2,1) forwards}@keyframes wsp{to{transform:rotate(1500deg)}}
-.chart{display:flex;align-items:flex-end;gap:8px;height:120px;margin-top:10px}.chart>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
-.chart i{width:100%;max-width:30px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,#ff5a5a,#a80000)}.chart span{font-size:11px;color:var(--mu)}
-.bgs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
-.bg1{display:flex;flex-direction:column;gap:3px;padding:12px;border-radius:14px;background:var(--soft);opacity:.55}.bg1.on{opacity:1;background:#e7f6ec}
-.bg1 b{font-size:14px;color:#1a1a22}.bg1 span:not(.ico){font-size:12px;color:var(--mu)}.bg1 .ico{margin-bottom:4px}
-.banner{display:flex;align-items:center;gap:10px;background:#fff;border-left:4px solid #d90a0a;border-radius:14px;padding:12px 14px;margin:0 0 10px}
-.banner .pt{flex:1}.banner b{display:block;font-size:14.5px;color:#1a1a22}.banner span{font-size:13px;color:#6b5b5b}.banner.warn{background:#fff4e0;border-color:#f59e0b}
-.xb2{background:none;box-shadow:none;color:#6b5b5b;padding:0 6px;font-size:22px}
-.cf{position:fixed;inset:0;pointer-events:none;z-index:99;overflow:hidden}
-.cf i{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;animation:cfall 2.4s ease-in forwards}
-@keyframes cfall{to{transform:translateY(105vh) rotate(var(--r));opacity:.9}}
-.lvup{padding:10px 0}
-html[data-theme=dark] .bg1.on{background:#12301c}html[data-theme=dark] .bg1 b{color:#f6eaea}html[data-theme=dark] .banner{background:#2a1214}html[data-theme=dark] .banner b{color:#f6eaea}
+/* ===== Page-style navigation (menu -> full page, back button) ===== */
+#panel{display:block!important}#panel.hide{display:none!important}
+#tabs{display:flex!important;flex-direction:column;width:auto!important;position:static;margin:10px 0;padding:6px;gap:2px;background:var(--card);border:1px solid var(--bd);border-radius:14px}
+#tabs button{width:100%;justify-content:flex-start;gap:12px;padding:15px 12px!important;font-size:15.5px!important;font-weight:600;border-radius:10px;background:transparent;border:0;color:#f3e1e1;white-space:nowrap}
+#tabs button:not(:last-child){border-bottom:1px solid var(--bd);border-radius:0}
+#tabs button .ic{width:20px;height:20px}
+#tabs button::after{display:block!important;content:"\203a";position:static!important;width:auto!important;height:auto!important;background:none!important;animation:none!important;transform:none!important;margin-left:6px;opacity:.55;font-size:22px;line-height:1}
+#tabs .nb{margin-left:auto;font-size:12px;line-height:20px;padding:0 8px}
+#tabs button:not(:has(.nb:not(:empty)))::after{margin-left:auto!important}
+#tabs .nb:not(:empty)+*{margin-left:0}
+#tabs button.on{background:transparent;color:#f3e1e1}
+#tabs button.on .ic{color:#ff8a8a}
+body.inpage #stats,body.inpage #syn,body.inpage #tabs{display:none!important}
+body:not(.inpage) #panel>[id^="t-"]{display:none!important}
+#pbar{display:none;align-items:center;gap:12px;position:sticky;top:0;z-index:7;padding:10px 0;margin-bottom:4px;background:#150305}
+body.inpage #pbar{display:flex}#pbar b{font-size:18px;color:#fff}#pbar button{padding:8px 12px}
+.card,.urow{overflow-wrap:anywhere}
+.stat>div{font-size:9.5px;letter-spacing:0}
+.urow{display:flex;align-items:center;gap:12px;padding:12px;margin:8px 0;background:var(--card);border:1px solid var(--bd);border-radius:14px;cursor:pointer}
+.urow:active{background:#3a1215}
+.uav{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(217,10,10,.2);color:#ff8a8a;font-weight:700;flex:none}
+.ui{flex:1;min-width:0}.ui b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:14.5px}
+.chev{font-size:22px;opacity:.5}
 </style>
 </head>
 <body>
 <div class="bg"><i style="--s:96px;left:-3%;top:6%;--d:14s;--l:0s"></i><i style="--s:70px;left:84%;top:12%;--d:11s;--l:-3s"></i><i style="--s:130px;left:-6%;top:38%;--d:17s;--l:-5s"></i><i style="--s:60px;left:90%;top:44%;--d:12s;--l:-2s"></i><i style="--s:84px;left:6%;top:76%;--d:15s;--l:-7s"></i><i style="--s:110px;left:78%;top:72%;--d:16s;--l:-4s"></i><i style="--s:44px;left:46%;top:90%;--d:10s;--l:-1s"></i></div>
 <div class="w">
-<div class="hdr"><div class="logo"><svg viewBox="0 0 34 34"><path d="M10 27V8h8.5a5.5 5.5 0 010 11H13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ht"><h1 id="brand"></h1><div class="mu">Earn • Invite • Withdraw</div></div><button id="bell" class="g hide" onclick="showNotifs()" aria-label="Notifications"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0112 0v5l1.500 2h-15zM10 20.500a2 2 0 004 0"/></svg><span id="bellb" class="hide"></span></button><button id="lo" class="g hide" onclick="auth.signOut()"></button></div>
+<div class="hdr"><div class="logo"><svg viewBox="0 0 34 34"><path d="M10 27V8h8.5a5.5 5.5 0 010 11H13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ht"><h1>TaskPey <span>Admin</span></h1><div class="mu" id="who"></div></div><button id="lo" class="g hide" onclick="auth.signOut()">Logout</button></div>
 
-<div id="auth" class="hide">
-  <div class="tagl">Complete tasks.<br><span>Earn real money.</span></div>
-  <div id="login" class="card">
-    <div class="seg"><button class="g on" onclick="showAuth('login')">Log in</button><button class="g" onclick="showAuth('signup')">Sign up</button></div>
-    <h3 style="font-size:21px;margin-top:0">Welcome back</h3>
-    <div class="mu">Login to your TaskPey account</div>
-    <input id="lem" type="email" placeholder="Email" autocomplete="email">
-    <input id="lpw" type="password" placeholder="Password" autocomplete="current-password">
-    <button style="width:100%;margin-top:8px" onclick="login()">Login &#8250;</button>
-    <div id="lerr" class="mu err" style="margin-top:8px"></div>
-    <div style="margin-top:8px"><a href="#" onclick="forgot();return false">Forgot password?</a></div>
-    <div class="or"><span>OR</span></div><div class="mu" style="text-align:center;margin-top:16px">New here? <a href="#" onclick="showAuth('signup');return false"><b>Create account</b></a></div>
-    <div class="mu" style="text-align:center;margin-top:8px"><a href="terms.html" target="_blank">About &amp; Terms</a></div>
-    <div class="mu" style="text-align:center;margin-top:14px">Created by <b>NOVA REEF STUDIO</b></div>
+<div id="boot" class="card" style="text-align:center;padding:26px"><div class="sp" id="ldsp"></div><div class="mu">Loading…</div><div class="ldbar"></div><div class="mu ldt" id="ldt"></div></div>
+<div id="auth" class="card hide">
+  <input id="em" type="email" placeholder="Admin email">
+  <input id="pw" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <div id="aerr" class="mu"></div>
+</div>
+
+<div id="panel" class="hide">
+  <div class="card stat" id="stats"></div>
+  <div class="mu" id="syn" style="margin:-4px 4px 8px"></div>
+  <div class="tabs" id="tabs"></div>
+
+  <div id="pbar"><button class="g" onclick="goBack()"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Back</button><b id="ptitle"></b></div>
+  <div id="t-user" class="hide"></div>
+  <div id="t-users" class="hide">
+    <input id="us" placeholder="Search user by email" oninput="renderUsers()">
+    <div id="ulist"></div>
   </div>
-  <div id="signup" class="card hide">
-    <div class="seg"><button class="g" onclick="showAuth('login')">Log in</button><button class="g on" onclick="showAuth('signup')">Sign up</button></div>
-    <h3 style="font-size:21px;margin-top:0">Create account</h3>
-    <div class="mu">A friend's referral code is required to join.</div>
-    <input id="fn" placeholder="Full name" maxlength="40" autocomplete="name">
-    <select id="co"></select>
-    <input id="em" type="email" placeholder="Email" autocomplete="email">
-    <input id="pw" type="password" placeholder="Password" autocomplete="new-password">
-    <div class="mu">Password: 8+ characters, with uppercase, lowercase, a number and a special character (@ # $ ! etc.)</div>
-    <input id="rf" placeholder="Referral code (required)" maxlength="6" autocapitalize="characters">
-    <button id="sb" style="width:100%;margin-top:8px" onclick="signup()">Create Account</button>
-    <div class="mu" style="text-align:center;margin-top:10px">By creating an account you agree to our <a href="terms.html" target="_blank"><b>About &amp; Terms</b></a>.</div>
-    <div id="aerr" class="mu err" style="margin-top:8px"></div>
-    <div class="mu" style="text-align:center;margin-top:16px">Already have an account? <a href="#" onclick="showAuth('login');return false"><b>Login</b></a></div>
-    <div class="mu" style="text-align:center;margin-top:14px">Created by <b>NOVA REEF STUDIO</b></div>
+
+  <div id="t-chat" class="hide">
+    <div id="cl"><div class="row" style="margin:0 0 6px"><button class="g" onclick="askNotif()">&#128276; Enable alerts</button></div><div id="chatlist"></div></div>
+    <div id="ct" class="hide card"><div class="row" style="margin:0 0 8px;align-items:center"><button class="g" onclick="backChat()">&#8249; Back</button><b id="cwho"></b></div><div id="cth"></div>
+      <div class="cin" style="margin-top:8px"><input id="crin" placeholder="Type your reply…" onkeydown="if(event.key==='Enter')sendReply()"><button onclick="sendReply()">Send</button></div></div>
+  </div>
+  <div id="t-lb" class="hide">
+    <div class="card"><h3 style="margin-top:0">Leaderboard (real users)</h3><div class="mu">Top 50 by earning. Hide a user to remove them from the leaderboard users see, or change the name shown there.</div><div class="row"><button class="g" onclick="loadLB()">Refresh</button></div></div>
+    <div class="card"><h3 style="margin-top:0">Public payouts</h3><div class="mu">Users see the latest real payouts (name half hidden). New "Paid" withdrawals are added automatically. Tap below to add your last 10 paid ones.</div><div class="row"><button class="g" onclick="importPayouts()">Add last 10 paid withdrawals</button></div></div>
+    <div class="card"><h3 style="margin-top:0">Weekly challenge</h3><div class="mu">The ranking updates by itself every time you approve a task (most approved tasks this week, Monday to Sunday). Set title and prizes in Settings, and pay winners with "Add Rs".</div></div>
+    <div id="lblist"></div>
+  </div>
+  <div id="t-set" class="hide">
+    <div class="card"><h3 style="margin-top:0">Membership fee &amp; payment</h3>
+      <div class="mu">Dollar rate (1 USD = how many Rs). Users see everything in dollars using this rate</div><input id="s-usd" type="number" step="any">
+      <div class="mu">Signup bonus for every new user (Rs). It is added to their wallet automatically. Use 0 to switch it off</div><input id="s-sb" type="number" min="0" max="1000" step="any">
+      <div class="mu">Membership fee (Rs)</div><input id="s-fee" type="number">
+      <div class="mu">Payment method (e.g. Easypaisa)</div><input id="s-method">
+      <div class="mu">Payment number</div><input id="s-num">
+      <div class="mu">Account title</div><input id="s-name">
+      <h3>Referral &amp; withdrawal</h3>
+      <div class="mu">Referral bonus per friend (Rs), paid when the friend's membership is approved</div><input id="s-ref" type="number">
+      <div class="mu">Minimum withdrawal (Rs)</div><input id="s-min" type="number">
+      <div class="mu">WhatsApp community link (leave empty to hide)</div><input id="s-wa" inputmode="url" placeholder="https://chat.whatsapp.com/...">
+      <div class="mu">Withdrawal tax (%) - deducted from every withdrawal</div><input id="s-tax" type="number" min="0" max="50" step="0.5">
+      <h3>Rewards</h3>
+      <div class="mu">Daily check-in bonus (Rs). Day 7 pays 5x. Use 0 to switch it off</div><input id="s-db" type="number" min="0" step="any">
+      <div class="mu">Daily spin: smallest prize (Rs)</div><input id="s-smin" type="number" min="0" step="any">
+      <div class="mu">Daily spin: biggest prize (Rs)</div><input id="s-smax" type="number" min="0" step="any">
+      <div class="mu">Reward for each completed daily mission (Rs). Use 0 to switch missions off</div><input id="s-mb" type="number" min="0" step="any">
+      <h3>Weekly challenge &amp; announcement</h3>
+      <div class="mu">Weekly challenge title</div><input id="s-wt" maxlength="40">
+      <div class="mu">Prizes shown to users (e.g. 1st Rs 100, 2nd Rs 50, 3rd Rs 25). Pay the winners yourself with "Add Rs"</div><input id="s-wp" maxlength="120">
+      <div class="mu">Announcement banner shown on every user's Home (leave empty to hide)</div><textarea id="s-an" rows="2" maxlength="200"></textarea>
+      <h3>Support chat</h3>
+      <div class="mu">Auto-reply bot (turn OFF if you deploy the AI Cloud Function)</div><select id="s-bot"><option value="1">ON - instant FAQ replies</option><option value="0">OFF</option></select>
+      <button onclick="saveSettings()">Save settings</button><div id="sok" class="mu"></div></div>
+    <div class="card"><h3 style="margin-top:0">Records (CSV for Excel / Google Sheets)</h3>
+      <div class="mu">Download your payment and withdrawal records and keep them safe, for example once a week.</div>
+      <div class="row"><button class="g" onclick="exportPayments()">Payments</button><button class="g" onclick="exportWithdrawals()">Withdrawals</button><button class="g" onclick="exportLogs()">Balance changes</button><button class="g" onclick="exportUsers()">Users</button></div>
+      <div id="expmsg" class="mu"></div></div>
+  </div>
+
+  <div id="t-pay" class="hide">
+    <h3>Pending membership payments</h3><div id="apay"></div>
+    <h3>History</h3><div id="phist"></div>
+  </div>
+
+  <div id="t-proofs" class="hide"><div id="asub"></div></div>
+
+  <div id="t-wd" class="hide">
+    <div class="card stat wsum" id="wsum"></div>
+    <div class="card wbox"><h3 style="margin-top:0">Pending requests <span class="tag" id="wpc"></span></h3><div id="awd"></div></div>
+    <div class="card wbox"><h3 style="margin-top:0">History (paid / rejected)</h3><div id="whist"></div></div>
+  </div>
+
+  <div id="t-tasks" class="hide">
+    <div class="card"><h3 style="margin-top:0">New task</h3>
+      <div class="mu">1. What should the user do?</div>
+      <select id="tp" onchange="tpChange()"></select>
+      <div id="tprev"></div>
+      <div class="mu">2. Link <span id="tlh"></span></div>
+      <input id="tl" placeholder="https://..." inputmode="url">
+      <div class="mu">3. Reward for the user in dollars ($), decimals allowed</div>
+      <input id="tr" type="number" step="any" inputmode="decimal" placeholder="e.g. 0.2344" oninput="rwPrev()">
+      <div class="mu" id="rwp"></div>
+      <div class="mu">4. Limit: how many users can do this task (leave empty for unlimited)</div>
+      <input id="tlim" type="number" min="1" placeholder="e.g. 50">
+      <div class="mu">Extra instruction (optional), e.g. what to comment</div>
+      <textarea id="td" placeholder="e.g. Comment: Nice video! 🔥"></textarea>
+      <button onclick="addTask()">Create task</button></div>
+    <h3>All tasks</h3><div id="atasks"></div>
   </div>
 </div>
-
-<div id="switch" class="card hide">
-  <h3 style="margin-top:0">You are already logged in</h3>
-  <div class="mu">You opened an invite link, but this browser is logged in as <b id="swem"></b>. To create a new account, log out first.</div>
-  <div class="row"><button onclick="newSession()">Create new account (keep this one logged in)</button><button class="g" onclick="switchAcc()">Logout &amp; create new account</button><button class="g" onclick="stayAcc()">Stay logged in</button></div>
 </div>
 
-<div id="needref" class="card hide">
-  <h3 style="margin-top:0">One last step</h3>
-  <div class="mu">A referral code is required to finish creating your account. Enter the 6-character code of the friend who invited you.</div>
-  <input id="nr" maxlength="6" placeholder="Referral code" autocapitalize="characters">
-  <button style="width:100%;margin-top:8px" onclick="finishRef()">Continue</button>
-  <div id="nrerr" class="mu err" style="margin-top:8px"></div>
-  <div class="row"><button class="g" onclick="auth.signOut()">Logout</button></div>
-</div>
-
-<div id="verify" class="card hide">
-  <h3>Verify your email</h3>
-  <div class="mu">We sent a 6-digit code to <b id="vem"></b>. Enter it below (check Spam too). The code is valid for 10 minutes.</div>
-  <input id="otp" inputmode="numeric" maxlength="6" placeholder="6-digit code">
-  <div class="row"><button onclick="verifyOtp()">Verify</button><button class="g" onclick="resendOtp()">Resend code</button><button class="g" onclick="auth.signOut()">Logout</button></div>
-  <div id="verr" class="mu"></div>
-</div>
-
-<div id="banned" class="card hide">
-  <h3>Account banned</h3>
-  <div class="mu">Your account has been banned by the admin. Contact support if you think this is a mistake.</div>
-  <div class="row"><button class="g" onclick="auth.signOut()">Logout</button></div>
-</div>
-
-<div id="activate" class="card hide"></div>
-
-<div id="ld" class="card" style="text-align:center;padding:30px 14px"><div class="sp" id="ldsp"></div><div class="mu" id="ldm">Loading your account…</div><div class="ldbar"></div><div class="mu ldt" id="ldt"></div></div>
-
-<div id="app" class="hide">
-  <div id="v-home">
-    <div id="banners"></div>
-    <div class="card hero"><div class="mu">Available balance</div><div class="bal" id="bal">$0.00</div></div>
-    <div class="card stat pl" id="hstats"></div>
-    <div class="card" id="wacard"></div>
-    <div class="card"><h3>Withdraw money</h3>
-      <select id="wm"><option>JazzCash</option><option>Easypaisa</option></select>
-      <input id="wh" maxlength="40" placeholder="Account holder name" autocomplete="name">
-      <input id="wn" placeholder="Account number">
-      <input id="wa" type="number" step="any" inputmode="decimal" placeholder="Amount ($)" oninput="taxPreview()">
-      <div class="note" id="wtax" style="display:none"></div>
-      <button onclick="withdraw()">Request withdrawal</button>
-      <div class="mu" id="wmin"></div></div>
-    <div id="wlist"></div>
-  </div>
-  <div id="v-tasks" class="hide"></div>
-  <div id="v-refer" class="hide"></div>
-  <div id="v-rewards" class="hide"></div>
-  <div id="v-profile" class="hide"></div>
-  <input id="pf" type="file" accept="image/*" class="hide">
-  <div id="modal" class="hide" onclick="if(event.target===this)closeM()"></div>
-  <nav id="nav"></nav>
-</div>
-</div>
-
-<button id="cfab" class="hide" onclick="toggleChat()" aria-label="Live chat support"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Support<span class="bd" id="cbd"></span></button>
-<div id="cpan" class="hide"><div class="ch"><span class="dot"></span><div style="flex:1"><b>TaskPey Support</b><div style="font-size:12px;opacity:.9">Live chat · we reply instantly</div></div><button class="g" style="padding:6px 12px" onclick="toggleChat()">&#10005;</button></div><div id="cmsg"></div>
-<div class="cin"><input id="cin" maxlength="500" placeholder="Type your message…" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">Send</button></div></div>
-<button id="hfab" class="hide" onclick="toggleHelp()" aria-label="Help and support"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Support</button>
-<div id="hpan" class="hide"><div class="ch"><span class="dot"></span><div style="flex:1"><b>TaskPey Help</b><div style="font-size:12px;opacity:.9">Step-by-step guide &middot; A to Z</div></div><button class="g" style="padding:6px 12px" onclick="toggleHelp()">&#10005;</button></div><div id="hmsg"></div><div class="chips" id="hchips"></div>
-<div class="cin"><input id="hin" maxlength="100" placeholder="Ask: account, payment, TID…" onkeydown="if(event.key==='Enter')helpSend()"><button onclick="helpSend()">Send</button></div></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-/* ====== SETTINGS ====== */
-const NAME = "TaskPey";
-// Default values. Admin panel (Settings tab) se badal sakte ho, wo yahan override ho jayengi.
+const ADMIN_EMAIL = "umardrazofficial01@gmail.com";
 const DEF = {planFee:200, payMethod:"Easypaisa", payNumber:"03405211428", payName:"AASMA BIBI", refBonus:20, minWithdraw:500, withdrawTax:5, dailyBonus:2, spinMin:1, spinMax:10, missionBonus:3, announce:"", weeklyTitle:"Weekly challenge", weeklyPrizes:"", usdRate:280, signupBonus:15, chatBot:true, waLink:"https://chat.whatsapp.com/HcSXjSz9Xst7bEewclxch6"};
 let CFG = {...DEF};
 const firebaseConfig = {
@@ -462,41 +372,7 @@ const firebaseConfig = {
   projectId: "taskpey-2158a",
   appId: "1:377131772878:web:88a03dc550adaad77d599f"
 };
-const EMAILJS = { publicKey: "Ck35uPqqaOvVcN_uj", serviceId: "service_i50h7da", templateId: "template_sljklem", supportTemplateId: "template_6sbs9o9" };
-/* ====================== */
-
-let emailReady = null;
-function loadEmailJS(){
-  return emailReady || (emailReady = new Promise((res, rej) => {
-    const sc = document.createElement("script");
-    sc.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js";
-    sc.onload = () => { emailjs.init({ publicKey: EMAILJS.publicKey }); res(); };
-    sc.onerror = () => { emailReady = null; rej(new Error("Could not load the email service. Check your internet and tap Resend code.")); };
-    document.head.appendChild(sc);
-  }));
-}
 const $ = id => document.getElementById(id);
-let toastT = null;
-function toast(m, type){
-  let t = document.getElementById("toast");
-  if(!t){ t = document.createElement("div"); t.id = "toast"; t.innerHTML = "<i></i><span></span>"; document.body.appendChild(t); }
-  t.className = type === "err" ? "err" : "";
-  t.querySelector("i").textContent = type === "err" ? "!" : "\u2713";
-  t.querySelector("span").textContent = String(m);
-  void t.offsetWidth; t.classList.add("on");
-  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), Math.min(6500, 2000 + String(m).length * 45));
-}
-window.alert = m => toast(m, /copied|sent|success|saved/i.test(String(m)) ? "ok" : "err");
-function uiConfirm(title, body, okLabel){
-  return new Promise(res => {
-    const o = document.createElement("div"); o.id = "cfm";
-    o.innerHTML = `<div class="cfb"><h3>${esc(title)}</h3><div class="cft">${esc(body).replace(/\n/g, "<br>")}</div><div class="row"><button id="cfy">${esc(okLabel || "Confirm")}</button><button class="g" id="cfn">Cancel</button></div></div>`;
-    document.body.appendChild(o);
-    const done = v => { o.remove(); res(v); };
-    o.querySelector("#cfy").onclick = () => done(true); o.querySelector("#cfn").onclick = () => done(false);
-    o.onclick = e => { if(e.target === o) done(false); };
-  });
-}
 function fatal(m){
   let b = document.getElementById("fatal");
   if(!b){ b = document.createElement("div"); b.id = "fatal"; b.style.cssText = "position:fixed;left:8px;right:8px;top:8px;z-index:99;background:#dc2626;color:#fff;padding:10px 12px;border-radius:12px;font:14px system-ui,sans-serif"; document.body.appendChild(b); }
@@ -504,35 +380,68 @@ function fatal(m){
 }
 window.addEventListener("error", e => fatal("Error: " + (e.message || "unknown") + " - please refresh the page."));
 if(!window.firebase || !firebase.firestore || !firebase.auth) fatal("Could not load Firebase. Check your internet connection and refresh the page.");
-// Two accounts in one browser: a tab opened with ?alt=1 (or via "Add another account") uses its own separate login
-const qa = new URLSearchParams(location.search).get("alt");
-try{ if(qa === "1") sessionStorage.setItem("tp_alt", "1"); if(qa === "0") sessionStorage.removeItem("tp_alt"); }catch(e){}
-let ALT = false; try{ ALT = sessionStorage.getItem("tp_alt") === "1"; }catch(e){}
-const P = ALT ? "alt_" : "";
-const fbApp = firebase.initializeApp(firebaseConfig, ALT ? "alt" : undefined);
-const auth = fbApp.auth(), db = fbApp.firestore();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(), db = firebase.firestore();
 try{ db.settings({experimentalAutoDetectLongPolling:true, merge:true}); }catch(e){ console.warn(e); }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const rate = () => Number(CFG.usdRate) > 0 ? Number(CFG.usdRate) : DEF.usdRate;
-// PKR (database) -> Dollar text for users, up to 5 decimals (e.g. $0.2344, $12.50)
-const usd = p => { let s = ((Number(p) || 0) / rate()).toFixed(5).replace(/0+$/, ""); const d = s.indexOf("."); const dec = s.length - d - 1; if(dec < 2) s += "0".repeat(2 - dec); return "$" + s; };
-const usd2 = p => "$" + ((Number(p) || 0) / rate()).toFixed(2);
-let me = null, ud = null;
-const X = {
-  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/>',
-  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
-  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
-  mail:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.5 7l8.5 6 8.5-6"/>',
-  lock:'<rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/>',
-  image:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/>',
+const IC = {
+  chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+  users:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 3-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.5 0 4.5 1.8 4.5 5"/>',
+  ban:'<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
   shield:'<path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
-  badge:'<path d="M12 2l2.4 2 3.1-.2 1 3 2.6 1.7-1 3 1 3-2.6 1.7-1 3-3.1-.2L12 22l-2.4-2-3.1.2-1-3L2.9 15.5l1-3-1-3L5.5 7.8l1-3 3.1.2z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
-  cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
-  chev:'<path d="M9 5l7 7-7 7"/>',
+  proofs:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+  wallet:'<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>',
+  card:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>',
+  tasks:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6M9 13l2 2 4-4"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
   out:'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>',
+  bolt:'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
   check:'<path d="M5 12l5 5 9-10"/>',
-  wallet:'<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>'};
-
+  plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>'};
+const ic = k => `<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
+let USERS = [], tab = ""; try{ tab = decodeURIComponent(location.hash.slice(1)); }catch(e){}
+let ALLPAY = [], ALLWD = [];
+const fmtD = v => v ? new Date(v).toLocaleString("en-GB", {hour12:false}) : "";
+function csvCell(v){
+  let s = v == null ? "" : String(v);
+  if(typeof v === "string" && /^[=+\-@]/.test(s)) s = "'" + s;   // stop spreadsheet formula injection
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+function downloadCsv(name, head, rows){
+  const csv = "\ufeff" + [head].concat(rows).map(r => r.map(csvCell).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+  a.download = name + "-" + new Date().toISOString().slice(0, 10) + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  $("expmsg").textContent = rows.length + " rows saved as " + a.download + " (check your Downloads).";
+}
+function exportPayments(){
+  downloadCsv("taskpey-payments", ["Date","Email","Method","Sender number","TID","Amount (Rs)","Status"],
+    ALLPAY.slice().sort((a, b) => (b.at || 0) - (a.at || 0)).map(x => [fmtD(x.at), x.email, x.method, x.sender, x.tid, x.amount, x.status]));
+}
+function exportWithdrawals(){
+  downloadCsv("taskpey-withdrawals", ["Date","Email","Method","Account name","Account number","Amount (Rs)","Tax (Rs)","Net to pay (Rs)","Status"],
+    ALLWD.slice().sort((a, b) => (b.at || 0) - (a.at || 0)).map(x => {
+      const fee = x.fee != null ? x.fee : Math.ceil(Number(x.amount) * (CFG.withdrawTax || 0)) / 100;
+      return [fmtD(x.at), x.email, x.method, x.holder, x.number, x.amount, fee, x.net != null ? x.net : Math.round((Number(x.amount) - fee) * 100) / 100, x.status];
+    }));
+}
+async function exportLogs(){
+  try{
+    const s = await db.collection("balanceLogs").orderBy("at", "desc").limit(2000).get();
+    downloadCsv("taskpey-balance-changes", ["Date","User email","Change (Rs)","Before (Rs)","After (Rs)","By"], s.docs.map(d => { const x = d.data(); return [fmtD(x.at), x.email, x.amount, x.before, x.after, x.by]; }));
+  }catch(e){ alert(e.message); }
+}
+function exportUsers(){
+  downloadCsv("taskpey-users", ["Joined","Email","Name","Country","Balance (Rs)","Total earned (Rs)","Total withdrawn (Rs)","Referral code","Invited with code","Member","Banned"],
+    USERS.map(x => [fmtD(x.createdAt), x.email, x.fullName, x.country, x.balance, x.totalEarned, x.totalWithdrawn, x.refCode, x.referredBy, x.activated ? "yes" : "no", x.banned ? "yes" : "no"]));
+}
+const r6 = n => Math.round((Number(n) || 0) * 1e6) / 1e6;
+const rs = n => "Rs " + (Math.round((Number(n) || 0) * 100) / 100);
+const rt = () => Number(CFG.usdRate) > 0 ? Number(CFG.usdRate) : DEF.usdRate;
+function rwPrev(){ const v = Number($("tr").value); $("rwp").textContent = v > 0 ? "= " + rs(r6(v * rt())) + " (rate: 1 USD = Rs " + rt() + ")" : ""; }
+$("lo").innerHTML = ic("out") + "Logout";
 const PLAT = {
   instagram:{n:"Instagram", bg:"linear-gradient(135deg,#f9a03f,#e1306c 55%,#7b3fe4)", g:'<rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17" cy="7" r="1" fill="#fff" stroke="none"/>'},
   tiktok:{n:"TikTok", bg:"#111", g:'<path d="M14 4v10.2a3.4 3.4 0 11-3.4-3.4M14 4c.4 2.5 2 4.1 4.6 4.3"/>'},
@@ -548,671 +457,452 @@ const PLAT = {
 };
 const pbadge = (k, sz) => { const p = PLAT[k] || {bg:"#d90a0a", e:"\u{1F3AF}"};
   return `<span class="pb" style="background:${p.bg};${sz ? `width:${sz}px;height:${sz}px` : ""}">${p.g ? `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p.g}</svg>` : p.e}</span>`; };
-const xi = k => `<svg class="ic" viewBox="0 0 24 24">${X[k]}</svg>`;
-X.trend = '<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>';
-$("lo").innerHTML = xi("out") + "Logout";
-const COUNTRIES = [["Pakistan","PK"],["India","IN"],["Bangladesh","BD"],["Afghanistan","AF"],["Saudi Arabia","SA"],["United Arab Emirates","AE"],["Qatar","QA"],["Kuwait","KW"],["Oman","OM"],["Bahrain","BH"],["United Kingdom","GB"],["United States","US"],["Canada","CA"],["Australia","AU"],["Germany","DE"],["France","FR"],["Italy","IT"],["Spain","ES"],["Netherlands","NL"],["Ireland","IE"],["Sweden","SE"],["Norway","NO"],["Turkey","TR"],["Malaysia","MY"],["Indonesia","ID"],["Singapore","SG"],["China","CN"],["Japan","JP"],["South Korea","KR"],["Sri Lanka","LK"],["Nepal","NP"],["Iran","IR"],["Iraq","IQ"],["Jordan","JO"],["Lebanon","LB"],["Egypt","EG"],["Nigeria","NG"],["South Africa","ZA"],["Brazil","BR"],["Mexico","MX"],["Russia","RU"],["Other",""]];
-const flagOf = n => { const c = (COUNTRIES.find(x => x[0] === n) || [])[1]; return c ? String.fromCodePoint(...[...c].map(ch => 127397 + ch.charCodeAt(0))) : "\u{1F30D}"; };
-const countryOpts = sel => COUNTRIES.map(c => `<option value="${esc(c[0])}" ${c[0]===sel?"selected":""}>${flagOf(c[0])} ${esc(c[0])}</option>`).join("");
-$("co").innerHTML = '<option value="">Select your country</option>' + countryOpts("");
 
-$("brand").innerHTML = "Task<span>Pey</span>"; document.title = NAME + (ALT ? " (2nd account)" : "");
-if(ALT){ const m0 = document.querySelector(".ht .mu"); if(m0) m0.textContent += " \u2022 2nd account"; }
-const qref = (new URLSearchParams(location.search).get("ref") || "").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
-if(qref) $("rf").value = qref;
+const PRESETS = [
+ ["instagram","\u{1F4F8} Instagram",[
+  ["ig_like_reel","\u2764\uFE0F","Instagram reel like","Like Instagram Reel","Open Reel","reel","Open the reel and tap the \u2764\uFE0F Like button."],
+  ["ig_like_post","\u2764\uFE0F","Instagram post like","Like Instagram Post","Open Post","post","Open the post and tap the \u2764\uFE0F Like button."],
+  ["ig_follow","\u2795","Instagram account follow","Follow on Instagram","Open Account","account","Open the account and tap Follow."],
+  ["ig_comment_reel","\u{1F4AC}","Instagram reel comment","Comment on Instagram Reel","Open Reel","reel","Open the reel and write a nice comment."],
+  ["ig_comment_post","\u{1F4AC}","Instagram post comment","Comment on Instagram Post","Open Post","post","Open the post and write a nice comment."]]],
+ ["tiktok","\u{1F3B5} TikTok",[
+  ["tt_like_video","\u2764\uFE0F","TikTok video like","Like TikTok Video","Open Video","video","Open the video and tap the \u2764\uFE0F Like button."],
+  ["tt_follow","\u2795","TikTok account follow","Follow on TikTok","Open Account","account","Open the account and tap Follow."],
+  ["tt_comment_video","\u{1F4AC}","TikTok video comment","Comment on TikTok Video","Open Video","video","Open the video and write a nice comment."],
+  ["tt_share_video","\u{1F501}","TikTok video share","Share TikTok Video","Open Video","video","Open the video, tap Share and share it."],
+  ["tt_watch_video","\u{1F440}","TikTok video watch","Watch TikTok Video","Open Video","video","Open the video and watch it till the end."]]],
+ ["youtube","\u25B6\uFE0F YouTube",[
+  ["yt_like_video","\u{1F44D}","YouTube video like","Like YouTube Video","Open Video","video","Open the video and tap the \u{1F44D} Like button."],
+  ["yt_subscribe","\u{1F514}","YouTube channel subscribe","Subscribe on YouTube","Open Channel","channel","Open the channel and tap Subscribe."],
+  ["yt_comment_video","\u{1F4AC}","YouTube video comment","Comment on YouTube Video","Open Video","video","Open the video and write a nice comment."],
+  ["yt_watch_video","\u{1F440}","YouTube video watch","Watch YouTube Video","Open Video","video","Open the video and watch it for at least 1 minute."]]],
+ ["facebook","\u{1F44D} Facebook",[
+  ["fb_like_page","\u{1F44D}","Facebook page like","Like Facebook Page","Open Page","page","Open the page and tap Like."],
+  ["fb_follow","\u2795","Facebook page follow","Follow on Facebook","Open Page","page","Open the page and tap Follow."],
+  ["fb_like_post","\u{1F44D}","Facebook post like","Like Facebook Post","Open Post","post","Open the post and tap Like."],
+  ["fb_comment_post","\u{1F4AC}","Facebook post comment","Comment on Facebook Post","Open Post","post","Open the post and write a nice comment."],
+  ["fb_share_post","\u{1F501}","Facebook post share","Share Facebook Post","Open Post","post","Open the post and share it."]]],
+ ["x","\u{1F426} X (Twitter)",[
+  ["x_like","\u2764\uFE0F","X post like","Like X Post","Open Post","post","Open the post and tap the \u2764\uFE0F Like button."],
+  ["x_follow","\u2795","X account follow","Follow on X","Open Account","account","Open the account and tap Follow."],
+  ["x_repost","\u{1F501}","X post repost","Repost on X","Open Post","post","Open the post and repost it."],
+  ["x_reply","\u{1F4AC}","X post reply","Reply on X","Open Post","post","Open the post and write a reply."]]],
+ ["telegram","\u2708\uFE0F Telegram",[
+  ["tg_channel","\u{1F4E2}","Telegram channel join","Join Telegram Channel","Open Channel","channel","Open the channel and tap Join."],
+  ["tg_group","\u{1F465}","Telegram group join","Join Telegram Group","Open Group","group","Open the group and tap Join."]]],
+ ["whatsapp","\u{1F4AC} WhatsApp",[
+  ["wa_channel","\u{1F4E2}","WhatsApp channel join","Join WhatsApp Channel","Open Channel","channel","Open the channel and tap Follow."],
+  ["wa_group","\u{1F465}","WhatsApp group join","Join WhatsApp Group","Open Group","group","Open the group link and tap Join."]]],
+ ["snapchat","\u{1F47B} Snapchat",[
+  ["sc_follow","\u2795","Snapchat account follow","Follow on Snapchat","Open Account","account","Open the profile and tap Add Friend or Subscribe."]]],
+ ["app","\u{1F4F1} Mobile App",[
+  ["app_review","\u2B50","App review (5 stars + comment)","Review the App","Open App Page","app","Open the app page, give 5 stars and write a short review."],
+  ["app_install","\u2B07\uFE0F","App install","Install the App","Open App Page","app","Install the app and open it once."]]],
+ ["maps","\u{1F4CD} Google Maps",[
+  ["maps_review","\u2B50","Google Maps review","Review on Google Maps","Open Place","place","Open the place, give 5 stars and write a short review."]]],
+ ["web","\u{1F310} Website",[
+  ["web_visit","\u{1F310}","Website visit","Visit the Website","Open Website","website","Open the website and stay on it for about 30 seconds."]]]
+];
+const PMAP = {};
+PRESETS.forEach(g => g[2].forEach(p => PMAP[p[0]] = {id:p[0], pl:g[0], emoji:p[1], label:p[2], title:p[3], open:p[4], target:p[5], how:p[6]}));
+$("tp").innerHTML = '<option value="">Choose a task\u2026</option>' + PRESETS.map(g =>
+  `<optgroup label="${esc(g[1])}">${g[2].map(p => `<option value="${p[0]}">${p[1]} ${esc(p[2])}</option>`).join("")}</optgroup>`).join("");
+function tpChange(){
+  const p = PMAP[$("tp").value];
+  $("tprev").innerHTML = p ? `<div class="card" style="margin:6px 0"><div class="th">${pbadge(p.pl)}<h3>${esc(p.title)}</h3></div><div class="mu">${esc(p.how)}</div><div class="mu" style="margin-top:6px">Button: <b>${esc(p.open)}</b></div></div>` : "";
+  $("tlh").textContent = p ? "(paste the " + p.target + " link)" : "";
+}
 
-const lsGet = k => { try{ return localStorage.getItem(P + k); }catch(e){ return null; } };
-const lsSet = (k, v) => { try{ localStorage.setItem(P + k, v); }catch(e){} };
-const lsDel = k => { try{ localStorage.removeItem(P + k); }catch(e){} };
-const cleanCode = v => String(v || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
-function msg(id, t, ok){ const el = $(id); el.textContent = t || ""; el.classList.toggle("err", !!t && !ok); }
-const friendly = e => ({
-  "auth/invalid-credential":"Wrong email or password.", "auth/wrong-password":"Wrong email or password.",
-  "auth/user-not-found":"No account found with this email.", "auth/invalid-email":"Please enter a valid email address.",
-  "auth/email-already-in-use":"This email is already registered. Please login instead.",
-  "auth/weak-password":"Password is too weak.", "auth/network-request-failed":"No internet connection. Please try again.",
-  "auth/too-many-requests":"Too many attempts. Please wait a few minutes and try again."})[e && e.code] || (e && e.message) || "Something went wrong.";
-function showAuth(k){
-  $("login").classList.toggle("hide", k !== "login"); $("signup").classList.toggle("hide", k !== "signup");
-  msg("lerr"); msg("aerr"); window.scrollTo(0, 0);
-}
-if(qref) showAuth("signup");
-const strong = p => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(p);
 
-async function login(){
-  msg("lerr"); const e = $("lem").value.trim(), p = $("lpw").value;
-  if(!e || !p) return msg("lerr", "Enter your email and password.");
-  try{ await auth.signInWithEmailAndPassword(e, p); }catch(x){ msg("lerr", friendly(x)); }
+function login(){ auth.signInWithEmailAndPassword($("em").value, $("pw").value).catch(e => $("aerr").textContent = e.message); }
+auth.onAuthStateChanged(u => {
+  if(u && u.email !== ADMIN_EMAIL){ $("aerr").textContent = "Access denied. This page is for the owner only."; auth.signOut(); return; }
+  $("boot").classList.add("hide"); $("auth").classList.toggle("hide", !!u); $("panel").classList.toggle("hide", !u); $("lo").classList.toggle("hide", !u);
+  if(u){ $("who").textContent = u.email; load(); initChat(); }
+});
+
+const PT = {users:"Users", user:"User details", pay:"Payments", proofs:"Task proofs", wd:"Withdrawals", tasks:"Tasks", chat:"Support", lb:"Leaderboard", set:"Settings"};
+let CURU = "";
+function weekKey(ts){ const d = new Date(ts || Date.now()), k = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - k); return d.toISOString().slice(0, 10); }
+const maskName = t => { t = String(t || "User").trim(); return t.slice(0, 2) + "***"; };
+function show(t){
+  t = t || ""; if(t.indexOf("user:") === 0){ CURU = t.slice(5); t = "user"; }
+  tab = t === "user" ? "user:" + CURU : t;
+  document.body.classList.toggle("inpage", !!PT[t]);
+  Object.keys(PT).forEach(x => { const e = $("t-" + x); if(e) e.classList.toggle("hide", x !== t); });
+  $("ptitle").textContent = PT[t] || "";
+  if(t === "user") renderUser();
+  if(t === "lb" && !LBL.length) loadLB();
 }
-async function forgot(){
-  const e = $("lem").value.trim();
-  if(!e) return msg("lerr", "Enter your email above, then tap Forgot password.");
-  try{ await auth.sendPasswordResetEmail(e); msg("lerr", "Reset link sent to " + e + ". Check your email (and Spam).", true); }
-  catch(x){ msg("lerr", friendly(x)); }
+function go(t){ window.__nav = 1; if(decodeURIComponent(location.hash.slice(1)) === t){ show(t); window.scrollTo(0, 0); } else location.hash = t; }
+function goBack(){ if(window.__nav) history.back(); else { location.hash = ""; } }
+window.addEventListener("hashchange", () => { let h = ""; try{ h = decodeURIComponent(location.hash.slice(1)); }catch(e){} if(!$("panel").classList.contains("hide")){ show(h); window.scrollTo(0, 0); } });
+
+async function saveSettings(){
+  const n = {planFee:Number($("s-fee").value), payMethod:$("s-method").value.trim(), payNumber:$("s-num").value.trim(),
+    payName:$("s-name").value.trim(), refBonus:Number($("s-ref").value), minWithdraw:Number($("s-min").value), withdrawTax:Number($("s-tax").value), usdRate:Number($("s-usd").value), signupBonus:Number($("s-sb").value), dailyBonus:Number($("s-db").value), spinMin:Number($("s-smin").value), spinMax:Number($("s-smax").value), missionBonus:Number($("s-mb").value), weeklyTitle:$("s-wt").value.trim(), weeklyPrizes:$("s-wp").value.trim(), announce:$("s-an").value.trim(), waLink:$("s-wa").value.trim(), chatBot:$("s-bot").value==="1"};
+  if(!(n.planFee >= 0) || !n.payMethod || !n.payNumber || !n.payName || !(n.refBonus >= 0) || !(n.minWithdraw > 0) || !(n.withdrawTax >= 0 && n.withdrawTax <= 50) || !(n.usdRate > 0) || !(n.dailyBonus >= 0) || !(n.spinMin >= 0) || !(n.spinMax >= n.spinMin) || !(n.missionBonus >= 0) || !(n.signupBonus >= 0 && n.signupBonus <= 1000)) return alert("Please fill every field correctly.");
+  if(n.waLink && !/^https:\/\/(chat\.)?whatsapp\.com\//i.test(n.waLink)) return alert("WhatsApp link must start with https://chat.whatsapp.com/");
+  try{ await db.collection("settings").doc("config").set(n); CFG = n; $("sok").textContent = "Saved. Users will see the new values."; }
+  catch(e){ alert(e.message); }
 }
-async function signup(){
-  msg("aerr");
-  const email = $("em").value.trim(), pw = $("pw").value, code = cleanCode($("rf").value);
-  if(!email) return msg("aerr", "Please enter your email.");
-  if(!$("co").value) return msg("aerr", "Please select your country.");
-  if(!strong(pw)) return msg("aerr", "Weak password. Use 8+ characters with uppercase, lowercase, a number and a special character (@ # $ !).");
-  if(code.length !== 6) return msg("aerr", "Referral code is required. Ask the friend who invited you for their 6-character code.");
-  const btn = $("sb"); btn.disabled = true;
+
+async function addTask(){
+  const p = PMAP[$("tp").value], link = $("tl").value.trim(), r = r6(Number($("tr").value) * rt());
+  if(!p) return alert("Please choose what the user should do.");
+  if(!/^https?:\/\//i.test(link)) return alert("Please paste the " + p.target + " link (it must start with https://).");
+  if(!(r > 0)) return alert("Please enter the reward in dollars, e.g. 0.2344");
+  const lim = Math.floor(Number($("tlim").value) || 0);
+  if($("tlim").value && !(lim >= 1)) return alert("Limit must be 1 or more, or leave it empty.");
   try{
-    let r;
-    try{ r = await db.collection("refCodes").doc(code).get(); }
-    catch(e){ return msg("aerr", "Could not check the referral code. Check your internet and try again."); }
-    if(!r.exists) return msg("aerr", "This referral code is not valid. Please check it and try again.");
-    lsSet("tp_ref", code); lsSet("tp_co", $("co").value); lsSet("tp_fn", $("fn").value.trim().slice(0, 40));
-    await auth.createUserWithEmailAndPassword(email, pw);
-  }catch(e){ msg("aerr", friendly(e)); }
-  finally{ btn.disabled = false; }
-}
-async function finishRef(){
-  const c = cleanCode($("nr").value); msg("nrerr");
-  if(c.length !== 6) return msg("nrerr", "Enter the 6-character referral code.");
-  try{ const r = await db.collection("refCodes").doc(c).get(); if(!r.exists) return msg("nrerr", "This referral code is not valid."); }
-  catch(e){ return msg("nrerr", "Could not check the code. Try again."); }
-  lsSet("tp_ref", c); $("needref").classList.add("hide"); boot(me);
-}
-function ensureRef(c){
-  if(!c || !me) return; const r = db.collection("refCodes").doc(c);
-  r.get().then(s => { if(!s.exists) return r.set({uid: me.uid}); }).catch(() => {});
+    await db.collection("tasks").add({platform:p.pl, preset:p.id, title:p.title, desc:p.how, openLabel:p.open, note:$("td").value.trim(), link, reward:r, limit:lim, taken:0, active:true, at:Date.now()});
+  }catch(e){ return alert(e.message); }
+  ["tl","tr","td","tlim"].forEach(i => $(i).value = ""); $("rwp").textContent = ""; $("tp").value = ""; tpChange(); load();
 }
 
-/* ---------- Email OTP (EmailJS) ---------- */
-const OTP_KEY = "tp_otp";
-const getOtp = () => JSON.parse(sessionStorage.getItem(OTP_KEY) || "null");
-async function sendOtp(){
-  const last = getOtp();
-  if(last && Date.now() - last.sent < 60000) throw new Error("Please wait a minute before requesting a new code.");
-  const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000);
-  await loadEmailJS();
-  await emailjs.send(EMAILJS.serviceId, EMAILJS.templateId, {to_email: me.email, otp: code, app_name: NAME});
-  sessionStorage.setItem(OTP_KEY, JSON.stringify({code, exp: Date.now()+600000, sent: Date.now(), tries: 0}));
-}
-async function resendOtp(){
-  try{ await sendOtp(); $("verr").textContent = "New code sent to your email."; }
-  catch(e){ $("verr").textContent = e.message || "Could not send the email. Try again later."; }
-}
-async function verifyOtp(){
-  const o = getOtp(), v = $("otp").value.trim(), m = $("verr");
-  if(!o) return m.textContent = "No code yet. Tap Resend code.";
-  if(Date.now() > o.exp) return m.textContent = "Code expired. Tap Resend code.";
-  if(o.tries >= 5) return m.textContent = "Too many wrong attempts. Tap Resend code.";
-  if(v !== o.code){ o.tries++; sessionStorage.setItem(OTP_KEY, JSON.stringify(o)); return m.textContent = "Wrong code. Try again."; }
-  await db.collection("users").doc(me.uid).update({verified: true});
-  sessionStorage.removeItem(OTP_KEY); location.reload();
+async function load(){
+  if(!USERS.length) $("stats").innerHTML = '<div style="padding:10px"><div class="sp"></div>Loading\u2026</div>';
+  try{ await load0(); }
+  catch(e){ $("stats").innerHTML = '<div style="padding:10px;color:#dc2626">Could not load: ' + esc(e.message) + '</div>'; }
 }
 
-/* ---------- Session ---------- */
-const genCode = () => Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
-const CK = P + "tp_cache";
-function readCache(){ try{ return JSON.parse(localStorage.getItem(CK) || "null"); }catch(e){ return null; } }
-function writeCache(uid, d){ try{ localStorage.setItem(CK, JSON.stringify({uid, ud:d, cfg:CFG})); }catch(e){} }
-function mountApp(){
-  $("app").classList.remove("hide"); initChat(); startFeed();
-  const I = {
-    home:'<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',
-    tasks:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6M9 13l2 2 4-4"/>',
-    refer:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 3-6 6-6s6 2.5 6 6M18 8v6M15 11h6"/>',
-    rewards:'<rect x="3" y="8" width="18" height="5" rx="1.5"/><path d="M12 8v13M5 13v7h14v-7M12 8C9 8 7.5 3.5 10 3.5S12 6 12 8zM12 8c0-2 .5-4.5 2-4.5 2.500 0 1 4.500-2 4.500"/>',
-    profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>'};
-  $("nav").innerHTML = [["home","Home"],["tasks","Tasks"],["refer","Refer"],["rewards","Rewards"],["profile","Profile"]]
-    .map(t => `<button id="n-${t[0]}" onclick="show('${t[0]}')"><svg viewBox="0 0 24 24">${I[t[0]]}</svg>${t[1]}</button>`).join("");
-}
-async function refreshBg(u){
-  try{
-    const [cs, d] = await Promise.all([db.collection("settings").doc("config").get().catch(() => null), db.collection("users").doc(u.uid).get()]);
-    if(cs && cs.exists) CFG = {...DEF, ...cs.data()};
-    if(!d.exists) return;
-    const nd = d.data();
-    if(nd.banned || !nd.verified || !nd.activated){ await onUser(u); return; }
-    ensureRef(nd.refCode);
-    const changed = JSON.stringify(nd) !== JSON.stringify(ud);
-    ud = nd; writeCache(u.uid, nd);
-    if(changed) ({home:loadHome, tasks:loadTasks, refer:loadRefer, rewards:loadRewards, profile:loadProfile})[curTab]();
-    loadTasks().catch(() => {});
-  }catch(e){}
-}
-let refChecked = false;   // invite link opened while another account is logged in: ask once per page load
-function showSwitch(u){ refChecked = true; $("swem").textContent = u.email || ""; $("ld").classList.add("hide"); $("auth").classList.add("hide"); $("switch").classList.remove("hide"); }
-function dropRef(){ try{ history.replaceState(null, "", location.pathname); }catch(e){} }
-async function switchAcc(){ $("switch").classList.add("hide"); dropRef(); lsDel(CK); await auth.signOut(); showAuth("signup"); }
-function newSession(){ try{ sessionStorage.setItem("tp_alt", "1"); }catch(e){} location.reload(); }
-function stayAcc(){ $("switch").classList.add("hide"); dropRef(); boot(auth.currentUser); }
-let authFirst = true;   // the "already logged in" question is only for the FIRST auth event of the page load (not after a new signup)
-async function boot(u){
-  const first = authFirst; authFirst = false;
-  if(first && u && qref && !refChecked) return showSwitch(u);
-  try{
-    const c = u ? readCache() : null;
-    if(c && c.uid === u.uid && c.ud && c.ud.verified && c.ud.activated && !c.ud.banned){
-      // fast path: show the app instantly from saved data, refresh quietly in the background
-      me = u; ud = c.ud; if(c.cfg) CFG = {...DEF, ...c.cfg};
-      $("auth").classList.add("hide"); $("ld").classList.add("hide"); $("lo").classList.remove("hide");
-      mountApp(); show("home", true); ensureCode(); ensureProfile(); refreshBg(u);
-      return;
-    }
-    await onUser(u);
+let lastMaint = 0;
+function maintain(w){
+  if(Date.now() - lastMaint < 600000) return; lastMaint = Date.now();
+  setTimeout(async () => { try{
+  const [rc, pf] = await Promise.all([db.collection("refCodes").get().catch(() => null), db.collection("profiles").get().catch(() => null)]);
+  if(rc){ const have = new Set(rc.docs.map(d => d.id)), miss = USERS.filter(x => x.refCode && !have.has(x.refCode)).slice(0, 400);
+    if(miss.length){ const bt = db.batch(); miss.forEach(x => bt.set(db.collection("refCodes").doc(x.refCode), {uid:x.id})); bt.commit().catch(() => {}); } }
+  backfillRef();
+  await syncProfiles(pf, w);
+  const nocode = USERS.filter(x => !x.refCode).slice(0, 50);
+  if(nocode.length){
+    nocode.forEach(x => { x.refCode = Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join(""); });
+    const b2 = db.batch();
+    nocode.forEach(x => { b2.update(db.collection("users").doc(x.id), {refCode:x.refCode}); b2.set(db.collection("refCodes").doc(x.refCode), {uid:x.id}); });
+    b2.commit().catch(() => nocode.forEach(x => { delete x.refCode; }));
   }
-  catch(e){ if(u){ $("ld").classList.remove("hide"); $("ldsp").classList.add("hide"); $("ldm").textContent = "Could not load your account. " + (e.message || "") + " Pull to refresh or try again."; } }
+  }catch(e){ console.warn(e); } }, 2500);
 }
-auth.onAuthStateChanged(boot);
-setTimeout(() => { if(!$("ld").classList.contains("hide") && !$("ldsp").classList.contains("hide")) $("ldm").textContent = "Slow internet \u2014 please wait\u2026"; }, 6000);
+function renderSubs(docs){
+  docs = docs.slice().sort((a,b) => (b.data().at||0) - (a.data().at||0));
+  let h = "";
+  docs.forEach(d => { const x = d.data();
+    h += `<div class="card l"><b>${esc(x.taskTitle)}</b> · ${rs(x.reward)}<div class="mu">${esc(x.email)} · ${new Date(x.at||0).toLocaleString()}</div>
+      <div>${/^https?:\/\//.test(x.proof) ? `<a href="${esc(x.proof)}" target="_blank" rel="noopener">${esc(x.proof)}</a>` : esc(x.proof)}</div>
+      ${/^data:image\/[a-z+]+;base64,[A-Za-z0-9+\/=]+$/.test(x.shot || "") ? `<img loading="lazy" decoding="async" src="${x.shot}" alt="screenshot" style="max-width:100%;max-height:240px;border-radius:12px;margin-top:6px;border:1px solid var(--bd)" onclick="openShot(this.src)"><div class="mu">Tap the screenshot to enlarge</div>` : ""}
+      <div class="row"><button onclick="appSub('${d.id}',true)">Approve</button><button class="r" onclick="appSub('${d.id}',false)">Reject</button></div></div>`; });
+  $("asub").innerHTML = (docs.length >= 100 ? '<div class="mu" style="margin:4px 2px">Showing the first 100 pending proofs. More appear after you review these.</div>' : "") + h || '<div class="mu">No pending proofs</div>';
+  const nb = $("nb-proofs"); if(nb) nb.textContent = docs.length || "";
+}
+let subsUnsub = null;
+function watchSubs(){
+  if(subsUnsub) return;
+  subsUnsub = db.collection("submissions").where("status","==","pending").limit(100).onSnapshot(
+    snap => renderSubs(snap.docs),
+    err => { subsUnsub = null; $("asub").innerHTML = '<div style="padding:10px;color:#dc2626">Proofs could not load: ' + esc(err.message) + '</div>'; });
+}
+async function load0(){
+  const [s, w, t, u, p, cs] = await Promise.all([
+    db.collection("submissions").where("status","==","pending").limit(100).get(),
+    db.collection("withdrawals").get(),
+    db.collection("tasks").get(),
+    db.collection("users").get(),
+    db.collection("payments").get(),
+    db.collection("settings").doc("config").get()]);
+  CFG = {...DEF, ...(cs.exists ? cs.data() : {})};
+  ALLPAY = p.docs.map(d => ({id:d.id, ...d.data()})); ALLWD = w.docs.map(d => ({id:d.id, ...d.data()}));
+  $("s-fee").value = CFG.planFee; $("s-method").value = CFG.payMethod; $("s-num").value = CFG.payNumber;
+  $("s-name").value = CFG.payName; $("s-ref").value = CFG.refBonus; $("s-min").value = CFG.minWithdraw; $("s-tax").value = CFG.withdrawTax; $("s-usd").value = CFG.usdRate; $("s-sb").value = CFG.signupBonus ?? 15; $("s-db").value = CFG.dailyBonus ?? 2; $("s-smin").value = CFG.spinMin ?? 1; $("s-smax").value = CFG.spinMax ?? 10; $("s-mb").value = CFG.missionBonus ?? 3; $("s-wt").value = CFG.weeklyTitle || "Weekly challenge"; $("s-wp").value = CFG.weeklyPrizes || ""; $("s-an").value = CFG.announce || ""; $("s-wa").value = CFG.waLink || ""; $("s-bot").value = CFG.chatBot === false ? "0" : "1";
 
-async function onUser(u){
-  $("bell").classList.add("hide"); me = u; helpShow(!u); if(!u) chatOff(); $("auth").classList.toggle("hide", !!u); $("lo").classList.toggle("hide", !u);
-  $("verify").classList.add("hide"); $("needref").classList.add("hide"); $("app").classList.add("hide"); $("banned").classList.add("hide"); $("activate").classList.add("hide");
-  $("ld").classList.add("hide");
-  if(!u){ try{ localStorage.removeItem(CK); }catch(e){} setTimeout(() => loadEmailJS().catch(() => {}), 1500); return; }
-  $("ldsp").classList.remove("hide"); $("ldm").textContent = "Loading your account\u2026"; $("ld").classList.remove("hide");
-  const ur = db.collection("users").doc(u.uid);
-  const [cs, d0] = await Promise.all([db.collection("settings").doc("config").get().catch(() => null), ur.get()]);
-  if(cs && cs.exists) CFG = {...DEF, ...cs.data()};
-  const cfgOk = !!(cs && cs.exists);
-  let d = d0, newBonus = 0;
-  if(!d.exists){
-    const rc = cleanCode(lsGet("tp_ref")); let ok = false, rUid = "";
-    if(rc.length === 6){ try{ const r0 = await db.collection("refCodes").doc(rc).get(); ok = r0.exists; rUid = ok ? (r0.data().uid || "") : ""; }catch(e){} }
-    if(!ok){ $("ld").classList.add("hide"); $("nr").value = rc; $("needref").classList.remove("hide"); helpShow(true); return; }
-    const co = lsGet("tp_co");
-    newBonus = cfgOk ? Math.min(1000, Math.max(0, Number(CFG.signupBonus) || 0)) : 0;   // signup bonus goes straight into the wallet
-    await ur.set({email:u.email, balance:newBonus, signupBonus:newBonus, verified:false, refCode:genCode(), referredBy:rc, referrerUid:rUid, refEarned:0, refCount:0, createdAt:Date.now(),
-      country:(COUNTRIES.some(c => c[0] === co) ? co : ""), fullName:lsGet("tp_fn") || ""});
-    ["tp_ref","tp_co","tp_fn"].forEach(lsDel);
-    d = await ur.get();
-    if(newBonus > 0) toast("Welcome! Signup bonus " + usd(newBonus) + " (Rs " + newBonus + ") was added to your wallet. \u{1F381}");
-  }
-  window.__uDoc = d.data();
-  ensureRef(d.data().refCode);
-  $("ld").classList.add("hide");
-  if(d.data().banned){ $("banned").classList.remove("hide"); return; }
-  if(!d.data().verified){   // OTP removed: auto-verify
-    try{ await ur.update({verified:true}); d = await ur.get(); window.__uDoc = d.data(); }
-    catch(e){ console.warn(e); }
-  }
-  if(!d.data().activated){ showActivate(); return; }
-  mountApp();
-  ud = d.data(); writeCache(u.uid, ud);
-  show("home", true); ensureCode(); ensureProfile();
-  loadTasks().catch(() => {});
-}
+  USERS = u.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+  maintain(w);
+  const wds = w.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.at||0) - (a.at||0));
+  const pend = wds.filter(x => x.status === "pending");
+  const wtax = a => Math.ceil(Number(a) * (CFG.withdrawTax || 0) / 100);
+  const wnet = arr => arr.reduce((t, x) => t + (x.net != null ? Number(x.net) : Number(x.amount) - wtax(x.amount)), 0);
+  const wpaid = wds.filter(x => x.status === "paid"), wrej = wds.filter(x => x.status === "rejected");
+  const wsd = (k, n, l) => `<div><span class="si">${ic(k)}</span><b>${n}</b>${l}</div>`;
+  $("wsum").innerHTML = wsd("wallet", pend.length, "Pending") + wsd("card", rs(wnet(pend)), "To pay") + wsd("check", rs(wnet(wpaid)), "Paid") + wsd("ban", wrej.length, "Rejected");
+  $("wpc").textContent = pend.length;
 
-let curTab = "home";
-async function show(t, cached){
-  curTab = t;
-  ["home","tasks","refer","rewards","profile"].forEach(x => {
-    $("v-"+x).classList.toggle("hide", x!==t); $("n-"+x).classList.toggle("on", x===t); });
-  const run = () => ({home:loadHome, tasks:loadTasks, refer:loadRefer, rewards:loadRewards, profile:loadProfile})[t]();
-  if(ud) run();
-  if(cached && ud) return;
-  try{
-    const nd = (await db.collection("users").doc(me.uid).get()).data();
-    if(!ud || JSON.stringify(nd) !== JSON.stringify(ud)){ ud = nd; writeCache(me.uid, ud); if(curTab === t) run(); }
-  }catch(e){ if(!ud) throw e; }
-}
+  const sd = (k, n, l) => `<div><span class="si">${ic(k)}</span><b>${n}</b>${l}</div>`;
+  $("stats").innerHTML = sd("users",USERS.length,"Users") + sd("ban",USERS.filter(x=>x.banned).length,"Banned") + sd("shield",USERS.filter(x=>x.activated).length,"Active") + sd("proofs",s.size,"Proofs") + sd("wallet",pend.length,"Payouts");
+  $("tabs").innerHTML = [["users","Users","users"],["lb","Leaderboard","bolt"],["pay","Payment","card"],["proofs","Proof","proofs"],["wd","Withdrawal","wallet"],["tasks","Tasks","tasks"],["chat","Support","chat"],["set","Settings","gear"]]
+    .map(x => `<button id="b-${x[0]}" onclick="go('${x[0]}')">${ic(x[2])}${x[1]}${x[0]==="chat"?'<span class="nb" id="nbc"></span>':`<span class="nb" id="nb-${x[0]}"></span>`}</button>`).join("");
+  [["pay", p.docs.filter(d => d.data().status === "pending").length], ["proofs", s.size], ["wd", pend.length]].forEach(a => { const e = $("nb-" + a[0]); if(e) e.textContent = a[1] || ""; });
 
-/* ---------- Activation plan ---------- */
-async function showActivate(){
-  const a = $("activate"); a.classList.remove("hide"); initChat();
-  const p = await db.collection("payments").doc(me.uid).get(), st = p.exists ? p.data().status : "";
-  const out = `<div class="row"><button class="g" onclick="location.reload()">Refresh status</button><button class="g" onclick="auth.signOut()">Logout</button></div>`;
-  if(st === "pending"){
-    a.innerHTML = `<h3>Payment under review</h3><div class="mu">We received your payment details (TID: ${esc(p.data().tid)}). Your account will be activated after the admin checks it, usually within 24 hours.</div>${out}`;
-    return;
-  }
-  a.innerHTML = `<h3>Activate your account</h3>
-    ${(Number((window.__uDoc || {}).signupBonus) || 0) > 0 ? `<div class="note">\u{1F381} Signup bonus <b>${usd(window.__uDoc.signupBonus)}</b> (Rs ${esc(window.__uDoc.signupBonus)}) is already in your wallet.</div>` : ""}
-    <div style="text-align:center;margin:10px 0 4px"><div class="mu">Membership fee (one-time)</div><div class="bal">${usd2(CFG.planFee)}</div><div class="mu">Rs ${CFG.planFee}</div></div>
-    <div class="note" style="margin:8px 0">This is a one-time membership fee for access to the member area. It is <b>not an investment</b> and no profit or return is promised. Earnings depend on the tasks available and are not guaranteed. <a href="terms.html" target="_blank">Read About &amp; Terms</a></div>
-    <div class="mu">It unlocks tasks, withdrawals and your referral code. Earnings are <b>not guaranteed</b>: they depend on available tasks and on approval of your work.</div>
-    ${st === "rejected" ? '<div class="mu" style="color:#dc2626;margin-top:8px">Your last payment could not be verified. Please check the details and submit again.</div>' : ""}
-    <div class="card"><div class="mu">Send Rs ${CFG.planFee} to (${esc(CFG.payMethod)}):</div><div class="code" style="font-size:20px;letter-spacing:1px">${esc(CFG.payNumber)}</div><div class="mu" style="text-align:center">${esc(CFG.payName)}</div></div>
-    <select id="pm"><option>${esc(CFG.payMethod)}</option></select>
-    <input id="ps" placeholder="Your account number (sender)">
-    <input id="pt" placeholder="Transaction ID (TID)">
-    <button onclick="submitPay()">Submit payment details</button>
-    <div id="perr" class="mu"></div>${out}`;
-}
-async function submitPay(){
-  const sender = $("ps").value.trim(), tid = $("pt").value.trim();
-  if(!sender || tid.length < 6) return $("perr").textContent = "Enter your account number and a valid Transaction ID.";
-  try{
-    await db.collection("payments").doc(me.uid).set({uid:me.uid, email:me.email, amount:CFG.planFee, method:$("pm").value, sender, tid, status:"pending", at:Date.now()});
-    showActivate();
-  }catch(e){ $("perr").textContent = e.message; }
+  renderUsers();
+  const pays = p.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (b.at||0) - (a.at||0));
+  $("apay").innerHTML = pays.filter(x => x.status === "pending").map(x => `<div class="card l"><b>Rs ${esc(x.amount)}</b> · ${esc(x.method)}
+    <div class="mu">${esc(x.email)}</div><div>Sender: ${esc(x.sender)}</div><div>TID: ${esc(x.tid)}</div>
+    <div class="mu">Check this payment in your JazzCash/Easypaisa first, then approve.</div>
+    <div class="row"><button onclick="appPay('${x.id}',true)">Approve</button><button class="r" onclick="appPay('${x.id}',false)">Reject</button></div></div>`).join("")
+    || '<div class="mu">No pending payments</div>';
+  $("phist").innerHTML = pays.filter(x => x.status !== "pending").slice(0, 40).map(x => `<div class="card l">Rs ${esc(x.amount)} · ${esc(x.email)} <span class="tag">${esc(x.status)}</span>
+    <div class="mu">TID ${esc(x.tid)} · ${new Date(x.at||0).toLocaleDateString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
+
+  renderSubs(s.docs); watchSubs();
+
+  const taxOf = a => { const f = Math.ceil(Number(a) * (CFG.withdrawTax || 0) / 100); return {fee:f, net:Number(a) - f}; };
+  $("awd").innerHTML = pend.map(x => { const tx_ = taxOf(x.amount); return `<div class="card l"><b>Pay Rs ${tx_.net}</b> <span class="mu">(Rs ${esc(x.amount)} - ${CFG.withdrawTax||0}% tax Rs ${tx_.fee})</span> · ${esc(x.method)} · ${esc(x.number)}<div class="mu">Account holder: <b>${esc(x.holder || "-")}</b></div><div class="mu">${esc(x.email)}</div>
+      <div class="mu">Send the money via JazzCash/Easypaisa first, then tap "Paid".</div>
+      <div class="row"><button onclick="appWd('${x.id}',true)">Paid</button><button class="r" onclick="appWd('${x.id}',false)">Reject</button></div></div>`; }).join("")
+    || '<div class="mu">No pending requests</div>';
+  $("whist").innerHTML = wds.filter(x => x.status !== "pending").slice(0, 40).map(x =>
+    `<div class="card l">Rs ${esc(x.amount)}${x.net != null ? " (paid Rs " + esc(x.net) + " after tax)" : ""} · ${esc(x.method)} · ${esc(x.number)} <span class="tag">${esc(x.status)}</span>
+      <div class="mu">${esc(x.holder || "-")} · ${esc(x.email)} · ${new Date(x.at||0).toLocaleString()}</div></div>`).join("") || '<div class="mu">No history yet</div>';
+
+  h = ""; t.forEach(d => { const x = d.data();
+    h += `<div class="card l"><div class="th">${pbadge(x.platform,30)}<b style="flex:1">${esc(x.title)}</b> <span class="tag">${rs(x.reward)}</span> ${x.limit > 0 ? `<span class="tag ${(x.taken||0) >= x.limit ? "bad" : ""}">${x.taken||0}/${x.limit}</span>` : `<span class="tag no">${x.taken||0} done</span>`}
+      <span class="tag ${x.active && !(x.limit > 0 && (x.taken||0) >= x.limit) ? "" : "no"}">${!x.active ? "closed" : (x.limit > 0 && (x.taken||0) >= x.limit) ? "ended (full)" : "live"}</span></div>
+      <div class="row"><button class="g" onclick="toggleTask('${d.id}',${!x.active})">${x.active ? "Close" : "Make live"}</button></div></div>`; });
+  $("atasks").innerHTML = h;
+  show(tab);
 }
 
-/* ---------- Home ---------- */
-async function loadHome(){
-  $("wmin").textContent = "Minimum " + usd(CFG.minWithdraw);
-  $("bal").textContent = usd(ud.balance); waCard();
-  try{ const a = JSON.parse(lsGet("wacc") || "null"); if(a && !$("wn").value){ $("wm").value = a.m; $("wh").value = a.h; $("wn").value = a.n; } }catch(e){}
-  const sd = (ic, n, l) => `<div><span class="si">${xi(ic)}</span><b>${usd(n)}</b>${l}</div>`;
-  const paint = (paid, tasksEarned) => {
-    const tw = ud.totalWithdrawn != null ? ud.totalWithdrawn : paid;
-    const te = tasksEarned != null ? tasksEarned + (Number(ud.refEarned) || 0) + (Number(ud.signupBonus) || 0) : (ud.totalEarned != null ? ud.totalEarned : (Number(ud.balance) || 0) + paid);
-    $("hstats").innerHTML = sd("trend", te, "Total earning") + sd("wallet", tw, "Total withdrawal");
-  };
-  paint(0);
-  const [q, sq] = await Promise.all([db.collection("withdrawals").where("uid","==",me.uid).get(), db.collection("submissions").where("uid","==",me.uid).get().catch(() => null)]);
-  let paid = 0; q.forEach(d => { const w = d.data(); if(w.status === "paid") paid += Number(w.amount) || 0; });
-  let te = null; if(sq){ te = 0; sq.forEach(d => { const x = d.data(); if(x.status === "approved") te += Number(x.reward) || 0; }); }
-  paint(paid, te);
-  const arr = q.docs.map(d => ({id: d.id, ...d.data()})).sort((x, y) => (y.at || 0) - (x.at || 0));
-  arr.forEach(w => WD[w.id] = w);
-  const stName = {paid:"Paid", pending:"Pending", rejected:"Rejected"};
-  $("wlist").innerHTML = arr.length ? "<h3>My withdrawals</h3>" + arr.map(w => `<div class="card wd">
-    <div class="wtop"><span class="wi ${wcls(w.method)}">${xi("wallet")}</span>
-      <div class="wm"><b>${usd(w.amount)}</b><span>${esc(w.method)} \u00b7 ${fdate(w.at)}, ${ftime(w.at)}</span></div>
-      <span class="st ${esc(w.status)}">${esc(stName[w.status] || w.status)}</span></div>
-    <div class="wbot"><span class="mu">${w.net != null ? "You get <b>" + usd(w.net) + "</b>" : "&nbsp;"}</span><button class="g sm" onclick="viewSlip('${esc(w.id)}')">View slip</button></div></div>`).join("") : "";
+let ULIM = 40;
+const lvName = u => { const e = (u.totalEarned != null ? Number(u.totalEarned) : (Number(u.balance) || 0) + (Number(u.totalWithdrawn) || 0)) / rt(); return e >= 50 ? "Platinum" : e >= 20 ? "Gold" : e >= 5 ? "Silver" : "Bronze"; };
+function moreUsers(){ ULIM += 40; renderUsers(true); }
+const userCard = u => `<div class="card l">
+    <b>${esc(u.email)}</b> ${u.banned ? '<span class="tag bad">banned</span>' : ''}
+    <span class="tag ${u.verified ? "" : "no"}">${u.verified ? ic("check") + "verified" : "unverified"}</span> <span class="tag ${u.activated ? "" : "no"}">${u.activated ? "member" : "no plan"}</span>
+    ${u.fullName || u.country ? `<div class="mu">${esc(u.fullName||"")}${u.fullName && u.country ? " \u00b7 " : ""}${esc(u.country||"")}</div>` : ""}
+    <div class="mu">Referral code: <b>${esc(u.refCode||"-")}</b>${u.referredBy ? " \u00b7 invited with code <b>" + esc(u.referredBy) + "</b>" + (u.refPaid ? " (commission paid)" : "") : ""}</div>
+    <div class="mu">Earned ${u.totalEarned == null ? "-" : rs(u.totalEarned)} · Withdrawn ${u.totalWithdrawn == null ? "-" : rs(u.totalWithdrawn)}</div>
+    <div class="mu">Level ${lvName(u)} \u00b7 Streak ${esc(u.streak||0)} day(s)${u.lastCheckin ? " \u00b7 last check-in " + esc(u.lastCheckin) : ""}</div>
+    <div class="mu">Balance ${rs(u.balance)} · Friends ${esc(u.refCount||0)} · Joined ${new Date(u.createdAt||0).toLocaleDateString()}</div>
+    <div class="row"><button class="g" onclick="adjBal('${u.id}',1)">${ic("plus")}Add Rs</button><button class="r" onclick="adjBal('${u.id}',-1)">${ic("minus")}Deduct</button>
+      <button class="g" onclick="setActive('${u.id}',${!u.activated})">${ic("bolt")}${u.activated ? "Deactivate" : "Activate"}</button>
+      ${u.email === ADMIN_EMAIL ? "" : `<button class="${u.banned ? "g" : "r"}" onclick="ban('${u.id}',${!u.banned})">${u.banned ? "Unban" : "Ban user"}</button>`}</div>
+  </div>`;
+function renderUsers(keep){
+  if(keep !== true) ULIM = 40;
+  const k = $("us").value.toLowerCase(), all = USERS.filter(u => (u.email||"").toLowerCase().includes(k));
+  $("ulist").innerHTML = all.slice(0, ULIM).map(u => `<div class="urow" onclick="go('user:${u.id}')"><span class="uav">${esc((u.email || "?")[0].toUpperCase())}</span>
+    <div class="ui"><b>${esc(u.email)}</b><div class="mu">${esc(u.fullName || "-")} \u00b7 ${rs(u.balance)}</div></div>
+    <span class="uc">${u.banned ? '<span class="tag bad">banned</span>' : `<span class="tag ${u.activated ? "" : "no"}">${u.activated ? "member" : "no plan"}</span>`}</span><span class="chev">&#8250;</span></div>`).join("")
+    + (all.length > ULIM ? `<button class="g" style="width:100%;margin-top:8px" onclick="moreUsers()">Show more (${all.length - ULIM} left)</button>` : "") || '<div class="mu">No users found</div>';
 }
-const WD = {};
-const wcls = m => /easy/i.test(m) ? "ep" : /jazz/i.test(m) ? "jc" : "ot";
-const fdate = t => t ? new Date(t).toLocaleDateString("en-GB", {day:"2-digit", month:"short", year:"numeric"}) : "-";
-const ftime = t => t ? new Date(t).toLocaleTimeString("en-US", {hour:"2-digit", minute:"2-digit", hour12:true}) : "-";
-function viewSlip(id){
-  const w = WD[id]; if(!w) return;
-  const stName = {paid:"Paid", pending:"Pending", rejected:"Rejected"};
-  const notes = {paid:"Payment has been sent to your account.", pending:"Your request is waiting for review by our team.", rejected:"This request was rejected. Your balance was not deducted."};
-  const row = (l, v) => `<div class="sr"><span>${l}</span><b>${v}</b></div>`;
-  $("modal").innerHTML = `<div class="sheet slip">
-    <div class="slh"><div class="logo"><svg viewBox="0 0 34 34"><path d="M10 27V8h8.5a5.5 5.5 0 010 11H13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><b>${NAME}</b><span>Withdrawal slip</span></div></div>
-    <div class="slamt"><span class="bal">${usd(w.amount)}</span><span class="st ${esc(w.status)}">${esc(stName[w.status] || w.status)}</span></div>
-    <div class="dash"></div>
-    ${row("Date", fdate(w.at))}${row("Time", ftime(w.at))}
-    ${row("Method", esc(w.method))}${row("Account number", esc(w.number))}${row("Account holder", w.holder ? esc(w.holder) : "-")}
-    <div class="dash"></div>
-    ${row("Amount", usd(w.amount))}${w.fee != null ? row("Tax", usd(w.fee)) : ""}${w.net != null ? row("You receive", usd(w.net)) : ""}
-    <div class="dash"></div>
-    ${row("Status", esc(stName[w.status] || w.status))}${w.doneAt ? row("Processed on", fdate(w.doneAt) + ", " + ftime(w.doneAt)) : ""}${row("Slip ID", esc(id.slice(0, 8).toUpperCase()))}
-    <div class="slnote ${esc(w.status)}">${esc(notes[w.status] || "")}</div>
-    <div class="row"><button class="g" style="width:100%" onclick="closeM()">Close</button></div></div>`;
-  $("modal").classList.remove("hide");
+function renderUser(){
+  const u = USERS.find(x => x.id === CURU);
+  $("t-user").innerHTML = u ? userCard(u) : '<div class="card mu">User not found. Go back and open the list again.</div>';
 }
-const waOk = l => /^https:\/\/(chat\.)?whatsapp\.com\//i.test(l || "");
-function waCard(){
-  const l = CFG.waLink, el = $("wacard"); if(!el) return;
-  if(!waOk(l)){ el.style.display = "none"; return; }
-  el.style.display = "block";
-  el.innerHTML = `<div class="fr">${pbadge("whatsapp", 46)}<div class="pt"><b>Join our WhatsApp Official Community</b><span style="white-space:normal">Updates, support and new tasks</span></div></div>
-    <a href="${esc(l)}" target="_blank" rel="noopener"><button style="width:100%;margin-top:10px">Join now</button></a>`;
-}
-const taxCalc = a => { const fee = Math.ceil(a * (CFG.withdrawTax || 0) / 100); return {fee, net:a - fee}; };
-const wdPkr = () => Math.floor((Number($("wa").value) || 0) * rate());   // dollars typed by user -> whole PKR
-function taxPreview(){
-  const a = wdPkr(), el = $("wtax");
-  if(!(a > 0) || !(CFG.withdrawTax > 0)){ el.style.display = "none"; return; }
-  const c = taxCalc(a);
-  el.style.display = "block"; el.innerHTML = `Tax (${CFG.withdrawTax}%): <b>${usd(c.fee)}</b> \u00b7 You will receive: <b>${usd(c.net)}</b> <span class="mu">(Rs ${c.net})</span>`;
-}
-async function withdraw(){
-  const amount = wdPkr(), number = $("wn").value.trim(), holder = $("wh").value.trim().slice(0, 40);
-  if(holder.length < 3) return alert("Enter the account holder name (as on your account).");
-  if(!number || !(amount >= CFG.minWithdraw)) return alert("Enter account number and amount (minimum " + usd(CFG.minWithdraw) + ")");
-  if(amount > ud.balance) return alert("Insufficient balance");
-  const c = taxCalc(amount);
-  if(!(await uiConfirm("Withdraw " + usd(amount) + "?", "Tax (" + (CFG.withdrawTax || 0) + "%): " + usd(c.fee) + "\nYou will receive: " + usd(c.net) + " (Rs " + c.net + ")", "Withdraw"))) return;
-  try{ await db.collection("withdrawals").add({uid:me.uid, email:me.email, amount, fee:c.fee, net:c.net, method:$("wm").value, number, holder, status:"pending", at:Date.now()}); }
-  catch(e){ return alert(e.message); }
-  lsSet("wacc", JSON.stringify({m:$("wm").value, h:$("wh").value, n:$("wn").value})); $("wa").value = ""; $("wh").value = ""; $("wn").value = ""; taxPreview(); loadHome();
-}
-
-/* ---------- Tasks ---------- */
-const SHOTS = {};
-function readShot(file){
-  return new Promise((res, rej) => {
-    const img = new Image(), url = URL.createObjectURL(file);
-    img.onload = () => {
-      const k = Math.min(1, 900 / Math.max(img.width, img.height));
-      const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      let q = .6, d = c.toDataURL("image/jpeg", q);
-      while(d.length > 300000 && q > .3){ q -= .1; d = c.toDataURL("image/jpeg", q); }
-      res(d);
-    };
-    img.onerror = () => rej(new Error("Please choose an image file."));
-    img.src = url;
-  });
-}
-async function pickShot(id, inp){
-  const f = inp.files[0]; if(!f) return;
-  try{
-    SHOTS[id] = await readShot(f);
-    $("pv-"+id).innerHTML = `<img src="${SHOTS[id]}" alt="" style="max-width:100%;max-height:200px;border-radius:12px;margin:8px 0;border:1px solid var(--bd)"><div class="row"><button class="g" onclick="clearShot('${id}')">Remove screenshot</button></div>`;
-  }catch(e){ alert(e.message); }
-  inp.value = "";
-}
-function clearShot(id){ delete SHOTS[id]; $("pv-"+id).innerHTML = ""; }
-let tasksHtml = null;
-async function loadTasks(){
-  if(tasksHtml !== null && $("v-tasks").dataset.h !== "1"){ $("v-tasks").innerHTML = tasksHtml; $("v-tasks").dataset.h = "1"; }
-  if(window.__tt && Date.now() - window.__tt < 20000) return; window.__tt = Date.now();
-  const [ts, ss] = await Promise.all([
-    db.collection("tasks").where("active","==",true).get(),
-    db.collection("submissions").where("uid","==",me.uid).get()]);
-  const done = {}; ss.forEach(s => done[s.data().taskId] = s.data().status);
-  let h = ""; const plats = {};
-  ts.forEach(d => { const t = d.data(), st = done[d.id];
-    const lim = Number(t.limit || 0), left = lim - Number(t.taken || 0), full = lim > 0 && left <= 0;
-    if(full && !st) return;   // task ended: hidden for users who did not take part
-    plats[t.platform || "other"] = 1;
-    h += `<div class="card tk" data-p="${esc(t.platform || "other")}"><div class="th">${pbadge(t.platform)}<h3>${esc(t.title)}</h3>${Date.now() - (Number(t.at) || 0) < 3 * 864e5 ? '<span class="tag new">NEW</span>' : ""}<span class="tag">${usd(t.reward)}</span>${lim > 0 && !full ? `<span class="tag no">${left} left</span>` : ""}${full ? `<span class="tag bad">Task ended</span>` : ""}</div>
-      <div class="mu">${esc(t.desc)}</div>
-      ${t.note ? `<div class="note">\u{1F4DD} ${esc(t.note)}</div>` : ""}
-      ${/^https?:\/\//i.test(t.link || "") ? `<div class="row"><a href="${esc(t.link)}" target="_blank" rel="noopener"><button class="g">${esc(t.openLabel || "Open link")}</button></a></div>` : ""}
-      ${st && st !== "rejected" ? `<div class="row"><span class="tag">Status: ${esc(st)}</span></div>` : (st === "rejected" ? `<div class="note">Your last proof was rejected. Fix it and submit again.</div>` : "") +
-      `<input id="p-${d.id}" placeholder="Note or link (optional if you attach a screenshot)">
-       <input id="f-${d.id}" type="file" accept="image/*" class="hide" onchange="pickShot('${d.id}', this)">
-       <div class="row"><button class="g" onclick="$('f-${d.id}').click()">${xi("image")}Attach screenshot</button></div>
-       <div id="pv-${d.id}"></div>
-       <button onclick="submitProof('${d.id}')">Submit proof</button>`}</div>`; });
-  const pk = Object.keys(plats);
-  h = h ? (pk.length > 1 ? `<div class="chips"><button class="g on" onclick="tf('all',this)">All</button>${pk.map(k => `<button class="g" onclick="tf('${k}',this)">${esc((PLAT[k] && PLAT[k].n) || k)}</button>`).join("")}</div>` : "") + h : '<div class="card mu">No tasks available right now.</div>';
-  if(h !== tasksHtml){ tasksHtml = h; $("v-tasks").innerHTML = h; $("v-tasks").dataset.h = "1"; }
-}
-async function submitProof(id){
-  const proof = $("p-"+id).value.trim(), shot = SHOTS[id] || "";
-  if(!proof && !shot) return alert("Please attach a screenshot or write a note as proof.");
-  const tref = db.collection("tasks").doc(id), sref = db.collection("submissions").doc(me.uid + "_" + id);
+async function adjBal(id, sign){
+  const u = USERS.find(x => x.id === id); if(!u) return;
+  const a = Number(prompt((sign > 0 ? "Add balance to " : "Deduct balance from ") + u.email + "\nCurrent balance: " + rs(u.balance) + "\nEnter amount (Rs):"));
+  if(!(a > 0)) return;
+  if(!confirm((sign > 0 ? "Add Rs " + a + " to " : "Deduct Rs " + a + " from ") + u.email + "?")) return;
+  const ref = db.collection("users").doc(id); let before = 0, after = 0;
   try{
     await db.runTransaction(async tx => {
-      const [t, s0] = await Promise.all([tx.get(tref), tx.get(sref)]);
-      if(s0.exists && s0.data().status !== "rejected") throw new Error("You already submitted this task.");
-      if(!t.exists || !t.data().active) throw new Error("This task is no longer available.");
-      const td = t.data(), lim = Number(td.limit || 0), taken = Number(td.taken || 0);
-      if(lim > 0 && taken >= lim) throw new Error("Task ended: all spots are filled.");
-      tx.set(sref, {uid:me.uid, email:me.email, taskId:id, taskTitle:td.title, reward:Number(td.reward), proof, shot, status:"pending", at:Date.now()});
-      tx.update(tref, {taken: taken + 1});
+      const s = await tx.get(ref); before = s.data().balance || 0; after = r6(before + sign * a);
+      if(after < 0) throw new Error("Balance cannot go below Rs 0 (current: Rs " + before + ")");
+      tx.update(ref, {balance: after});
     });
-    delete SHOTS[id];
+  }catch(e){ return alert(e.message); }
+  try{ await db.collection("balanceLogs").add({uid:id, email:u.email, amount:sign * a, before, after, by:ADMIN_EMAIL, at:Date.now()}); }catch(e){}
+  load();
+}
+async function ban(id, v){
+  if(!confirm(v ? "Ban this user?" : "Unban this user?")) return;
+  await db.collection("users").doc(id).update({banned:v}); db.collection("profiles").doc(id).update({hidden:v}).catch(() => {}); load();
+}
+
+function openShot(src){
+  const o = document.createElement("div");
+  o.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:80;display:grid;place-items:center;padding:12px";
+  o.innerHTML = `<img src="${src}" style="max-width:100%;max-height:100%;border-radius:10px">`;
+  o.onclick = () => o.remove(); document.body.appendChild(o);
+}
+// Referral commission: friend ka plan approve hote hi invite karne wale ko milta hai (sirf ek baar)
+async function payReferral(uid){
+  try{
+    const u0 = (await db.collection("users").doc(uid).get()).data();
+    if(!u0 || !u0.referredBy || u0.refPaid) return false;
+    const q = await db.collection("users").where("refCode","==",u0.referredBy).limit(1).get();
+    if(q.empty || q.docs[0].id === uid) return false;
+    const rq = q.docs[0].ref, uref = db.collection("users").doc(uid);
+    return await db.runTransaction(async tx => {
+      const rpref = db.collection("profiles").doc(rq.id);
+      const [u, r, rp] = await Promise.all([tx.get(uref), tx.get(rq), tx.get(rpref)]);
+      if(u.data().refPaid) return false;
+      const rd = r.data();
+      tx.update(uref, {refPaid:true});
+      tx.update(rq, {balance:r6((rd.balance||0)+CFG.refBonus), refEarned:(rd.refEarned||0)+CFG.refBonus, refCount:(rd.refCount||0)+1, totalEarned:inc(CFG.refBonus)});
+      if(rp.exists) tx.update(rpref, {earned:inc(CFG.refBonus), team:inc(1)});
+      return true;
+    });
+  }catch(e){ console.warn(e); return false; }
+}
+const inc = n => firebase.firestore.FieldValue.increment(n);
+// Har user ka public profile (naam, photo, team, total earning) invite karne walon ko dikhane ke liye
+let syncing = false;
+async function syncProfiles(pf, w){
+  if(syncing || !pf) return; syncing = true;
+  try{
+    const have = {}; pf.docs.forEach(d => have[d.id] = d.data());
+    const byCode = {}; USERS.forEach(x => { if(x.refCode) byCode[x.refCode] = x.id; });
+    const paid = {}; w.docs.forEach(d => { const x = d.data(); if(x.status === "paid") paid[x.uid] = (paid[x.uid] || 0) + (Number(x.amount) || 0); });
+    const ops = [];
+    // Total earning = approved task rewards + referral commission (admin ke manual balance badlav shamil nahi)
+    const sums = {};
+    if(USERS.some(x => x.earnedV !== 2)){
+      const as = await db.collection("submissions").where("status","==","approved").get();
+      as.docs.forEach(d => { const x = d.data(); sums[x.uid] = (sums[x.uid] || 0) + (Number(x.reward) || 0); });
+    }
+    USERS.forEach(x => {
+      const pd = paid[x.id] || 0, fix = x.earnedV !== 2;
+      const te = fix ? (sums[x.id] || 0) + (Number(x.refEarned) || 0) + (Number(x.signupBonus) || 0) : x.totalEarned, tw = x.totalWithdrawn != null ? x.totalWithdrawn : pd;
+      const ruid = x.referredBy ? (byCode[x.referredBy] || "") : "";
+      const upd = {};
+      if(fix){ upd.totalEarned = te; upd.earnedV = 2; }
+      if(x.totalWithdrawn == null) upd.totalWithdrawn = tw;
+      if(ruid && x.referrerUid !== ruid) upd.referrerUid = ruid;
+      if(Object.keys(upd).length) ops.push(b => b.update(db.collection("users").doc(x.id), upd));
+      Object.assign(x, upd);
+      const want = {refUid:x.referrerUid || ruid || "", team:x.refCount || 0, earned:te, active:!!x.activated}, p = have[x.id];
+      if(!p) ops.push(b => b.set(db.collection("profiles").doc(x.id), {uid:x.id, name:(x.fullName || "").trim() || (x.email || "").split("@")[0], photo:x.photo || "", at:x.createdAt || Date.now(), ...want}));
+      else if(p.refUid !== want.refUid || p.team !== want.team || Math.abs((p.earned || 0) - (want.earned || 0)) > 1e-6 || p.active !== want.active) ops.push(b => b.update(db.collection("profiles").doc(x.id), want));
+    });
+    for(let i = 0; i < ops.length; i += 100){ const b = db.batch(); ops.slice(i, i + 100).forEach(f => f(b)); await b.commit(); }
+    $("syn").textContent = ops.length ? "Profiles synced (" + ops.length + " updates)." : "";
+  }catch(e){ console.warn(e); $("syn").textContent = "Profile sync failed: " + e.message + " (publish the latest firestore.rules)"; }
+  syncing = false;
+}
+let paying = false;
+async function backfillRef(){
+  if(paying) return; paying = true; let any = false;
+  for(const x of USERS.filter(u => u.activated && u.referredBy && !u.refPaid).slice(0, 20)){ if(await payReferral(x.id)) any = true; }
+  paying = false; if(any) setTimeout(load, 300);
+}
+
+let LBL = [];
+async function loadLB(){
+  $("lblist").innerHTML = '<div class="card mu">Loading...</div>';
+  try{
+    const q = await db.collection("profiles").orderBy("earned", "desc").limit(50).get();
+    LBL = q.docs.map(d => ({id:d.id, ...d.data()}));
+    $("lblist").innerHTML = LBL.map((p, i) => `<div class="card l"><div class="lbr"><span class="rk">${i + 1}</span><b>${esc(p.name || "User")}</b><span class="tag">${rs(p.earned || 0)}</span><span class="tag no">${p.team || 0} friends</span>${p.hidden ? '<span class="tag bad">hidden</span>' : ""}</div>
+      <div class="row"><button class="g" onclick="lbRename('${p.id}')">Change name</button><button class="${p.hidden ? "g" : "r"}" onclick="lbHide('${p.id}',${!p.hidden})">${p.hidden ? "Show" : "Hide"}</button></div></div>`).join("") || '<div class="card mu">No profiles yet.</div>';
+  }catch(e){ $("lblist").innerHTML = '<div class="card err">Could not load: ' + esc(e.message) + '</div>'; }
+}
+async function lbHide(id, v){ try{ await db.collection("profiles").doc(id).update({hidden:v}); const p = LBL.find(x => x.id === id); if(p) p.hidden = v; loadLB(); }catch(e){ alert(e.message); } }
+async function lbRename(id){
+  const p = LBL.find(x => x.id === id), n = prompt("Name shown on the leaderboard:", p ? p.name : ""); if(!n || !n.trim()) return;
+  try{ await db.collection("profiles").doc(id).update({name:n.trim().slice(0, 30)}); loadLB(); }catch(e){ alert(e.message); }
+}
+
+async function importPayouts(){
+  const l = ALLWD.filter(x => x.status === "paid").sort((a, b) => (b.doneAt || b.at || 0) - (a.doneAt || a.at || 0)).slice(0, 10);
+  if(!l.length) return alert("No paid withdrawals yet.");
+  try{ const b = db.batch(); l.forEach(x => b.set(db.collection("payouts").doc(x.id), {name:maskName(x.holder || x.email), amount:Number(x.net != null ? x.net : x.amount) || 0, method:x.method || "", at:x.doneAt || x.at || Date.now()})); await b.commit(); alert("Added " + l.length + " payouts."); }
+  catch(e){ alert(e.message); }
+}
+async function appPay(uid, ok){
+  const b = db.batch();
+  b.update(db.collection("payments").doc(uid), {status: ok ? "approved" : "rejected"});
+  if(ok) b.update(db.collection("users").doc(uid), {activated:true, activatedAt:Date.now()});
+  try{ await b.commit(); if(ok) await payReferral(uid); }catch(e){ alert(e.message); }
+  load();
+}
+async function setActive(id, v){
+  if(!confirm(v ? "Activate this user's membership?" : "Deactivate this user's membership?")) return;
+  await db.collection("users").doc(id).update({activated:v}); if(v) await payReferral(id); load();
+}
+
+async function appSub(id, ok){
+  let reason = "";
+  if(!ok){ reason = prompt("Reason for rejection (the user will see it):", "Screenshot is not clear or the task was not completed"); if(reason === null) return; }
+  const ref = db.collection("submissions").doc(id); let uid = null;
+  try{
+    await db.runTransaction(async tx => {
+      const s = await tx.get(ref); const x = s.data(); if(x.status !== "pending") return;
+      uid = x.uid;
+      const uref = db.collection("users").doc(x.uid);
+      const u = await tx.get(uref);
+      const pref = db.collection("profiles").doc(x.uid), pr = await tx.get(pref);
+      const td = await tx.get(db.collection("tasks").doc(x.taskId));
+      if(ok){ tx.update(uref, {balance: r6((u.data().balance||0) + x.reward), totalEarned: inc(x.reward)}); if(pr.exists){ const wk = weekKey(), pd = pr.data() || {}; tx.update(pref, {earned: inc(x.reward), wk, wt: pd.wk === wk ? (Number(pd.wt) || 0) + 1 : 1}); } }
+      if(!ok && td.exists) tx.update(td.ref, {taken: Math.max(0, (td.data().taken || 0) - 1)});
+      tx.update(ref, ok ? {status:"approved", reviewedAt:Date.now()} : {status:"rejected", reviewedAt:Date.now(), reason:reason.trim().slice(0, 200)});
+    });
+    if(ok && uid) await payReferral(uid);
   }catch(e){ alert(e.message); }
-  window.__tt = 0; tasksHtml = null; $("v-tasks").dataset.h = ""; loadTasks();
+  load();
 }
-
-/* ---------- Refer ---------- */
-let codeBusy = false;
-async function ensureCode(){
-  if(!ud || ud.refCode || !me || codeBusy) return;
-  codeBusy = true;
+async function appWd(id, ok){
+  let reason = "";
+  if(!ok){ reason = prompt("Reason for rejection (the user will see it):", "Wrong account number or name"); if(reason === null) return; }
+  const ref = db.collection("withdrawals").doc(id);
   try{
-    let code, n = 0;
-    do{ code = genCode(); n++; } while((await db.collection("refCodes").doc(code).get()).exists && n < 5);
-    await db.collection("users").doc(me.uid).update({refCode: code});
-    ud.refCode = code; writeCache(me.uid, ud);
-    await db.collection("refCodes").doc(code).set({uid: me.uid}).catch(() => {});
-    if(curTab === "refer") loadRefer();
-  }catch(e){ console.warn(e); }
-  codeBusy = false;
+    await db.runTransaction(async tx => {
+      const s = await tx.get(ref); const x = s.data(); if(x.status !== "pending") return;
+      if(ok){ const uref = db.collection("users").doc(x.uid); const u = await tx.get(uref);
+        if((u.data().balance||0) < x.amount) throw new Error("User balance is too low");
+        tx.update(uref, {balance: r6(u.data().balance - x.amount), totalWithdrawn: inc(x.amount)}); }
+      const fee = Math.ceil(Number(x.amount) * (CFG.withdrawTax || 0) / 100);
+      tx.update(ref, ok ? {status:"paid", fee, net:Number(x.amount) - fee, doneAt:Date.now(), paidAt:Date.now(), reviewedAt:Date.now()} : {status:"rejected", doneAt:Date.now(), reviewedAt:Date.now(), reason:reason.trim().slice(0, 200)});
+    });
+  }catch(e){ alert(e.message); }
+  if(ok){ try{ const d = (await ref.get()).data(); if(d && d.status === "paid") await db.collection("payouts").doc(id).set({name:maskName(d.holder || d.email), amount:Number(d.net != null ? d.net : d.amount) || 0, method:d.method || "", at:Date.now()}); }catch(e){ console.warn(e); } }
+  load();
 }
-function loadRefer(){
-  if(!ud.refCode) ensureCode();
-  const c = ud.refCode || "…", link = location.origin + location.pathname + "?ref=" + c;
-  $("v-refer").innerHTML = `<div class="card"><h3>Invite friends, earn ${usd(CFG.refBonus)}</h3>
-    <div class="mu">You get ${usd(CFG.refBonus)} when your friend's membership is approved.</div>
-    <div class="code">${esc(c)}</div>
-    ${ud.refCode ? `<div class="row"><button onclick="cp('${esc(c)}')">Copy code</button><button class="g" onclick="cp('${esc(link)}')">Copy invite link</button><button onclick="shareWA('${esc(link)}')">WhatsApp</button><button class="g" onclick="shareCard('${esc(link)}')">Share card</button></div>` : `<div class="mu">Creating your code…</div>`}</div>
-    <div class="card stat pl"><div><b>${ud.refCount||0}</b><span class="mu">Friends joined</span></div><div><b>${usd(ud.refEarned||0)}</b><span class="mu">Earned</span></div></div>
-    <div class="card"><b>Next milestone: ${Math.floor((ud.refCount||0)/5)*5+5} friends</b><div class="bar"><i style="width:${((ud.refCount||0)%5)*20}%"></i></div><div class="mu">${5-((ud.refCount||0)%5)} more friend(s) to go. Total earned from referrals: ${usd(ud.refEarned||0)}</div></div>
-    <div id="flist"></div>`;
-  loadFriends();
-}
-let friendsHtml = null;
-async function loadFriends(){
-  if(friendsHtml !== null && $("flist")) $("flist").innerHTML = friendsHtml;
-  try{
-    const q = await db.collection("profiles").where("refUid", "==", me.uid).get();
-    const arr = q.docs.map(d => d.data()).sort((a, b) => (b.at || 0) - (a.at || 0));
-    const okImg = p => /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p || "");
-    let h = `<h3>My friends (${arr.length})</h3>` + (arr.length ? "" : `<div class="card mu">No friends have joined with your code yet.</div>`);
-    arr.forEach(f => { h += `<div class="card"><div class="fr"><div class="fav">${okImg(f.photo) ? `<img src="${f.photo}" alt="">` : xi("user")}</div>
-      <div class="pt"><b>${esc(f.name || "Friend")}</b><span>Team: ${esc(f.team || 0)} members</span><span>Total earning: <em style="font-style:normal;font-weight:700;color:var(--pr2)">${usd(f.earned || 0)}</em></span></div>
-      <span class="tag ${f.active ? "" : "no"}">${f.active ? "Active" : "Not active yet"}</span></div></div>`; });
-    friendsHtml = h; if($("flist") && curTab === "refer") $("flist").innerHTML = h;
-  }catch(e){ console.warn(e); }
-}
-let profDone = false;
-async function ensureProfile(){
-  if(profDone || !ud || !me) return; profDone = true;
-  try{
-    const r = db.collection("profiles").doc(me.uid), sn = await r.get(); if(sn.exists) return;
-    await r.set({uid:me.uid, name:(ud.fullName || "").trim() || (me.email || "").split("@")[0], photo:ud.photo || "", refUid:ud.referrerUid || "", team:0, earned:0, active:false, at:Date.now()});
-  }catch(e){ console.warn(e); }
-}
-function cp(t){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => alert("Copied!")).catch(() => prompt("Copy this:", t)); }
-
-/* ---------- Profile ---------- */
-function loadProfile(){
-  const un = (ud.fullName || "").trim() || (me.email || "").split("@")[0];
-  const photo = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(ud.photo || "") ? ud.photo : "";
-  const row = (ic, t, sub, act) => `<div class="prow ${act ? "" : "ro"}" ${act ? `onclick="${act}"` : ""}><span class="pi">${xi(ic)}</span><div class="pt"><b>${t}</b><span>${sub}</span></div>${act ? xi("chev") : ""}</div>`;
-  $("v-profile").innerHTML = `<div class="card"><div class="pcard">
-      <div class="av">${photo ? `<img src="${photo}" alt="">` : xi("user")}<button class="cam" onclick="$('pf').click()" aria-label="Change photo">${xi("cam")}</button></div>
-      <div class="pinfo"><h2>${esc(un)} ${xi("badge")}</h2>
-        <div class="mu">Member since ${new Date(ud.createdAt || Date.now()).toLocaleDateString()}</div>
-        <div class="row"><span class="tag">${xi("mail")}Email verified</span><span class="tag">${xi("wallet")}Balance: ${usd(ud.balance)}</span><span class="tag" style="background:${lvl().c};color:#fff">${lvl().n}</span></div></div></div></div>
-    <div class="sec" style="margin:16px 4px 4px"><span class="pi">${xi("gear")}</span><div class="pt"><b style="font-size:18px">Account Information</b><span>Manage your account settings</span></div></div>
-    ${row("user", "Full Name", ud.fullName ? esc(ud.fullName) : "Tap to add your name", "editField('name')")}
-    ${row("globe", "Country", ud.country ? esc(ud.country) + " " + flagOf(ud.country) : "Tap to select your country", "editField('country')")}
-    ${row("mail", "Email Address", esc(me.email), "")}
-    ${row("lock", "Change Password", "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022", "changePw()")}
-    ${row("wallet", "History", "Tasks, withdrawals and bonuses", "showHistory('all')")}
-    ${row("shield", "Dark mode", document.documentElement.dataset.theme === "dark" ? "On - tap to switch to light" : "Off - tap to switch to dark", "toggleTheme()")}
-    ${row("globe", "How it works", "Quick tutorial", "showTutorial()")}
-    ${row("mail", "FAQ & rules", "Withdraw time, tax, rejected tasks", "showFAQ()")}
-    ${window.__ip ? row("badge", "Install app", "Add TaskPey to your home screen", "installApp()") : ""}
-    ${row("image", "Update Profile Picture", "Change your profile photo", "$('pf').click()")}
-    ${row("user", ALT ? "Open main account" : "Add another account", ALT ? "Opens your main account in a new tab" : "Use a second account in this browser (new tab)", "otherAcc()")}
-    ${waOk(CFG.waLink) ? `<a class="prow" href="${esc(CFG.waLink)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="pi" style="background:none">${pbadge("whatsapp", 46)}</span><div class="pt"><b>WhatsApp Community</b><span>Join our official community</span></div>${xi("chev")}</a>` : ""}
-    <a class="prow" href="terms.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="pi">${xi("shield")}</span><div class="pt"><b>About &amp; Terms</b><span>How TaskPey works, fees and rules</span></div>${xi("chev")}</a>
-    <div class="pstat"><span class="pi">${xi("shield")}</span><div class="pt"><b style="font-size:17px">Account Status</b><span style="white-space:normal">Your account is verified &amp; active</span></div><span class="tag">${xi("check")}Verified</span></div>
-    <div class="mu" style="text-align:center;margin:14px 0">${NAME} \u00b7 Created by <b>NOVA REEF STUDIO</b></div>`;
-}
-function otherAcc(){ window.open(location.pathname + "?alt=" + (ALT ? "0" : "1"), "_blank"); }
-function closeM(){ $("modal").classList.add("hide"); }
-function editField(k){
-  $("modal").innerHTML = k === "name"
-    ? `<div class="sheet"><h3>Full Name</h3><input id="mv" maxlength="40" value="${esc(ud.fullName || "")}" placeholder="Your full name"><div class="row"><button onclick="saveField('name')">Save</button><button class="g" onclick="closeM()">Cancel</button></div></div>`
-    : `<div class="sheet"><h3>Country</h3><select id="mv"><option value="">Select your country</option>${countryOpts(ud.country || "")}</select><div class="row"><button onclick="saveField('country')">Save</button><button class="g" onclick="closeM()">Cancel</button></div></div>`;
-  $("modal").classList.remove("hide");
-}
-async function saveField(k){
-  const v = $("mv").value.trim();
-  if(k === "name" && v.length < 2) return alert("Please enter your full name.");
-  if(k === "country" && !v) return alert("Please select your country.");
-  try{ await db.collection("users").doc(me.uid).update(k === "name" ? {fullName: v.slice(0,40)} : {country: v}); Object.assign(ud, k === "name" ? {fullName: v.slice(0,40)} : {country: v}); if(k === "name") db.collection("profiles").doc(me.uid).update({name: v.slice(0,40)}).catch(() => {}); closeM(); show("profile", true); }
-  catch(e){ alert(e.message); }
-}
-async function changePw(){
-  if(!(await uiConfirm("Change password", "We will email a password reset link to " + me.email + ".", "Send link"))) return;
-  try{ await auth.sendPasswordResetEmail(me.email); alert("Reset link sent. Check your email (and Spam)."); }
-  catch(e){ alert(e.message); }
-}
-$("pf").onchange = e => {
-  const f = e.target.files[0]; if(!f) return;
-  const img = new Image(), url = URL.createObjectURL(f);
-  img.onload = async () => {
-    const c = document.createElement("canvas"); c.width = c.height = 240;
-    const m = Math.min(img.width, img.height);
-    c.getContext("2d").drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, 240, 240);
-    URL.revokeObjectURL(url);
-    try{ const ph = c.toDataURL("image/jpeg", .75); await db.collection("users").doc(me.uid).update({photo: ph}); ud.photo = ph; db.collection("profiles").doc(me.uid).update({photo: ph}).catch(() => {}); show("profile", true); }
-    catch(err){ alert(err.message); }
-  };
-  img.onerror = () => alert("Please choose an image file.");
-  img.src = url; e.target.value = "";
-};
+async function toggleTask(id, v){ await db.collection("tasks").doc(id).update({active:v}); load(); }
 
 document.querySelectorAll("#lpw,#pw").forEach(i=>{const w=document.createElement("div");w.className="pw";i.parentNode.insertBefore(w,i);w.appendChild(i);
   const b=document.createElement("button");b.type="button";b.className="eye";b.setAttribute("aria-label","Show or hide password");
   b.innerHTML='<svg class="ic" viewBox="0 0 24 24"><path d="M3 12s3.5-6.5 9-6.5S21 12 21 12s-3.5 6.5-9 6.5S3 12 3 12z"/><circle cx="12" cy="12" r="2.8"/></svg>';
   b.onclick=()=>{i.type=i.type==="password"?"text":"password";b.style.opacity=i.type==="password"?1:.5};w.appendChild(b)});
 
-const TIPS=["Securing your session…","Syncing your balance…","Loading your tasks…","Almost there…"];let ti=0;const tipTick=()=>{const e=document.getElementById("ldt");if(e)e.textContent=TIPS[ti++%TIPS.length]};tipTick();setInterval(tipTick,1600);
+const TIPS=["Connecting to server…","Checking admin access…","Loading dashboard…","Almost there…"];let ti=0;const tipTick=()=>{const e=document.getElementById("ldt");if(e)e.textContent=TIPS[ti++%TIPS.length]};tipTick();setInterval(tipTick,1600);
 
-/* ---------- Live chat ---------- */
-const ADMIN_MAIL = "umardrazofficial01@gmail.com";
-let chatUnsub = null, chatOpen = false, chatN = 0, chatFirst = true, lastSend = 0;
-const bub = m => `<div class="mb ${m.from === "user" ? "u" : "o"}">${m.from === "user" ? "" : `<small>${m.from === "admin" ? "Support team" : m.from === "ai" ? "AI assistant" : "Auto assistant"}</small>`}${esc(m.text)}</div>`;
+/* ---------- Support chat ---------- */
+let CHATS = [], curChat = null, unsubMsgs = null, chatInit = false, chatFirst = true;
+function beep(){ try{ const c = new (window.AudioContext || window.webkitAudioContext)(), o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = 880; g.gain.value = .15; o.start(); o.stop(c.currentTime + .2); }catch(e){} }
+function askNotif(){ if(!window.Notification) return alert("Notifications are not supported in this browser."); Notification.requestPermission().then(p => alert(p === "granted" ? "Alerts enabled." : "Blocked. Allow notifications in the browser settings.")); }
+function pingChat(x){
+  beep(); document.title = "\u{1F4AC} New message - TaskPey Admin"; setTimeout(() => document.title = "TaskPey Admin", 6000);
+  try{ if(window.Notification && Notification.permission === "granted") new Notification("New support message", {body:(x.name || x.email) + ": " + (x.last || "")}); }catch(e){}
+}
+function chatBadge(){ const n = CHATS.filter(c => c.unreadAdmin).length, e = $("nbc"); if(e) e.textContent = n || ""; }
 function initChat(){
-  if(!me || chatUnsub) return; $("cfab").classList.remove("hide"); chatFirst = true;
-  chatUnsub = db.collection("chats").doc(me.uid).collection("msgs").orderBy("at").limitToLast(100).onSnapshot(sn => {
-    const a = sn.docs.map(d => d.data());
-    $("cmsg").innerHTML = a.length ? a.map(bub).join("") : bub({from:"bot", text:"Hi! \u{1F44B} I'm TaskPey support. Ask me about your membership, tasks, withdrawals or referrals."});
-    $("cmsg").scrollTop = 1e9;
-    const l = a[a.length - 1];
-    if(!chatFirst && !chatOpen && l && l.from !== "user"){ chatN++; $("cbd").textContent = chatN; }
-    chatFirst = false;
+  if(chatInit) return; chatInit = true;
+  db.collection("chats").orderBy("lastAt", "desc").limit(100).onSnapshot(s => {
+    CHATS = s.docs.map(d => ({id:d.id, ...d.data()}));
+    s.docChanges().forEach(c => {
+      const x = c.doc.data(); if(c.type === "removed" || !x.unreadAdmin) return;
+      if(c.doc.id === curChat){ c.doc.ref.update({unreadAdmin:false}).catch(() => {}); return; }
+      if(!chatFirst) pingChat(x);
+    });
+    chatFirst = false; renderChats();
   }, e => console.warn(e));
 }
-function chatOff(){ if(chatUnsub){ chatUnsub(); chatUnsub = null; } chatOpen = false; $("cfab").classList.add("hide"); $("cpan").classList.add("hide"); }
-function toggleChat(){
-  chatOpen = !chatOpen; $("cpan").classList.toggle("hide", !chatOpen);
-  if(chatOpen){ chatN = 0; $("cbd").textContent = ""; $("cmsg").scrollTop = 1e9; setTimeout(() => $("cin").focus(), 300); }
+function renderChats(){
+  chatBadge();
+  $("chatlist").innerHTML = CHATS.map(c => `<div class="card l" onclick="openChat('${c.id}')" style="cursor:pointer"><b>${esc(c.name || c.email)}</b> ${c.unreadAdmin ? '<span class="tag bad">new</span>' : ""}
+    <div class="mu">${esc(c.email)}</div><div>${esc(c.last || "")}</div><div class="mu">${c.lastFrom === "admin" ? "You replied \u00b7 " : ""}${new Date(c.lastAt || 0).toLocaleString()}</div></div>`).join("") || '<div class="mu">No chats yet</div>';
 }
-async function sendChat(){
-  const t = $("cin").value.trim().slice(0, 500);
-  if(!t || Date.now() - lastSend < 1500) return; lastSend = Date.now(); $("cin").value = "";
-  const cr = db.collection("chats").doc(me.uid);
-  try{
-    await cr.collection("msgs").add({from:"user", text:t, at:Date.now()});
-    await cr.set({uid:me.uid, email:me.email, name:(ud && ud.fullName) || (me.email || "").split("@")[0], last:t, lastAt:Date.now(), lastFrom:"user", unreadAdmin:true});
-  }catch(e){ return alert(e.message); }
-  notifyAdmin(t);
-  if(CFG.chatBot !== false) setTimeout(() => botReply(t), 800);
+function openChat(id){
+  const c = CHATS.find(x => x.id === id) || {}; curChat = id;
+  $("cl").classList.add("hide"); $("ct").classList.remove("hide"); $("cwho").textContent = c.email || id;
+  db.collection("chats").doc(id).update({unreadAdmin:false}).catch(() => {});
+  if(unsubMsgs) unsubMsgs();
+  unsubMsgs = db.collection("chats").doc(id).collection("msgs").orderBy("at").limitToLast(200).onSnapshot(s => {
+    $("cth").innerHTML = s.docs.map(d => { const m = d.data(), mine = m.from === "admin";
+      return `<div class="mb ${mine ? "u" : "o"}">${mine ? "" : `<small>${m.from === "user" ? "User" : m.from === "ai" ? "AI reply" : "Auto-reply"}</small>`}${esc(m.text)}</div>`; }).join("");
+    $("cth").scrollTop = 1e9;
+  });
 }
-async function notifyAdmin(t){   // email to admin (max 1 per 3 minutes); needs EMAILJS.supportTemplateId
-  if(!EMAILJS.supportTemplateId || Date.now() - Number(lsGet("tp_cn") || 0) < 180000) return; lsSet("tp_cn", Date.now());
-  try{ await loadEmailJS(); await emailjs.send(EMAILJS.serviceId, EMAILJS.supportTemplateId, {to_email:ADMIN_MAIL, from_email:me.email, user_name:(ud && ud.fullName) || "", message:t, app_name:NAME}); }catch(e){ console.warn(e); }
-}
-const DONE = "We're working on your request now. Your issue will be solved shortly, and one of our agents will talk to you here soon. \u{1F64F}";
-// Each topic: keyword -> ask "what is the issue?" with options -> short answer -> "we are working on it"
-const TOPICS = {
-  wd:{re:/w[a-z]{0,3}draw|cash ?out|jazz|easypaisa|payout|paisa|paise|pesy/i, name:"withdrawal", live:true,
-    opts:[
-      {l:"Pending", re:/pend|wait|time|late|how long|how much|kitna|der|dair|intezar/i, t:"Pending withdrawals are paid manually by our team."},
-      {l:"Rejected", re:/reject|cancel|declin/i, t:"A rejected withdrawal is usually caused by a wrong account number or method."},
-      {l:"Approved/Paid but money not received", re:/approv|paid|receiv|not (got|come|came)|nahi|nhi|ni a|pas?y|payment/i, t:"If it shows paid but you did not receive it, we will trace the payment."}],
-    more:"Please send your account number, method (JazzCash/Easypaisa), amount and date so we can check it."},
-  task:{re:/task|proof|screenshot|submission|submit/i, name:"task",
-    opts:[
-      {l:"Submission pending", re:/pend|wait|time|late|review/i, t:"Submissions are reviewed manually by our team."},
-      {l:"Submission rejected", re:/reject|declin/i, t:"A task is usually rejected when the proof is unclear or incomplete."},
-      {l:"Approved but reward not added", re:/approv|reward|balance|not (added|got|come)|nahi|nhi|pas?y/i, t:"The reward is added to your balance right after approval."}],
-    more:"Please tell us the task name and what happened."},
-  plan:{re:/plan|activat|fee|tid|invest|payment/i, name:"membership / activation",
-    opts:[
-      {l:"Payment pending", re:/pend|wait|time|late|review/i, t:"Membership payments are checked manually by our team."},
-      {l:"Payment rejected", re:/reject|declin|wrong/i, t:"A payment is usually rejected when the TID or sender number does not match."},
-      {l:"Approved but account not active", re:/approv|active|activate|not (active|work)|nahi|nhi/i, t:"After approval your account should become active."}],
-    more:"Please send your sender account number, TID and amount so we can check it."},
-  ref:{re:/refer|invite|friend|bonus|code/i, name:"referral",
-    opts:[
-      {l:"Bonus not received", re:/bonus|not (got|receiv|add)|nahi|nhi|pas?y/i, t:"The referral bonus is added when your friend's membership is approved."},
-      {l:"Friend joined but not counted", re:/count|joined|join|show|list/i, t:"Your friend must join with your code and get their membership approved to be counted."},
-      {l:"Code not working", re:/work|valid|invalid|error/i, t:"Codes are 6 characters (letters and numbers)."}],
-    more:"Please send your referral code and your friend's email so we can check it."}
-};
-const SIMPLE = [
-  [/^(hi|hello|hey|salam|assalam|aoa)\b/i, () => "Hi! \u{1F44B} Welcome to TaskPey support. Tell me what you need help with: membership, tasks, withdrawals or referrals."],
-  [/otp|verify|verification/i, () => "Check Spam for the 6-digit code (valid 10 minutes) or tap Resend code."],
-  [/password|forgot|login/i, () => 'Tap "Forgot password?" on the login page and we will email you a reset link.'],
-  [/ban|block/i, () => "If your account is banned, our team will review it. Please send your registered email and what happened."],
-  [/thank|shukr/i, () => "You're welcome! \u{1F60A}"]
-];
-let botFlow = null;
-const topicOf = t => Object.keys(TOPICS).find(k => TOPICS[k].re.test(t));
-async function wdLive(){
-  try{
-    const q = await db.collection("withdrawals").where("uid","==",me.uid).get();
-    const a = q.docs.map(d => d.data()).sort((x, y) => (y.at || 0) - (x.at || 0))[0];
-    return a ? ` Your latest withdrawal (${usd(a.amount)}, ${a.method}) is currently: ${a.status}.` : " We could not find any withdrawal request on your account.";
-  }catch(e){ return ""; }
-}
-async function botSay(arr){
-  let at = Date.now();
-  for(const text of arr){
-    try{ await db.collection("chats").doc(me.uid).collection("msgs").add({from:"bot", text:String(text).slice(0, 500), at:at++}); }catch(e){ console.warn(e); }
-  }
-}
-const HAND_MS = 6 * 3600 * 1000;   // after "we are working on it", bot stays silent so the agent can reply
-const handKey = () => "tp_hand_" + (me ? me.uid : "");
-const inHandoff = () => Date.now() - Number(lsGet(handKey()) || 0) < HAND_MS;
-async function botReply(t){
-  if(inHandoff()) return;
-  const ask = k => { botFlow = {k}; const T = TOPICS[k];
-    return [`Sorry for the trouble! What is the issue with your ${T.name}?\n` + T.opts.map((o, i) => `${i + 1}) ${o.l}`).join("\n") + `\n${T.opts.length + 1}) Something else\nReply with a number or write your issue.`]; };
-  if(botFlow){
-    const T = TOPICS[botFlow.k], n = t.trim().match(/^(\d)$/);
-    let o = n ? T.opts[Number(n[1]) - 1] : null;
-    if(!o && !n) o = T.opts.slice().reverse().find(x => x.re.test(t));
-    if(!o && !n){ const k2 = topicOf(t); if(k2 && k2 !== botFlow.k) return botSay(ask(k2)); }
-    const k = botFlow.k; botFlow = null;
-    const live = T.live && o ? await wdLive() : "";
-    lsSet(handKey(), Date.now());
-    return botSay([o ? o.t + live + " " + T.more : "Thanks for explaining. " + T.more, DONE]);
-  }
-  const gk = guideKey(t);
-  if(["tid","sender","method","pay"].includes(gk) && !/reject|pend|wrong|problem|issue|not |nahi|nhi/i.test(t)) return botSay([guideText(gk)]);
-  const hit = SIMPLE.find(b => b[0].test(t));
-  if(hit) return botSay([hit[1]()]);
-  const k = topicOf(t);
-  if(k) return botSay(ask(k));
-  return botSay(["Thanks! Please tell us your issue (membership, tasks, withdrawals or referrals) and we will help."]);
+function backChat(){ if(unsubMsgs){ unsubMsgs(); unsubMsgs = null; } curChat = null; $("ct").classList.add("hide"); $("cl").classList.remove("hide"); }
+async function sendReply(){
+  const t = $("crin").value.trim().slice(0, 1000); if(!t || !curChat) return; $("crin").value = "";
+  const cr = db.collection("chats").doc(curChat);
+  try{ await cr.collection("msgs").add({from:"admin", text:t, at:Date.now()}); await cr.update({last:t, lastAt:Date.now(), lastFrom:"admin", unreadAdmin:false}); }
+  catch(e){ alert(e.message); }
 }
 
-/* ---------- Help guide (works before login too, no database needed) ---------- */
-const GUIDE = {
-  signup: "How to create your account:\n1) Enter your full name, country, email and password.\n2) Enter the 6-character referral code of the friend who invited you (required).\n3) Tap Create Account.\n4) Pay the one-time membership fee to activate your account.",
-  ref: "Referral code: a 6-character code (letters and numbers) that your friend gets in their Refer tab. Ask the friend who invited you for it, or open their invite link and the code fills in automatically. Without a valid code you cannot create an account.",
-  pw: "Password rules: 8 or more characters with an uppercase letter, a lowercase letter, a number and a special character (@ # $ !).",
-  otp: "After you create the account we email a 6-digit code. Check Spam too. It is valid for 10 minutes. Did not get it? Tap Resend code (you can ask for a new one after 1 minute). 5 wrong tries lock the code, then tap Resend.",
-  method: "Payment method = the wallet/app you use to send the membership fee (for example Easypaisa or JazzCash). Choose the method shown on the activation screen and send the amount to the number shown there.",
-  sender: "Sender number = YOUR own wallet/account number that you sent the money FROM. Type that number in the 'Your account number (sender)' box.",
-  tid: "TID = Transaction ID, the unique ID of your payment. After you send the money you get a confirmation SMS (and a receipt in the app) with a Transaction ID. Copy it exactly into the TID box (at least 6 characters).",
-  login: "Wrong password? Tap 'Forgot password?' on the login page and we will email you a reset link (check Spam). If you have no account yet, tap Create account."
-};
-const guideText = k => {
-  if(k !== "pay") return GUIDE[k];
-  return me
-    ? `Membership payment A to Z:\n1) Open ${CFG.payMethod} and send Rs ${CFG.planFee} to ${CFG.payNumber} (${CFG.payName}).\n2) Copy the Transaction ID (TID) from the confirmation SMS.\n3) Type your own account number (sender) and the TID, then tap Submit payment details.\n4) We check it, usually within 24 hours, and activate your account.`
-    : "Membership payment A to Z:\n1) Create your account and verify your email. Then the membership fee and the number to send it to appear on the activation screen.\n2) Send the amount from your Easypaisa/JazzCash app.\n3) Copy the Transaction ID (TID) from the confirmation SMS.\n4) Type your own account number (sender) and the TID, then tap Submit payment details.\n5) We check it, usually within 24 hours, and activate your account.";
-};
-const guideKey = t => {
-  if(/\btid\b|transaction/i.test(t)) return "tid";
-  if(/sender/i.test(t)) return "sender";
-  if(/method/i.test(t)) return "method";
-  if(/(how|kaise|kese|kese).*(pay|send|bhej|activate)|pay(ment)? steps|payment kaise/i.test(t)) return "pay";
-  if(/otp|email code|6.?digit|verification code/i.test(t)) return "otp";
-  if(/password/i.test(t)) return "pw";
-  if(/refer|invite|code/i.test(t)) return "ref";
-  if(/login|log in|forgot/i.test(t)) return "login";
-  if(/account|sign ?up|register|create|join/i.test(t)) return "signup";
-  return "";
-};
-const HELPCHIPS = [["signup","Create account"],["ref","Referral code"],["pw","Password rules"],["pay","Membership payment steps"],["method","Payment method"],["sender","Sender number"],["tid","What is TID?"],["login","Login problem"]];
-let hOpen = false, hInit = false;
-function hAdd(c, t){ const m = $("hmsg"); m.insertAdjacentHTML("beforeend", `<div class="mb ${c}">${esc(t)}</div>`); m.scrollTop = 1e9; }
-function helpShow(v){ $("hfab").classList.toggle("hide", !v); if(!v){ hOpen = false; $("hpan").classList.add("hide"); } }
-function toggleHelp(){
-  hOpen = !hOpen; $("hpan").classList.toggle("hide", !hOpen);
-  if(hOpen && !hInit){
-    hInit = true;
-    hAdd("o", "Hi! \u{1F44B} I can guide you step by step, from creating your account to paying the membership fee. Tap a button below or type your question. After you log in and verify your email you can also chat with our support team.");
-    $("hchips").innerHTML = HELPCHIPS.map(c => `<button class="g" onclick="helpAsk('${c[0]}','${c[1]}')">${c[1]}</button>`).join("");
-  }
-}
-function helpAsk(k, label){ hAdd("u", label); setTimeout(() => hAdd("o", guideText(k)), 250); }
-function helpSend(){
-  const t = $("hin").value.trim(); if(!t) return; $("hin").value = ""; hAdd("u", t);
-  const k = guideKey(t);
-  setTimeout(() => hAdd("o", k ? guideText(k) : "Tap one of the buttons below, or ask about: account, referral code, password, email code, payment, method, sender number or TID."), 250);
-}
-
-/* ---- instant tap feedback: button shows a spinner right away and ignores double taps ---- */
-["login","signup","forgot","verifyOtp","resendOtp","finishRef","submitPay","withdraw","submitProof","saveField","changePw","sendChat","switchAcc"].forEach(n => {
+["appPay","appSub","appWd","setActive","ban","saveSettings","addTask","toggleTask","adjBal","sendReply","lbHide","login"].forEach(n => {
   const f = window[n]; if(typeof f !== "function") return;
   window[n] = async function(...a){
     const ev = window.event, b = ev && ev.target && ev.target.closest ? ev.target.closest("button") : null;
@@ -1220,263 +910,6 @@ function helpSend(){
     try{ return await f.apply(this, a); } finally{ if(b) b.classList.remove("wait"); }
   };
 });
-</script>
-
-<script>
-/* ===== TaskPey extras: notifications, history, rewards, levels, leaderboard, FAQ, tutorial, dark mode, PWA ===== */
-const dkey = d => { d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); };
-function sheet(h){ $("modal").innerHTML = '<div class="sheet slip"><button class="xb" onclick="closeM()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' + h + '</div>'; $("modal").classList.remove("hide"); }
-const LV = [["Bronze",0,"#cd7f32"],["Silver",5,"#9ca3af"],["Gold",20,"#f59e0b"],["Platinum",50,"#06b6d4"]];   // thresholds in USD earned
-function lvl(){
-  const e = (ud.totalEarned != null ? Number(ud.totalEarned) : (Number(ud.balance) || 0) + (Number(ud.totalWithdrawn) || 0)) / rate();
-  let i = 0; LV.forEach((l, j) => { if(e >= l[1]) i = j; }); const nx = LV[i+1];
-  return {n:LV[i][0], c:LV[i][2], e, nx, pct: nx ? Math.min(100, (e - LV[i][1]) / (nx[1] - LV[i][1]) * 100) : 100};
-}
-/* ---- feed: one list powers notifications + history ---- */
-let FEED = [], feedT = null, feedFirst = true;
-function startFeed(){
-  $("bell").classList.remove("hide"); setTimeout(loadFeed, 3000); clearInterval(feedT);
-  feedT = setInterval(() => { if(!document.hidden && me) loadFeed(); }, 180000);
-  if(!lsGet("tut")) setTimeout(showTutorial, 900);
-}
-async function loadFeed(){
-  if(!me) return;
-  const q = (c, f) => db.collection(c).where(f, "==", me.uid).get().catch(() => null);
-  const [ss, ws, fs, bs] = await Promise.all([q("submissions","uid"), q("withdrawals","uid"), q("profiles","refUid"), q("bonuses","uid")]);
-  const ev = [];
-  ss && ss.forEach(d => { const s = d.data(); ev.push({id:"t"+d.id, k:"task", at:Number(s.at) || 0, t:s.reviewedAt || s.updatedAt || s.at || 0, st:s.status, title:s.taskTitle || "Task", amt:s.status === "approved" ? Number(s.reward) || 0 : 0, reason:s.reason || s.adminNote || ""}); });
-  ws && ws.forEach(d => { const w = d.data(); ev.push({id:"w"+d.id, k:"wd", t:w.paidAt || w.reviewedAt || w.at || 0, st:w.status, title:"Withdrawal to " + (w.method || "account"), amt:w.status === "rejected" ? 0 : -(Number(w.amount) || 0), reason:w.reason || ""}); });
-  fs && fs.forEach(d => { const f = d.data(); ev.push({id:"f"+d.id, k:"friend", t:f.at || 0, st:f.active ? "active" : "joined", title:f.name || "A friend", amt:0}); });
-  bs && bs.forEach(d => { const b = d.data(); ev.push({id:"b"+d.id, k:"bonus", t:b.at || 0, st:"ok", title:b.title || "Daily bonus", amt:Number(b.amount) || 0}); });
-  if(ud && Number(ud.signupBonus) > 0) ev.push({id:"sb", k:"bonus", t:ud.createdAt || 0, st:"ok", title:"Signup bonus", amt:Number(ud.signupBonus)});
-  FEED = ev.sort((a, b) => b.t - a.t);
-  let map = null; try{ map = JSON.parse(lsGet("stmap") || "null"); }catch(e){}
-  if(!map){ map = {}; FEED.forEach(e => map[e.id] = e.st); lsSet("stmap", JSON.stringify(map)); }
-  const nw = FEED.filter(e => e.st !== "pending" && map[e.id] !== e.st);
-  const b = $("bellb"); b.textContent = nw.length > 9 ? "9+" : nw.length; b.classList.toggle("hide", !nw.length);
-  if(nw.length && !feedFirst) toast("New update: " + nw[0].title);
-  feedFirst = false;
-}
-const SV = d => `<svg viewBox="0 0 24 24">${d}</svg>`;
-const ICO = {ok:SV('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), bad:SV('<path d="M6 6l12 12M18 6L6 18"/>'), wt:SV('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
-  wd:SV('<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 15h2"/>'), friend:SV('<circle cx="9" cy="8.5" r="3.3"/><path d="M3 19c.5-3.4 3-5 6-5s5.500 1.600 6 5M17 6.500a3 3 0 010 5.500M18.500 14.500c1.500.6 2.300 2 2.500 4.500"/>'), bonus:SV('<rect x="3.500" y="9" width="17" height="4" rx="1"/><path d="M12 9v11M5 13v6.500h14V13M12 9c-2.500 0-4-3.500-1.800-4.500S12 7 12 9zm0 0c0-2 .8-4.500 2.800-4 2.200 1 .5 4-2.800 4z"/>')};
-function evIcon(e){
-  let c = "wt", i = "wt";
-  if(e.k === "task"){ if(e.st === "approved"){ c = "ok"; i = "ok"; } else if(e.st === "rejected"){ c = "bad"; i = "bad"; } }
-  else if(e.k === "wd"){ i = "wd"; c = e.st === "paid" ? "ok" : e.st === "rejected" ? "bad" : "wt"; }
-  else if(e.k === "bonus"){ i = "bonus"; c = "ok"; } else { i = "friend"; c = ""; }
-  return `<span class="ico ${c}">${ICO[i]}</span>`;
-}
-const evText = e => e.k === "task" ? (e.st === "approved" ? "Task approved" : e.st === "rejected" ? "Task rejected" : "Task under review") : e.k === "wd" ? (e.st === "paid" ? "Withdrawal paid" : e.st === "rejected" ? "Withdrawal rejected" : "Withdrawal pending") : e.k === "bonus" ? "Bonus received" : (e.st === "active" ? "Referral activated" : "New referral");
-function evRow(e, nw){
-  const a = e.amt ? `<span class="amt ${e.amt > 0 ? "p" : "m"}">${e.amt > 0 ? "+" : "-"}${usd(Math.abs(e.amt))}</span>` : "";
-  return `<div class="ev ${nw ? "nw" : ""}">${evIcon(e)}<div class="pt"><b>${esc(evText(e))}</b><span>${esc(e.title)}</span><span class="dt">${e.t ? fdate(e.t) : "-"}</span>${e.reason ? `<span class="err">Reason: ${esc(e.reason)}</span>` : ""}${e.k === "task" && e.st === "rejected" ? `<button class="sm g" onclick="closeM();show('tasks')">Submit again</button>` : ""}</div>${a}</div>`;
-}
-async function showNotifs(){
-  await loadFeed(); let map = {}; try{ map = JSON.parse(lsGet("stmap") || "{}"); }catch(e){}
-  const l = FEED.filter(e => e.st !== "pending").slice(0, 30);
-  sheet("<h3>Notifications</h3>" + (l.length ? l.map(e => evRow(e, map[e.id] !== e.st)).join("") : '<div class="mu">No updates yet. Approved tasks, paid withdrawals and new friends show up here.</div>'));
-  const m2 = {}; FEED.forEach(e => m2[e.id] = e.st); lsSet("stmap", JSON.stringify(m2)); $("bellb").classList.add("hide");
-}
-async function showHistory(f){
-  if(!FEED.length) await loadFeed();
-  const T = [["all","All"],["task","Tasks"],["wd","Withdrawals"],["bonus","Bonuses"]];
-  const l = FEED.filter(e => f === "all" || e.k === f);
-  sheet(`<h3>History</h3><div class="tabs">${T.map(t => `<button class="${t[0] === f ? "on" : ""}" onclick="showHistory('${t[0]}')">${t[1]}</button>`).join("")}</div>` + (l.length ? l.map(e => evRow(e)).join("") : '<div class="mu">Nothing here yet.</div>'));
-}
-/* ---- rewards tab: daily bonus, level, leaderboard ---- */
-const todayStart = () => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); };
-function weekKey(ts){ const d = new Date(ts || Date.now()), k = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - k); return d.toISOString().slice(0, 10); }
-function confetti(){
-  const c = document.createElement("div"), cols = ["#ff2a2a","#ffffff","#ffd166","#ff7a7a","#a80000"]; c.className = "cf";
-  for(let i = 0; i < 56; i++){ const e = document.createElement("i"); e.style.cssText = `left:${Math.random() * 100}%;background:${cols[i % 5]};animation-delay:${Math.random() * .5}s;--r:${Math.random() * 720 - 360}deg`; c.appendChild(e); }
-  document.body.appendChild(c); setTimeout(() => c.remove(), 3000);
-}
-async function claimReward(id, amt, title, extra){
-  const uref = db.collection("users").doc(me.uid), bref = db.collection("bonuses").doc(me.uid + "_" + id);
-  return db.runTransaction(async tx => {
-    const [u, b] = await Promise.all([tx.get(uref), tx.get(bref)]);
-    if(b.exists) throw new Error("Already claimed.");
-    const bal = (Number(u.data().balance) || 0) + amt;
-    tx.set(bref, {uid:me.uid, amount:amt, title, at:Date.now(), day:dkey()});
-    tx.update(uref, Object.assign({balance:bal}, extra || {})); return bal;
-  });
-}
-const claimedToday = id => FEED.some(e => e.id === "b" + me.uid + "_" + id);
-function missions(){
-  const t0 = todayStart(), tk = FEED.filter(e => e.k === "task" && e.at >= t0).length, fr = FEED.filter(e => e.k === "friend" && e.t >= t0).length;
-  return [{id:"m_tasks", t:"Submit 3 tasks today", p:Math.min(tk, 3), n:3}, {id:"m_checkin", t:"Claim your daily bonus", p:ud.lastCheckin === dkey() ? 1 : 0, n:1}, {id:"m_invite", t:"Invite 1 friend today", p:Math.min(fr, 1), n:1}];
-}
-async function claimMission(mid){
-  const m = missions().find(x => x.id === mid), amt = Number(CFG.missionBonus) || 0; if(!m || m.p < m.n || !amt) return;
-  try{ const bal = await claimReward(mid + "_" + dkey(), amt, "Mission: " + m.t); ud.balance = bal; writeCache(me.uid, ud); }catch(e){ return alert(e.message); }
-  confetti(); toast("Mission reward: " + usd(amt)); await loadFeed(); loadRewards();
-}
-async function spinNow(){
-  const day = dkey(); if(ud.lastSpin === day) return;
-  const mn = Number(CFG.spinMin) || 1, mx = Math.max(mn, Number(CFG.spinMax) || 10), amt = Math.floor(mn + Math.random() * (mx - mn + 1));
-  $("wheel").classList.add("spin"); let bal;
-  try{ [bal] = await Promise.all([claimReward("spin_" + day, amt, "Daily spin", {lastSpin:day}), new Promise(r => setTimeout(r, 1700))]); }
-  catch(e){ $("wheel").classList.remove("spin"); return alert(e.message); }
-  ud.lastSpin = day; ud.balance = bal; writeCache(me.uid, ud); confetti(); toast("You won " + usd(amt) + "!"); loadRewards(); setTimeout(loadFeed, 1200);
-}
-function badges(){
-  const tk = FEED.filter(e => e.k === "task" && e.st === "approved").length, wd = FEED.filter(e => e.k === "wd" && e.st === "paid").length, rf = Number(ud.refCount) || 0, st = Math.max(Number(ud.streak) || 0, Number(ud.bestStreak) || 0), L = lvl();
-  return [["first","First task","Get 1 task approved",tk >= 1,"ok"],["t10","10 tasks","10 approved tasks",tk >= 10,"ok"],["t50","50 tasks","50 approved tasks",tk >= 50,"ok"],["wd","First payout","Get your first withdrawal",wd >= 1,"wd"],
-    ["r1","Recruiter","Invite 1 friend",rf >= 1,"friend"],["r5","Team builder","Invite 5 friends",rf >= 5,"friend"],["s7","7-day streak","Check in 7 days in a row",st >= 7,"bonus"],["gold","Gold level","Earn $20 in total",L.e >= 20,"bonus"]];
-}
-function checkBadges(){
-  if(!me || !ud) return; const ok = badges().filter(b => b[3]).map(b => b[0]); let old = null; try{ old = JSON.parse(lsGet("bdg") || "null"); }catch(e){}
-  if(old){ const nw = badges().filter(b => b[3] && old.indexOf(b[0]) < 0); if(nw.length){ confetti(); toast("Badge unlocked: " + nw[0][1]); } }
-  lsSet("bdg", JSON.stringify(ok));
-}
-function levelCheck(){
-  if(!me || !ud) return; const L = lvl(), i = LV.findIndex(l => l[0] === L.n), o = lsGet("lvi");
-  if(o !== null && o !== "" && i > Number(o)){ confetti(); sheet(`<div class="lvup"><div class="ico ok" style="margin:0 auto 10px;width:56px;height:56px">${ICO.bonus}</div><h3 style="text-align:center">Level up!</h3><div class="mu" style="text-align:center">You reached <b style="color:${L.c}">${L.n}</b>. Keep going!</div></div>`); }
-  lsSet("lvi", String(i));
-}
-const _lf = loadFeed; window.loadFeed = async function(){ await _lf(); try{ checkBadges(); levelCheck(); }catch(e){} };
-async function loadRewards(){
-  if(!FEED.length) await loadFeed();
-  const today = dkey(), yk = dkey(new Date(Date.now() - 864e5)), got = ud.lastCheckin === today;
-  const st = got || ud.lastCheckin === yk ? Number(ud.streak) || 0 : 0, day = got ? ((st - 1) % 7) + 1 : (st % 7), b = Number(CFG.dailyBonus) || 2, L = lvl(), spun = ud.lastSpin === today, mb = Number(CFG.missionBonus) || 0;
-  const M = missions().map(m => { const cl = claimedToday(m.id + "_" + today), ready = m.p >= m.n && !cl;
-    return `<div class="ev"><span class="ico ${m.p >= m.n ? "ok" : "wt"}">${m.p >= m.n ? ICO.ok : ICO.wt}</span><div class="pt"><b>${m.t}</b><div class="bar" style="margin:6px 0 2px"><i style="width:${m.p / m.n * 100}%"></i></div><span>${m.p}/${m.n} \u00b7 reward ${usd(mb)}</span></div>${cl ? '<span class="tag">Claimed</span>' : `<button class="sm" ${ready ? "" : "disabled"} onclick="claimMission('${m.id}')">Claim</button>`}</div>`; }).join("");
-  const days = []; for(let i = 6; i >= 0; i--){ const d = new Date(Date.now() - i * 864e5); days.push({k:dkey(d), l:d.toLocaleDateString("en", {weekday:"short"}), v:0}); }
-  FEED.forEach(e => { if(e.amt > 0 && e.t){ const x = days.find(d => d.k === dkey(new Date(e.t))); if(x) x.v += e.amt; } });
-  const mxv = Math.max(1, ...days.map(d => d.v)), tot = days.reduce((a, d) => a + d.v, 0);
-  const warn = !got && ud.lastCheckin === yk && st > 0 ? `<div class="note">Your ${st}-day streak ends tonight. Claim today's bonus to keep it!</div>` : "";
-  $("v-rewards").innerHTML = `<div class="card"><h3>Daily bonus</h3>${warn}<div class="mu">Check in every day. Day 7 pays 5x. Miss a day and the streak restarts.</div>
-    <div class="days">${[1,2,3,4,5,6,7].map(i => `<span class="${i <= day ? "on" : ""}">${i === 7 ? "x5" : "D" + i}</span>`).join("")}</div>
-    <button style="width:100%" onclick="claimDaily()" ${got ? "disabled" : ""}>${got ? "Claimed today - come back tomorrow" : "Claim " + usd(b * (((st % 7) + 1) === 7 ? 5 : 1))}</button></div>
-    <div class="card spinc"><div class="wheel" id="wheel"><i></i></div><div class="pt"><h3>Daily spin</h3><div class="mu">Win ${usd(CFG.spinMin || 1)} to ${usd(CFG.spinMax || 10)} once a day.</div><button style="margin-top:8px" onclick="spinNow()" ${spun ? "disabled" : ""}>${spun ? "Spun today" : "Spin now"}</button></div></div>
-    <div class="card"><h3>Daily missions</h3>${mb > 0 ? M : '<div class="mu">Missions are not active right now.</div>'}</div>
-    <div class="card"><h3 id="wk-t">${esc(CFG.weeklyTitle || "Weekly challenge")}</h3><div class="mu">Most approved tasks this week. ${esc(CFG.weeklyPrizes || "")}</div><div class="mu" id="wk-e"></div><div id="wk"><div class="mu">Loading...</div></div></div>
-    <div class="card"><h3>Last 7 days</h3><div class="mu">Earned: ${usd(tot)}</div><div class="chart">${days.map(d => `<div><i style="height:${Math.max(4, d.v / mxv * 90)}px" title="${usd(d.v)}"></i><span>${d.l}</span></div>`).join("")}</div></div>
-    <div class="card"><h3>Badges</h3><div class="bgs">${badges().map(x => `<div class="bg1 ${x[3] ? "on" : ""}"><span class="ico ${x[3] ? "ok" : ""}">${ICO[x[4]]}</span><b>${x[1]}</b><span>${x[2]}</span></div>`).join("")}</div></div>
-    <div class="card"><h3>Recent payouts</h3><div id="po"><div class="mu">Loading...</div></div></div>
-    <div class="card"><h3>Your level: <span style="color:${L.c}">${L.n}</span></h3><div class="bar"><i style="width:${L.pct}%"></i></div>
-    <div class="mu">${L.nx ? `Earn ${usd(Math.max(0, (L.nx[1] - L.e) * rate()))} more to reach ${L.nx[0]}.` : "You reached the top level."}</div>
-    <div class="row">${LV.map(l => `<span class="tag" style="background:${l[2]};color:#fff;opacity:${l[0] === L.n ? 1 : .55}">${l[0]} $${l[1]}+</span>`).join("")}</div></div>
-    <div class="card"><h3>Leaderboard</h3><div class="tabs"><button class="on" id="lb-earned" onclick="loadBoard('earned')">Top earners</button><button id="lb-team" onclick="loadBoard('team')">Top referrers</button></div><div id="lb"><div class="mu">Loading...</div></div></div>`;
-  loadBoard("earned"); loadWeekly(); loadPayouts("po");
-}
-async function loadWeekly(){
-  const wk = weekKey(), end = new Date(wk + "T00:00:00Z").getTime() + 7 * 864e5, dl = Math.max(0, Math.ceil((end - Date.now()) / 864e5)); if($("wk-e")) $("wk-e").textContent = "Ends in " + dl + " day(s).";
-  try{
-    const q = await db.collection("profiles").orderBy("wt", "desc").limit(40).get(), r = q.docs.map(d => d.data()).filter(p => p.wk === wk && !p.hidden && p.wt > 0).slice(0, 10);
-    if($("wk")) $("wk").innerHTML = r.map((p, i) => `<div class="lr ${p.uid === me.uid ? "me" : ""}"><span class="rk r${i < 3 ? i + 1 : 0}">${i + 1}</span><b>${esc(p.name || "User")}</b><span class="tag">${p.wt} tasks</span></div>`).join("") || '<div class="mu">No one has completed a task this week yet. Be the first!</div>';
-  }catch(e){ if($("wk")) $("wk").innerHTML = '<div class="mu">Not available right now.</div>'; }
-}
-let POC = null;
-async function loadPayouts(id){
-  try{
-    if(!POC || Date.now() - POC.t > 300000){ const q = await db.collection("payouts").orderBy("at", "desc").limit(8).get(); POC = {t:Date.now(), r:q.docs.map(d => d.data())}; }
-    const h = POC.r.map(p => `<div class="ev"><span class="ico ok">${ICO.wd}</span><div class="pt"><b>${esc(p.name || "User")}</b><span>${esc(p.method || "")} \u00b7 ${p.at ? fdate(p.at) : ""}</span></div><span class="amt p">${usd(p.amount || 0)}</span></div>`).join("");
-    if($(id)) $(id).innerHTML = h || '<div class="mu">Payouts will appear here.</div>';
-  }catch(e){ if($(id)) $(id).innerHTML = '<div class="mu">Not available right now.</div>'; }
-}
-/* ---- banners on Home: announcement + streak warning ---- */
-const hsh = t => { let h = 0; for(let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return String(h); };
-function renderBanners(){
-  const el = $("banners"); if(!el || !ud) return; let h = "";
-  const a = (CFG.announce || "").trim(); if(a && lsGet("ann") !== hsh(a)) h += `<div class="banner"><div class="pt"><b>Announcement</b><span>${esc(a)}</span></div><button class="xb2" onclick="closeAnn()" aria-label="Dismiss">\u00d7</button></div>`;
-  const yk = dkey(new Date(Date.now() - 864e5));
-  if(ud.lastCheckin === yk && Number(ud.streak) > 0) h += `<div class="banner warn" onclick="show('rewards')"><div class="pt"><b>${ud.streak}-day streak at risk</b><span>Claim today's bonus before midnight to keep it.</span></div></div>`;
-  el.innerHTML = h;
-}
-function closeAnn(){ lsSet("ann", hsh((CFG.announce || "").trim())); renderBanners(); }
-const _lh = loadHome; window.loadHome = async function(){ const r = _lh.apply(this, arguments); renderBanners(); return r; };
-function tf(p, b){ document.querySelectorAll(".chips button").forEach(x => x.classList.toggle("on", x === b)); document.querySelectorAll(".tk").forEach(c => c.style.display = p === "all" || c.dataset.p === p ? "" : "none"); }
-/* ---- invite share card (image) ---- */
-function drawInvite(link){
-  const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d");
-  const rr = (X, Y, w, h, r) => { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); };
-  const F = (w, sz, it) => (it ? "italic " : "") + w + " " + sz + "px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
-  const fit = (t, w, sz, wt) => { let z = sz; x.font = F(wt, z); while(x.measureText(t).width > w && z > 24){ z -= 2; x.font = F(wt, z); } return z; };
-  const wrap = (t, w) => { const ws = t.split(" "), L = []; let l = ""; ws.forEach(q => { const n = l ? l + " " + q : q; if(x.measureText(n).width > w && l){ L.push(l); l = q; } else l = n; }); if(l) L.push(l); return L; };
-  const name = ((ud.fullName || "").trim() || (me.email || "A friend").split("@")[0]).slice(0, 28);
-  // background
-  const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#ff2a2a"); g.addColorStop(.5, "#a80000"); g.addColorStop(1, "#4d0000"); x.fillStyle = g; x.fillRect(0, 0, W, H);
-  x.fillStyle = "rgba(255,255,255,.07)"; x.beginPath(); x.arc(1010, 90, 330, 0, 7); x.fill(); x.beginPath(); x.arc(40, 1290, 300, 0, 7); x.fill();
-  x.fillStyle = "rgba(255,255,255,.22)"; for(let i = 0; i < 6; i++) for(let j = 0; j < 6; j++){ x.beginPath(); x.arc(60 + i * 30, 70 + j * 30, 3, 0, 7); x.fill(); }
-  // brand
-  x.fillStyle = "#fff"; rr(330, 70, 96, 96, 26); x.fill(); x.fillStyle = "#c40000"; x.textAlign = "center"; x.font = F(800, 70); x.fillText("P", 378, 142);
-  x.fillStyle = "#fff"; x.textAlign = "left"; x.font = F(800, 76, true); x.fillText("TaskPey", 448, 142);
-  // pill
-  x.textAlign = "center"; x.fillStyle = "rgba(255,255,255,.18)"; rr(390, 205, 300, 54, 27); x.fill(); x.fillStyle = "#fff"; x.font = F(700, 24); try{ x.letterSpacing = "4px"; }catch(e){} x.fillText("YOU'RE INVITED", 540, 241); try{ x.letterSpacing = "0px"; }catch(e){}
-  // card
-  x.save(); x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = 50; x.shadowOffsetY = 20; x.fillStyle = "#fff"; rr(70, 340, 940, 780, 52); x.fill(); x.restore();
-  // avatar
-  x.fillStyle = "#fff"; x.beginPath(); x.arc(540, 340, 88, 0, 7); x.fill();
-  const ag = x.createLinearGradient(460, 260, 620, 420); ag.addColorStop(0, "#ff2a2a"); ag.addColorStop(1, "#a80000"); x.fillStyle = ag; x.beginPath(); x.arc(540, 340, 74, 0, 7); x.fill();
-  x.fillStyle = "#fff"; x.font = F(800, 82); x.fillText(name[0].toUpperCase(), 540, 369);
-  // inviter
-  x.fillStyle = "#1a1a22"; const sz = fit(name, 800, 66, 800); x.font = F(800, sz); x.fillText(name, 540, 500);
-  x.fillStyle = "#6b5b5b"; x.font = F(500, 34); x.fillText("has invited you to join TaskPey", 540, 552);
-  x.fillStyle = "#c40000"; x.font = F(800, 60); x.fillText("You are most welcome!", 540, 640);
-  x.fillStyle = "#4a4a55"; x.font = F(400, 31); wrap("Complete simple tasks, earn rewards and withdraw to JazzCash or Easypaisa.", 740).forEach((l, i) => x.fillText(l, 540, 700 + i * 44));
-  // bonus chip
-  const sb = Number(CFG.signupBonus) || 0;
-  if(sb > 0){ const t = "Welcome bonus " + usd(sb) + " on signup"; x.font = F(700, 30); const w = x.measureText(t).width + 60; x.fillStyle = "#e7f6ec"; rr(540 - w / 2, 800, w, 60, 30); x.fill(); x.fillStyle = "#15803d"; x.fillText(t, 540, 840); }
-  // code box
-  x.strokeStyle = "#d90a0a"; x.lineWidth = 3; x.setLineDash([14, 10]); rr(190, 900, 700, 180, 28); x.stroke(); x.setLineDash([]);
-  x.fillStyle = "#6b5b5b"; x.font = F(700, 24); try{ x.letterSpacing = "4px"; }catch(e){} x.fillText("YOUR INVITE CODE", 540, 950); try{ x.letterSpacing = "10px"; }catch(e){}
-  x.fillStyle = "#b30000"; x.font = F(800, 96); x.fillText(ud.refCode || "", 545, 1043); try{ x.letterSpacing = "0px"; }catch(e){}
-  // footer
-  x.fillStyle = "#fff"; rr(290, 1170, 500, 84, 42); x.fill(); x.fillStyle = "#b30000"; x.font = F(800, 36); x.fillText("Join now with this code", 540, 1224);
-  x.fillStyle = "rgba(255,255,255,.92)"; x.font = F(500, 30); x.fillText(link.replace(/^https?:\/\//, ""), 540, 1306);
-  return {c, name};
-}
-async function shareCard(link){
-  const {c, name} = drawInvite(link);
-  const blob = await new Promise(r => c.toBlob(r, "image/png")), f = new File([blob], "taskpey-invite.png", {type:"image/png"});
-  try{ if(navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f], text:name + " invited you to TaskPey. You are most welcome! Use my code " + ud.refCode + ": " + link}); return; } }catch(e){ if(e && e.name === "AbortError") return; }
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "taskpey-invite.png"; document.body.appendChild(a); a.click(); a.remove(); toast("Invite card saved");
-}
-async function loadBoard(by){
-  ["earned","team"].forEach(x => { const b = $("lb-" + x); if(b) b.classList.toggle("on", x === by); });
-  try{
-    const q = await db.collection("profiles").orderBy(by, "desc").limit(25).get(), md = ["\u{1F947}","\u{1F948}","\u{1F949}"]; let i = 0, h = "";
-    q.docs.map(d => d.data()).filter(p => !p.hidden).slice(0, 10).forEach(p => { h += `<div class="lr ${p.uid === me.uid ? "me" : ""}"><span class="rk r${i < 3 ? i + 1 : 0}">${i + 1}</span><b>${esc(p.name || "User")}</b><span class="tag">${by === "earned" ? usd(p.earned || 0) : (p.team || 0) + " friends"}</span></div>`; i++; });
-    if($("lb")) $("lb").innerHTML = h || '<div class="mu">No data yet.</div>';
-  }catch(e){ if($("lb")) $("lb").innerHTML = '<div class="mu">Leaderboard is not available right now.</div>'; }
-}
-async function claimDaily(){
-  const today = dkey(), yk = dkey(new Date(Date.now() - 864e5)), ref = db.collection("users").doc(me.uid); let res;
-  try{
-    res = await db.runTransaction(async tx => {
-      const d = (await tx.get(ref)).data();
-      if(d.lastCheckin === today) throw new Error("Already claimed today. Come back tomorrow!");
-      const streak = d.lastCheckin === yk ? (Number(d.streak) || 0) + 1 : 1, amt = (Number(CFG.dailyBonus) || 2) * (((streak - 1) % 7) + 1 === 7 ? 5 : 1);
-      tx.update(ref, {balance:(Number(d.balance) || 0) + amt, lastCheckin:today, streak});
-      return {streak, amt, balance:(Number(d.balance) || 0) + amt};
-    });
-  }catch(e){ return alert(e.message); }
-  ud.lastCheckin = today; ud.streak = res.streak; ud.balance = res.balance; writeCache(me.uid, ud);
-  db.collection("bonuses").add({uid:me.uid, amount:res.amt, title:"Daily bonus (day " + (((res.streak - 1) % 7) + 1) + ")", at:Date.now()}).catch(() => {});
-  toast("Daily bonus added: " + usd(res.amt)); loadRewards(); setTimeout(loadFeed, 1200);
-}
-/* ---- referral share, dark mode, FAQ, tutorial, install ---- */
-function shareWA(link){ window.open("https://wa.me/?text=" + encodeURIComponent("Join TaskPey, complete simple tasks and earn real money! Use my invite link: " + link), "_blank"); }
-function toggleTheme(){ const d = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = d; try{ localStorage.setItem("tp_theme", d); }catch(e){} loadProfile(); }
-function showFAQ(){
-  const Q = [["How long does a withdrawal take?", "Requests are reviewed by our team and paid to your JazzCash or Easypaisa account. Check the status in History."],
-    ["What is the minimum withdrawal?", "The minimum is " + usd(CFG.minWithdraw) + ". A " + (CFG.withdrawTax || 0) + "% tax is deducted from each withdrawal."],
-    ["Why was my task rejected?", "Common reasons: blurry or wrong screenshot, task steps not completed, or a fake proof. The reason shows in History and you can submit again."],
-    ["How do referrals work?", "Share your code or link. You earn " + usd(CFG.refBonus) + " when your friend's membership is approved."],
-    ["How does the daily bonus work?", "Open Rewards and tap Claim once per day. Seven days in a row pays 5x on day 7."],
-    ["I entered a wrong TID or number", "Contact Support from the chat button and share your transaction ID."]];
-  sheet("<h3>FAQ & rules</h3>" + Q.map(q => `<details><summary>${esc(q[0])}</summary><p>${esc(q[1])}</p></details>`).join(""));
-}
-function showTutorial(){
-  lsSet("tut", "1");
-  const S = [["1","Pick a task","Open Tasks, read the steps and complete them."],["2","Send proof","Attach a screenshot and submit. We review it."],["3","Get paid","Approved tasks add money to your balance."],["4","Withdraw","Request JazzCash or Easypaisa payout from Home."],["5","Invite & earn","Share your code from Refer and claim the daily bonus in Rewards."]];
-  sheet("<h3>How TaskPey works</h3>" + S.map(s => `<div class="ev"><span class="ico" style="font-weight:700;font-size:16px">${s[0]}</span><div class="pt"><b>${s[1]}</b><span>${s[2]}</span></div></div>`).join(""));
-}
-addEventListener("beforeinstallprompt", e => { e.preventDefault(); window.__ip = e; });
-async function installApp(){ const e = window.__ip; if(!e) return; e.prompt(); await e.userChoice.catch(() => {}); window.__ip = null; loadProfile(); }
-if("serviceWorker" in navigator && /^https?:/.test(location.protocol)) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 </script>
 </body>
 </html>
